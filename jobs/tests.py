@@ -134,6 +134,23 @@ class JobApiTests(APITestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["barcode"], "HD-2002")
 
+    def test_search_by_new_fields(self):
+        self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode="HD-1001", device_model="Western Digital"),
+            format="json",
+        )
+        self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode="HD-2002", device_model="Toshiba"),
+            format="json",
+        )
+        response = self.client.get("/api/jobs/?search=Western")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["barcode"], "HD-1001")
+        self.assertEqual(response.data["results"][0]["device_model"], "Western Digital")
+
     def test_unauthenticated_rejected(self):
         self.client.credentials()
         response = self.client.post("/api/jobs/", self.payload, format="json")

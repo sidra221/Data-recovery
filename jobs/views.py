@@ -55,6 +55,9 @@ class JobViewSet(viewsets.ModelViewSet):
                 | Q(customer_phone__icontains=search)
                 | Q(barcode__icontains=search)
                 | Q(invoice_number__icontains=search)
+                | Q(device_model__icontains=search)
+                | Q(serial_number__icontains=search)
+                | Q(problem__icontains=search)
             )
         return queryset
 

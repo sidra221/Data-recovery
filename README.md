@@ -124,7 +124,7 @@ curl -X POST http://127.0.0.1:8000/api/jobs/1/send/ \
 
 - `GET /api/jobs/` قائمة الفواتير
 - `GET /api/jobs/?status=has_problems` فلترة بالحالة
-- `GET /api/jobs/?search=أحمد` بحث بالاسم أو الرقم أو الباركود
+- `GET /api/jobs/?search=أحمد` بحث بالاسم أو الرقم أو الباركود أو الموديل أو الرقم التسلسلي أو مشكلة العميل
 - `GET /api/jobs/1/` تفاصيل فاتورة
 - `GET /api/meta/` أنواع الهارد + الحالات + `client_reports` و `work_statuses` بنفس الشكل (`value` / `label`)
 - `GET /api/health/` فحص الخدمة
