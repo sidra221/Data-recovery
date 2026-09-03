@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
+import 'create_case_screen.dart';
 
 class CasesListScreen extends ConsumerStatefulWidget {
   const CasesListScreen({super.key});
@@ -127,7 +128,14 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
           ],
         ),
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const CreateCaseScreen(),
+              ),
+            );
+            await _load();
+          },
           elevation: 0,
           backgroundColor: Colors.transparent,
           child: const Icon(Icons.add, color: Colors.white, size: 28),
