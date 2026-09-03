@@ -128,3 +128,13 @@ curl -X POST http://127.0.0.1:8000/api/jobs/1/send/ \
 - `GET /api/jobs/1/` تفاصيل فاتورة
 - `GET /api/meta/` أنواع الهارد + الحالات + `client_reports` و `work_statuses` بنفس الشكل (`value` / `label`)
 - `GET /api/health/` فحص الخدمة
+
+## قبل النشر (Production)
+
+قبل ما ترفع السيرفر للإنتاج، حدّد المتغيرات التالية كبيئة حقيقية (مو القيم الافتراضية للتطوير):
+
+- `DJANGO_SECRET_KEY` — مفتاح عشوائي سري
+- `DJANGO_DEBUG=0`
+- `DJANGO_ALLOWED_HOSTS` — نطاق الموقع (مثال: `yourdomain.com,api.yourdomain.com`)
+
+انسخ `.env.example` إلى `.env` وعبّيه بالقيم الحقيقية. ملف `.env` موجود أصلاً في `.gitignore` وما ينرفع للمستودع.

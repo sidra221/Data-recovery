@@ -3,6 +3,8 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# بالإنتاج لازم يتحدد DJANGO_SECRET_KEY كمتغير بيئة حقيقي.
+# لا تعتمدوا على القيمة الافتراضية "django-insecure-..." بره بيئة التطوير.
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "django-insecure-dev-only-change-me",
