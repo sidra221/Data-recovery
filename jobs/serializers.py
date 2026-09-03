@@ -5,11 +5,12 @@ from .models import Job, StatusLog
 
 class StatusLogSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
+    field_name_label = serializers.CharField(source="get_field_name_display", read_only=True)
     created_by_name = serializers.CharField(source="created_by.username", read_only=True)
 
     class Meta:
         model = StatusLog
-        fields = ("id", "status", "status_label", "note", "created_by_name", "created_at")
+        fields = ("id", "field_name", "field_name_label", "status", "status_label", "note", "created_by_name", "created_at")
 
 
 class JobSerializer(serializers.ModelSerializer):

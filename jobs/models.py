@@ -122,7 +122,15 @@ class Job(models.Model):
 
 
 class StatusLog(models.Model):
+    class FieldName(models.TextChoices):
+        STATUS = "status", "الحالة العامة"
+        CLIENT_REPORT = "client_report", "قرار العميل"
+        WORK_STATUS = "work_status", "حالة الشغل"
+
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="status_logs")
+    field_name = models.CharField(
+        "الحقل المتغيّر", max_length=20, choices=FieldName, default=FieldName.STATUS,
+    )
     status = models.CharField(max_length=20, choices=Job.Status)
     note = models.CharField(max_length=255, blank=True)
     created_by = models.ForeignKey(

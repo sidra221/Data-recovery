@@ -34,6 +34,30 @@ python manage.py createsuperuser
 | `completed` | خلص |
 | `has_problems` | في مشاكل |
 
+### حقول إضافية (مسار العميل)
+
+| الحقل | المعنى |
+| --- | --- |
+| `problem` | المشكلة بنص حر — كلام العميل (Customer Comments) |
+| `device_model` | الموديل / الماركة (مثال: Western Digital) |
+| `serial_number` | الرقم التسلسلي S/N |
+| `customer_email` | إيميل العميل (اختياري) |
+| `attached_equipment` | الملحقات المرافقة (كيبل، علبة، شنطة…) |
+| `inspection_notes` | ملاحظات الفحص — منفصلة عن كلام العميل |
+
+كلها اختيارية؛ تنكتب وقت الإنشاء أو تتحدّث لاحقاً عبر PATCH.
+
+### مساري متابعة إضافيين
+
+`status` العام يبقى كما هو (`received` / `finished` / `completed` / `has_problems`). جنبه حقلان اختياريان مستقلان، فاضيَين لحد ما الموظف يعبّيهم:
+
+| الحقل | القيم | المعنى |
+| --- | --- | --- |
+| `client_report` | `agree` · `wait_client` · `finished` | قرار العميل على السعر |
+| `work_status` | `pending` · `in_progress` · `finished` | حالة الشغل الفعلي بعد الموافقة |
+
+ينعدّلوا عبر `PATCH /api/jobs/{id}/` مثل أي حقل قابل للتعديل. أي تغيير فيهم بينسجّل تلقائياً في `status_logs` (نفس سجل التتبع)، مع `field_name` يبيّن أي حقل تغيّر.
+
 ## أنواع الهارد
 
 `hdd_35` · `hdd_25` · `ssd` · `nvme` · `external` · `usb` · `memory_card` · `other`
@@ -102,5 +126,5 @@ curl -X POST http://127.0.0.1:8000/api/jobs/1/send/ \
 - `GET /api/jobs/?status=has_problems` فلترة بالحالة
 - `GET /api/jobs/?search=أحمد` بحث بالاسم أو الرقم أو الباركود
 - `GET /api/jobs/1/` تفاصيل فاتورة
-- `GET /api/meta/` أنواع الهارد + الحالات
+- `GET /api/meta/` أنواع الهارد + الحالات + `client_reports` و `work_statuses` بنفس الشكل (`value` / `label`)
 - `GET /api/health/` فحص الخدمة

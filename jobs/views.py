@@ -62,10 +62,30 @@ class JobViewSet(viewsets.ModelViewSet):
         job = serializer.save(created_by=self.request.user, status=Job.Status.RECEIVED)
         StatusLog.objects.create(
             job=job,
+            field_name=StatusLog.FieldName.STATUS,
             status=job.status,
             note="تم إنشاء الفاتورة",
             created_by=self.request.user,
         )
+
+    def perform_update(self, serializer):
+        old_client_report = serializer.instance.client_report
+        old_work_status = serializer.instance.work_status
+        job = serializer.save()
+        if "client_report" in serializer.validated_data and job.client_report != old_client_report:
+            StatusLog.objects.create(
+                job=job,
+                field_name=StatusLog.FieldName.CLIENT_REPORT,
+                status=job.client_report,
+                created_by=self.request.user,
+            )
+        if "work_status" in serializer.validated_data and job.work_status != old_work_status:
+            StatusLog.objects.create(
+                job=job,
+                field_name=StatusLog.FieldName.WORK_STATUS,
+                status=job.work_status,
+                created_by=self.request.user,
+            )
 
     @action(detail=False, methods=["get"], url_path="scan/(?P<barcode>[^/.]+)")
     def scan(self, request, barcode=None):
@@ -84,6 +104,7 @@ class JobViewSet(viewsets.ModelViewSet):
         job.save(update_fields=["status", "updated_at"])
         StatusLog.objects.create(
             job=job,
+            field_name=StatusLog.FieldName.STATUS,
             status=new_status,
             note=note,
             created_by=request.user,

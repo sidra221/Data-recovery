@@ -79,6 +79,35 @@ class JobApiTests(APITestCase):
         self.assertEqual(response.data["client_report"], "agree")
         self.assertEqual(response.data["status"], "received")
 
+    def test_client_report_and_work_status_are_logged(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        job_id = created.data["id"]
+        self.assertEqual(len(created.data["status_logs"]), 1)
+        self.assertEqual(created.data["status_logs"][0]["field_name"], "status")
+
+        response = self.client.patch(
+            f"/api/jobs/{job_id}/",
+            {"client_report": "agree"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["status_logs"]), 2)
+        self.assertEqual(response.data["status_logs"][0]["field_name"], "client_report")
+        self.assertEqual(response.data["status_logs"][0]["status"], "agree")
+
+        response = self.client.patch(
+            f"/api/jobs/{job_id}/",
+            {"work_status": "in_progress"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        logs = response.data["status_logs"]
+        self.assertEqual(len(logs), 3)
+        self.assertEqual(logs[0]["field_name"], "work_status")
+        self.assertEqual(logs[0]["status"], "in_progress")
+        self.assertEqual(logs[1]["field_name"], "client_report")
+        self.assertEqual(logs[-1]["field_name"], "status")
+
     def test_invoice_and_send(self):
         created = self.client.post("/api/jobs/", self.payload, format="json")
         job_id = created.data["id"]

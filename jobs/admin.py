@@ -6,7 +6,7 @@ from .models import Job, StatusLog
 class StatusLogInline(admin.TabularInline):
     model = StatusLog
     extra = 0
-    readonly_fields = ("status", "note", "created_by", "created_at")
+    readonly_fields = ("field_name", "status", "note", "created_by", "created_at")
     can_delete = False
 
 
@@ -31,6 +31,6 @@ class JobAdmin(admin.ModelAdmin):
 
 @admin.register(StatusLog)
 class StatusLogAdmin(admin.ModelAdmin):
-    list_display = ("job", "status", "note", "created_by", "created_at")
-    list_filter = ("status", "created_at")
+    list_display = ("job", "field_name", "status", "note", "created_by", "created_at")
+    list_filter = ("field_name", "status", "created_at")
     search_fields = ("job__invoice_number", "job__barcode", "note")
