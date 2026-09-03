@@ -1,0 +1,129 @@
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
+from .models import Job, StatusLog
+from .serializers import (
+    InvoiceSerializer,
+    JobCreateSerializer,
+    JobSerializer,
+    StatusUpdateSerializer,
+)
+
+
+class LoginView(ObtainAuthToken):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response(
+            {
+                "token": token.key,
+                "user_id": user.id,
+                "username": user.username,
+            }
+        )
+
+
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.select_related("created_by").prefetch_related("status_logs__created_by")
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return JobCreateSerializer
+        return JobSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        status_filter = self.request.query_params.get("status")
+        search = self.request.query_params.get("search")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if search:
+            queryset = queryset.filter(
+                Q(customer_name__icontains=search)
+                | Q(customer_phone__icontains=search)
+                | Q(barcode__icontains=search)
+                | Q(invoice_number__icontains=search)
+            )
+        return queryset
+
+    def perform_create(self, serializer):
+        job = serializer.save(created_by=self.request.user, status=Job.Status.RECEIVED)
+        StatusLog.objects.create(
+            job=job,
+            status=job.status,
+            note="تم إنشاء الفاتورة",
+            created_by=self.request.user,
+        )
+
+    @action(detail=False, methods=["get"], url_path="scan/(?P<barcode>[^/.]+)")
+    def scan(self, request, barcode=None):
+        job = get_object_or_404(self.get_queryset(), barcode=barcode.strip())
+        return Response(JobSerializer(job).data)
+
+    @action(detail=True, methods=["post"], url_path="status")
+    def update_status(self, request, pk=None):
+        job = self.get_object()
+        serializer = StatusUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_status = serializer.validated_data["status"]
+        note = serializer.validated_data.get("note", "")
+        job.status = new_status
+        job.save(update_fields=["status", "updated_at"])
+        StatusLog.objects.create(
+            job=job,
+            status=new_status,
+            note=note,
+            created_by=request.user,
+        )
+        job = self.get_queryset().get(pk=job.pk)
+        return Response(JobSerializer(job).data)
+
+    @action(detail=True, methods=["get"])
+    def invoice(self, request, pk=None):
+        return Response(InvoiceSerializer(self.get_object()).data)
+
+    @action(detail=True, methods=["post"])
+    def send(self, request, pk=None):
+        job = self.get_object()
+        job.mark_invoice_sent()
+        return Response(InvoiceSerializer(job).data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def meta(request):
+    return Response(
+        {
+            "hard_disk_types": [
+                {"value": value, "label": label} for value, label in Job.DiskType.choices
+            ],
+            "statuses": [
+                {"value": value, "label": label} for value, label in Job.Status.choices
+            ],
+            "client_reports": [
+                {"value": v, "label": l} for v, l in Job.ClientReport.choices
+            ],
+            "work_statuses": [
+                {"value": v, "label": l} for v, l in Job.WorkStatus.choices
+            ],
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def health(request):
+    return Response({"ok": True, "service": "01 Data Recovery"})
