@@ -241,3 +241,37 @@ class QuotationSerializer(serializers.ModelSerializer):
             for item in items_data:
                 QuotationItem.objects.create(quotation=instance, **item)
         return instance
+
+
+class QuotationInvoiceSerializer(serializers.Serializer):
+    company = serializers.SerializerMethodField()
+    invoice_number = serializers.CharField(source="job.invoice_number", read_only=True)
+    customer = serializers.SerializerMethodField()
+    device = serializers.SerializerMethodField()
+    items = QuotationItemSerializer(many=True, read_only=True)
+    subtotal = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    discount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    tax_rate = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    tax_amount = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    terms = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+    def get_company(self, obj):
+        return InvoiceSerializer().get_company(obj.job)
+
+    def get_customer(self, obj):
+        job = obj.job
+        return {
+            "name": job.customer_name,
+            "phone": job.customer_phone,
+            "email": job.customer_email,
+        }
+
+    def get_device(self, obj):
+        job = obj.job
+        return {
+            "type": job.get_hard_disk_type_display(),
+            "model": job.device_model,
+            "serial_number": job.serial_number,
+        }

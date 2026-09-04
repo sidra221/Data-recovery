@@ -383,3 +383,19 @@ class QuotationApiTests(APITestCase):
         response = self.client.post(f"/api/quotations/{created.data['id']}/send/")
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.data["sent_at"])
+
+    def test_quotation_invoice_view(self):
+        job_id = self._create_job()
+        created = self.client.post(
+            "/api/quotations/",
+            {"job": job_id, "items": self.items, "discount": "0", "tax_rate": "0"},
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        job = Job.objects.get(pk=job_id)
+        response = self.client.get(f"/api/quotations/{created.data['id']}/invoice/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["invoice_number"], job.invoice_number)
+        self.assertEqual(response.data["customer"]["name"], "أحمد علي")
+        self.assertEqual(len(response.data["items"]), 2)
+        self.assertEqual(str(response.data["total"]), "200.00")

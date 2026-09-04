@@ -14,6 +14,7 @@ from .serializers import (
     InvoiceSerializer,
     JobCreateSerializer,
     JobSerializer,
+    QuotationInvoiceSerializer,
     QuotationSerializer,
     StatusUpdateSerializer,
 )
@@ -191,6 +192,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
         quotation.mark_sent()
         quotation = self.get_queryset().get(pk=quotation.pk)
         return Response(QuotationSerializer(quotation).data)
+
+    @action(detail=True, methods=["get"])
+    def invoice(self, request, pk=None):
+        quotation = self.get_object()
+        return Response(QuotationInvoiceSerializer(quotation).data)
 
 
 @api_view(["GET"])
