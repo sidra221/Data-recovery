@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../models/customer.dart';
 import '../providers/customers_provider.dart';
+import 'customer_detail_screen.dart';
 
 class CustomersListScreen extends ConsumerStatefulWidget {
   const CustomersListScreen({super.key});
@@ -158,16 +159,20 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         itemCount: state.customers.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => _CustomerCard(customer: state.customers[index]),
+        itemBuilder: (context, index) => _CustomerCard(
+          customer: state.customers[index],
+          onReturned: _load,
+        ),
       ),
     );
   }
 }
 
 class _CustomerCard extends StatelessWidget {
-  const _CustomerCard({required this.customer});
+  const _CustomerCard({required this.customer, required this.onReturned});
 
   final Customer customer;
+  final Future<void> Function() onReturned;
 
   @override
   Widget build(BuildContext context) {
@@ -182,8 +187,14 @@ class _CustomerCard extends StatelessWidget {
       shadowColor: const Color(0x14000000),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        // TODO: navigate to customer detail
-        onTap: () {},
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => CustomerDetailScreen(customerId: customer.id),
+            ),
+          );
+          await onReturned();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(14),

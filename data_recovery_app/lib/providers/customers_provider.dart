@@ -56,4 +56,12 @@ class CustomersNotifier extends Notifier<CustomersState> {
       rethrow;
     }
   }
+
+  Future<Customer> updateCustomer(int id, Map<String, dynamic> payload) {
+    return _client.updateCustomer(id, payload);
+  }
+
+  Future<void> deleteCustomer(int id) {
+    return _client.deleteCustomer(id);
+  }
 }
