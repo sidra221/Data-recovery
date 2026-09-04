@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/customer.dart';
 import '../models/dashboard_stats.dart';
+import '../models/invoice_view.dart';
 import '../models/job.dart';
 import '../models/quotation.dart';
 import 'constants.dart';
@@ -190,6 +191,11 @@ class ApiClient {
   Future<Quotation> sendQuotation(int id) async {
     final data = await _post('quotations/$id/send/', {});
     return Quotation.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<InvoiceView> getQuotationInvoice(int quotationId) async {
+    final data = await _get('quotations/$quotationId/invoice/');
+    return InvoiceView.fromJson(data as Map<String, dynamic>);
   }
 
   Future<dynamic> _get(String path, {Map<String, dynamic>? query}) {
