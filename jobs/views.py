@@ -1,14 +1,15 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Job, StatusLog
+from .models import Customer, Job, StatusLog
 from .serializers import (
+    CustomerSerializer,
     InvoiceSerializer,
     JobCreateSerializer,
     JobSerializer,
@@ -70,6 +71,19 @@ class JobViewSet(viewsets.ModelViewSet):
             note="تم إنشاء الفاتورة",
             created_by=self.request.user,
         )
+        customer, created = Customer.objects.get_or_create(
+            phone=job.customer_phone,
+            defaults={
+                "full_name": job.customer_name,
+                "email": job.customer_email,
+            },
+        )
+        if not created:
+            customer.full_name = job.customer_name
+            customer.email = job.customer_email
+            customer.save(update_fields=["full_name", "email"])
+        job.customer = customer
+        job.save(update_fields=["customer"])
 
     def perform_update(self, serializer):
         old_client_report = serializer.instance.client_report
@@ -124,6 +138,33 @@ class JobViewSet(viewsets.ModelViewSet):
         job = self.get_object()
         job.mark_invoice_sent()
         return Response(InvoiceSerializer(job).data)
+
+
+class CustomerViewSet(viewsets.ModelViewSet):
+    queryset = Customer.objects.all().order_by("-created_at")
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get("search")
+        if search:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search)
+                | Q(phone__icontains=search)
+                | Q(email__icontains=search)
+            )
+        return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.jobs.exists():
+            return Response(
+                {"detail": "لا يمكن حذف عميل لديه فواتير مرتبطة"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 @api_view(["GET"])

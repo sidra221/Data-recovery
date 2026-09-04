@@ -1,6 +1,53 @@
-from rest_framework import serializers
+from decimal import Decimal
 
-from .models import Job, StatusLog
+from rest_framework import serializers
+from django.db.models import Sum
+
+from .models import Customer, Job, StatusLog
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    total_repairs = serializers.SerializerMethodField()
+    total_spent = serializers.SerializerMethodField()
+    first_visit = serializers.SerializerMethodField()
+    last_visit = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = (
+            "id",
+            "full_name",
+            "phone",
+            "email",
+            "created_at",
+            "total_repairs",
+            "total_spent",
+            "first_visit",
+            "last_visit",
+        )
+        read_only_fields = (
+            "id",
+            "created_at",
+            "total_repairs",
+            "total_spent",
+            "first_visit",
+            "last_visit",
+        )
+
+    def get_total_repairs(self, obj):
+        return obj.jobs.count()
+
+    def get_total_spent(self, obj):
+        total = obj.jobs.exclude(price=None).aggregate(total=Sum("price"))["total"]
+        if total is None:
+            return "0.00"
+        return f"{Decimal(total):.2f}"
+
+    def get_first_visit(self, obj):
+        return obj.jobs.order_by("created_at").values_list("created_at", flat=True).first()
+
+    def get_last_visit(self, obj):
+        return obj.jobs.order_by("-created_at").values_list("created_at", flat=True).first()
 
 
 class StatusLogSerializer(serializers.ModelSerializer):

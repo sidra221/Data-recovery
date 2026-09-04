@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import Job
+from .models import Customer, Job
 
 
 class JobApiTests(APITestCase):
@@ -221,3 +221,66 @@ class JobApiTests(APITestCase):
         status_values = {item["value"] for item in response.data["statuses"]}
         self.assertEqual(status_values, {"received", "finished", "completed", "has_problems"})
         self.assertTrue(Job.objects.count() == 0)
+
+
+class CustomerApiTests(APITestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(username="emp", password="pass12345")
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.payload = {
+            "customer_name": "أحمد علي",
+            "customer_phone": "0791234567",
+            "hard_disk_type": "hdd_25",
+            "barcode": "HD-1001",
+            "notes": "هارد ما بقلع",
+        }
+
+    def test_customer_created_automatically_on_job_creation(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(Customer.objects.count(), 1)
+        customer = Customer.objects.get()
+        self.assertEqual(customer.phone, "0791234567")
+        self.assertEqual(customer.full_name, "أحمد علي")
+
+        response = self.client.get("/api/customers/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["phone"], "0791234567")
+
+    def test_customer_stats(self):
+        first = self.client.post("/api/jobs/", self.payload, format="json")
+        self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode="HD-2002"),
+            format="json",
+        )
+        self.client.patch(
+            f"/api/jobs/{first.data['id']}/",
+            {"price": "100.00"},
+            format="json",
+        )
+        customer = Customer.objects.get()
+        response = self.client.get(f"/api/customers/{customer.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total_repairs"], 2)
+        self.assertEqual(str(response.data["total_spent"]), "100.00")
+
+    def test_second_job_reuses_existing_customer(self):
+        self.client.post("/api/jobs/", self.payload, format="json")
+        self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode="HD-2002"),
+            format="json",
+        )
+        self.assertEqual(Customer.objects.count(), 1)
+        self.assertEqual(Job.objects.count(), 2)
+
+    def test_delete_customer_with_jobs_rejected(self):
+        self.client.post("/api/jobs/", self.payload, format="json")
+        customer = Customer.objects.get()
+        response = self.client.delete(f"/api/customers/{customer.id}/")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Customer.objects.count(), 1)

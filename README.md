@@ -138,3 +138,14 @@ curl -X POST http://127.0.0.1:8000/api/jobs/1/send/ \
 - `DJANGO_ALLOWED_HOSTS` — نطاق الموقع (مثال: `yourdomain.com,api.yourdomain.com`)
 
 انسخ `.env.example` إلى `.env` وعبّيه بالقيم الحقيقية. ملف `.env` موجود أصلاً في `.gitignore` وما ينرفع للمستودع.
+
+## العملاء (Customers)
+
+كل فاتورة بتضل فيها `customer_name` / `customer_phone` / `customer_email` كما هي. بالإضافة، النظام بيربطها تلقائياً بسجل `Customer` حسب رقم التليفون (ينشئه إذا جديد، أو يعيد استخدام الموجود ويحدّث الاسم والإيميل).
+
+- `GET /api/customers/` قائمة العملاء (`?search=` بالاسم أو الرقم أو الإيميل)
+- `GET /api/customers/{id}/` تفاصيل + `total_repairs` / `total_spent` / `first_visit` / `last_visit`
+- `PATCH /api/customers/{id}/` تعديل بيانات العميل
+- `DELETE /api/customers/{id}/` حذف — مرفوض (400) إذا عنده فواتير مرتبطة
+
+ما في `POST /api/customers/`؛ العملاء بينخلقوا بس من إنشاء فاتورة.

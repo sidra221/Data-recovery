@@ -3,6 +3,16 @@ from django.db import models, transaction
 from django.utils import timezone
 
 
+class Customer(models.Model):
+    full_name = models.CharField("اسم العميل", max_length=120)
+    phone = models.CharField("رقم التليفون", max_length=32, unique=True, db_index=True)
+    email = models.EmailField("الإيميل", blank=True)
+    created_at = models.DateTimeField("تاريخ الإنشاء", auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.phone})"
+
+
 class Job(models.Model):
     class DiskType(models.TextChoices):
         HDD_35 = "hdd_35", "HDD 3.5"
@@ -89,6 +99,10 @@ class Job(models.Model):
         on_delete=models.PROTECT,
         related_name="jobs",
         verbose_name="الموظف",
+    )
+    customer = models.ForeignKey(
+        Customer, on_delete=models.PROTECT, related_name="jobs",
+        null=True, blank=True,
     )
     invoice_sent_at = models.DateTimeField("وقت إرسال الفاتورة", null=True, blank=True)
     created_at = models.DateTimeField("تاريخ الإنشاء", auto_now_add=True)

@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Job, StatusLog
+from .models import Customer, Job, StatusLog
+
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "phone", "email", "created_at")
+    search_fields = ("full_name", "phone", "email")
 
 
 class StatusLogInline(admin.TabularInline):
