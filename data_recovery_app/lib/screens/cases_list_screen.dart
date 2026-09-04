@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
 import 'create_case_screen.dart';
+import 'widgets/notify_customer_sheet.dart';
 import 'widgets/update_status_sheet.dart';
 
 class CasesListScreen extends ConsumerStatefulWidget {
@@ -421,6 +422,18 @@ class _CaseCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
+                            ),
+                            // TODO: restrict bell icon visibility to appropriate status once naming decision confirmed
+                            IconButton(
+                              onPressed: () {
+                                NotifyCustomerSheet.show(
+                                  context,
+                                  jobId: job.id,
+                                );
+                              },
+                              icon: const Icon(Icons.notifications_none),
+                              color: const Color(0xFF6B7280),
+                              visualDensity: VisualDensity.compact,
                             ),
                             Material(
                               color: colors.badgeBg,
