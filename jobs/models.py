@@ -30,6 +30,11 @@ class Job(models.Model):
         IN_PROGRESS = "in_progress", "قيد التنفيذ / البحث عن قطع"
         FINISHED = "finished", "انتهى الإصلاح"
 
+    class ReportFlag(models.TextChoices):
+        NONE = "none", "بدون"
+        NO_SPARE_PARTS = "no_spare_parts", "لا يوجد قطع غيار"
+        SEND_OUT_CHINA = "send_out_china", "يُرسل للصين"
+
     invoice_number = models.CharField("رقم الفاتورة", max_length=32, unique=True, editable=False)
     barcode = models.CharField("الباركود", max_length=64, unique=True, db_index=True)
     customer_name = models.CharField("اسم العميل", max_length=120)
@@ -72,6 +77,13 @@ class Job(models.Model):
         help_text="ملاحظات الموظف بعد الفحص - منفصلة عن كلام العميل",
     )
     ready_notified_at = models.DateTimeField("وقت تبليغ العميل بالجاهزية", null=True, blank=True)
+    price = models.DecimalField(
+        "السعر الإجمالي", max_digits=10, decimal_places=2, null=True, blank=True,
+    )
+    report_flag = models.CharField(
+        "علم تقرير الفحص", max_length=20, choices=ReportFlag,
+        default=ReportFlag.NONE, blank=True,
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

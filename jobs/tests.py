@@ -108,6 +108,22 @@ class JobApiTests(APITestCase):
         self.assertEqual(logs[1]["field_name"], "client_report")
         self.assertEqual(logs[-1]["field_name"], "status")
 
+    def test_update_price_and_report_flag(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        job_id = created.data["id"]
+        self.assertEqual(created.data["status"], "received")
+
+        response = self.client.patch(
+            f"/api/jobs/{job_id}/",
+            {"price": "150.00", "report_flag": "no_spare_parts"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(str(response.data["price"]), "150.00")
+        self.assertEqual(response.data["report_flag"], "no_spare_parts")
+        self.assertEqual(response.data["report_flag_label"], "لا يوجد قطع غيار")
+        self.assertEqual(response.data["status"], "received")
+
     def test_invoice_and_send(self):
         created = self.client.post("/api/jobs/", self.payload, format="json")
         job_id = created.data["id"]

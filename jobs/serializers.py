@@ -18,6 +18,7 @@ class JobSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     client_report_label = serializers.CharField(source="get_client_report_display", read_only=True)
     work_status_label = serializers.CharField(source="get_work_status_display", read_only=True)
+    report_flag_label = serializers.CharField(source="get_report_flag_display", read_only=True)
     created_by_name = serializers.CharField(source="created_by.username", read_only=True)
     status_logs = StatusLogSerializer(many=True, read_only=True)
     invoice_sent = serializers.SerializerMethodField()
@@ -46,6 +47,9 @@ class JobSerializer(serializers.ModelSerializer):
             "attached_equipment",
             "inspection_notes",
             "ready_notified_at",
+            "price",
+            "report_flag",
+            "report_flag_label",
             "created_by_name",
             "invoice_sent",
             "invoice_sent_at",

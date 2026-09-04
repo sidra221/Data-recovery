@@ -21,9 +21,11 @@ class JobAdmin(admin.ModelAdmin):
         "status",
         "client_report",
         "work_status",
+        "price",
+        "report_flag",
         "created_at",
     )
-    list_filter = ("status", "client_report", "work_status", "hard_disk_type", "created_at")
+    list_filter = ("status", "client_report", "work_status", "report_flag", "hard_disk_type", "created_at")
     search_fields = ("invoice_number", "barcode", "customer_name", "customer_phone", "serial_number", "device_model")
     readonly_fields = ("invoice_number", "invoice_sent_at", "ready_notified_at", "created_at", "updated_at")
     inlines = [StatusLogInline]
