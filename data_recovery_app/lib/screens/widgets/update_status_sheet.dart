@@ -47,28 +47,28 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
   static const _options = <_StatusOption>[
     _StatusOption(
       value: 'received',
-      label: 'تم الاستلام',
+      label: 'Received',
       icon: Icons.inventory_2_outlined,
       badgeBg: Color(0xFFE5F9FD),
       badgeText: Color(0xFF33BEE9),
     ),
     _StatusOption(
       value: 'finished',
-      label: 'فنش',
+      label: 'Finished',
       icon: Icons.check_circle_outline,
       badgeBg: Color(0xFFE7FFED),
       badgeText: Color(0xFF22C55E),
     ),
     _StatusOption(
       value: 'completed',
-      label: 'خلص',
+      label: 'Completed',
       icon: Icons.done_all,
       badgeBg: Color(0xFFF5F5F5),
       badgeText: Color(0xFF878688),
     ),
     _StatusOption(
       value: 'has_problems',
-      label: 'في مشاكل',
+      label: 'Has Problems',
       icon: Icons.error_outline,
       badgeBg: Color(0xFFFFF5F3),
       badgeText: Color(0xFFF04D4E),
@@ -89,10 +89,10 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
       widget.onUpdated?.call();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر تحديث الحالة');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to update status');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر تحديث الحالة');
+      _showError('Failed to update status');
     } finally {
       if (mounted) setState(() => _submittingStatus = null);
     }

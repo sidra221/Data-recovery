@@ -169,7 +169,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _load,
-                child: const Text('إعادة المحاولة'),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -184,7 +184,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 180),
-            Center(child: Text('لا يوجد فواتير')),
+            Center(child: Text('No cases found')),
           ],
         ),
       );

@@ -62,10 +62,10 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر جلب نص الفاتورة');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to load invoice text');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر جلب نص الفاتورة');
+      _showError('Failed to load invoice text');
     } finally {
       if (mounted) setState(() => _isLoadingInvoice = false);
     }
@@ -75,7 +75,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
     if (_isSending) return;
     final rawUrl = _whatsappUrl;
     if (rawUrl == null || rawUrl.isEmpty) {
-      _showError('رابط واتساب غير متوفر');
+      _showError('WhatsApp link is unavailable');
       return;
     }
 
@@ -91,10 +91,10 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر تسجيل الإرسال');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to record send');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر فتح واتساب أو تسجيل الإرسال');
+      _showError('Failed to open WhatsApp or record send');
     } finally {
       if (mounted) setState(() => _isSending = false);
     }

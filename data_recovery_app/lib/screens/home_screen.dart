@@ -45,13 +45,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'تعذّر جلب الإحصائيات';
+        _error = error.message.isNotEmpty ? error.message : 'Failed to load statistics';
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'تعذّر جلب الإحصائيات';
+        _error = 'Failed to load statistics';
       });
     }
   }
@@ -111,7 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+              TextButton(onPressed: _load, child: const Text('Retry')),
             ],
           ),
         ),
@@ -129,7 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _StatCard(
-                  label: 'تم الاستلام',
+                  label: 'Received',
                   value: '${_count(stats.statusCounts, 'received')}',
                   icon: Icons.inventory_2_outlined,
                   iconBg: const Color(0xFFE5F9FD),
@@ -139,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  label: 'فنش',
+                  label: 'Finished',
                   value: '${_count(stats.statusCounts, 'finished')}',
                   icon: Icons.check_circle_outline,
                   iconBg: const Color(0xFFE7FFED),
@@ -153,7 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _StatCard(
-                  label: 'خلص',
+                  label: 'Completed',
                   value: '${_count(stats.statusCounts, 'completed')}',
                   icon: Icons.done_all,
                   iconBg: const Color(0xFFF5F5F5),
@@ -163,7 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  label: 'في مشاكل',
+                  label: 'Has Problems',
                   value: '${_count(stats.statusCounts, 'has_problems')}',
                   icon: Icons.error_outline,
                   iconBg: const Color(0xFFFFF5F3),
@@ -174,7 +174,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 24),
           const Text(
-            'حالة الشغل',
+            'Work Status',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -186,19 +186,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _WorkStat(
-                  label: 'انتظار',
+                  label: 'Pending',
                   value: _count(stats.workStatusCounts, 'pending'),
                 ),
               ),
               Expanded(
                 child: _WorkStat(
-                  label: 'قيد التنفيذ',
+                  label: 'In Progress',
                   value: _count(stats.workStatusCounts, 'in_progress'),
                 ),
               ),
               Expanded(
                 child: _WorkStat(
-                  label: 'انتهى',
+                  label: 'Finished',
                   value: _count(stats.workStatusCounts, 'finished'),
                 ),
               ),
@@ -206,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 24),
           const Text(
-            'اليوم',
+            'Today',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -218,7 +218,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _StatCard(
-                  label: 'فواتير جديدة اليوم',
+                  label: 'New Cases Today',
                   value: '${stats.jobsCreatedToday}',
                   icon: Icons.note_add_outlined,
                   iconBg: const Color(0xFFE5F9FD),
@@ -228,7 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  label: 'تحديثات حالة اليوم',
+                  label: 'Status Updates Today',
                   value: '${stats.statusChangesToday}',
                   icon: Icons.sync,
                   iconBg: const Color(0xFFFFF7ED),
@@ -239,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'إجمالي العملاء: ${stats.totalCustomers}',
+            'Total customers: ${stats.totalCustomers}',
             style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
         ],

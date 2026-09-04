@@ -134,7 +134,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _load,
-                child: const Text('إعادة المحاولة'),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -149,7 +149,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 180),
-            Center(child: Text('لا يوجد عملاء')),
+            Center(child: Text('No customers found')),
           ],
         ),
       );

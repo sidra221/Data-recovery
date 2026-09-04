@@ -235,6 +235,6 @@ class ApiClient {
         return (data['non_field_errors'] as List).first.toString();
       }
     }
-    return error.message ?? 'حصل خطأ بالاتصال بالسيرفر.';
+    return error.message ?? 'A connection error occurred.';
   }
 }

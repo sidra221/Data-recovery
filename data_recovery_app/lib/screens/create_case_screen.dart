@@ -29,10 +29,10 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
     ('hdd_25', 'HDD 2.5'),
     ('ssd', 'SSD'),
     ('nvme', 'NVMe'),
-    ('external', 'هارد خارجي'),
-    ('usb', 'فلاش USB'),
-    ('memory_card', 'كرت ذاكرة'),
-    ('other', 'أخرى'),
+    ('external', 'External HDD'),
+    ('usb', 'USB Flash'),
+    ('memory_card', 'Memory Card'),
+    ('other', 'Other'),
   ];
 
   String? _deviceType;
@@ -72,14 +72,14 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('تم إنشاء الفاتورة بنجاح')));
+        ..showSnackBar(const SnackBar(content: Text('Case created successfully')));
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر إنشاء الفاتورة');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to create case');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر إنشاء الفاتورة');
+      _showError('Failed to create case');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -92,7 +92,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   }
 
   String? _required(String? value) {
-    if (value == null || value.trim().isEmpty) return 'هذا الحقل مطلوب';
+    if (value == null || value.trim().isEmpty) return 'This field is required';
     return null;
   }
 
@@ -175,7 +175,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                       ? null
                       : (value) => setState(() => _deviceType = value),
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'هذا الحقل مطلوب' : null,
+                      value == null || value.isEmpty ? 'This field is required' : null,
                 ),
               ),
               const SizedBox(height: 16),

@@ -46,13 +46,13 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'تعذّر جلب الفاتورة';
+        _error = error.message.isNotEmpty ? error.message : 'Failed to load invoice';
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'تعذّر جلب الفاتورة';
+        _error = 'Failed to load invoice';
       });
     }
   }
@@ -98,12 +98,12 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _error ?? 'تعذّر جلب الفاتورة',
+                _error ?? 'Failed to load invoice',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+              TextButton(onPressed: _load, child: const Text('Retry')),
             ],
           ),
         ),

@@ -89,7 +89,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
     if (_isSubmitting) return;
 
     if (_items.isEmpty) {
-      _showError('أضف بنداً واحداً على الأقل');
+      _showError('Add at least one item');
       return;
     }
 
@@ -128,10 +128,10 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر إرسال عرض السعر');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to send quotation');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر إرسال عرض السعر');
+      _showError('Failed to send quotation');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -144,13 +144,13 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   String? _required(String? value) {
-    if (value == null || value.trim().isEmpty) return 'هذا الحقل مطلوب';
+    if (value == null || value.trim().isEmpty) return 'This field is required';
     return null;
   }
 
   String? _positivePrice(String? value) {
     final parsed = double.tryParse(value?.trim() ?? '');
-    if (parsed == null || parsed <= 0) return 'أدخل سعراً أكبر من صفر';
+    if (parsed == null || parsed <= 0) return 'Enter a price greater than zero';
     return null;
   }
 

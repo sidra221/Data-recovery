@@ -27,7 +27,7 @@ class SettingScreen extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  'قريباً',
+                  'Coming soon',
                   style: TextStyle(color: Color(0xFF6B7280), fontSize: 16),
                 ),
               ),

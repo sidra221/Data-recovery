@@ -6,7 +6,7 @@ class CaseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('Case detail — UI لاحقاً')),
+      body: Center(child: Text('Case detail — UI coming later')),
     );
   }
 }

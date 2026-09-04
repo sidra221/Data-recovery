@@ -59,13 +59,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'تعذّر جلب بيانات العميل';
+        _error = error.message.isNotEmpty ? error.message : 'Failed to load customer';
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'تعذّر جلب بيانات العميل';
+        _error = 'Failed to load customer';
       });
     }
   }
@@ -102,13 +102,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       _applyCustomer(updated);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('تم التحديث')));
+        ..showSnackBar(const SnackBar(content: Text('Updated successfully')));
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'تعذّر التحديث');
+      _showError(error.message.isNotEmpty ? error.message : 'Failed to update');
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر التحديث');
+      _showError('Failed to update');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -118,8 +118,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف العميل'),
-        content: const Text('هل أنت متأكد من حذف هذا العميل؟'),
+        title: const Text('Delete Customer'),
+        content: const Text('Are you sure you want to delete this customer?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -144,7 +144,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       _showError(error.message);
     } catch (_) {
       if (!mounted) return;
-      _showError('تعذّر حذف العميل');
+      _showError('Failed to delete customer');
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -214,12 +214,12 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _error ?? 'تعذّر جلب بيانات العميل',
+                _error ?? 'Failed to load customer',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+              TextButton(onPressed: _load, child: const Text('Retry')),
             ],
           ),
         ),
@@ -298,7 +298,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 controller: _nameController,
                 enabled: !_isSaving,
                 validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
+                    value == null || value.trim().isEmpty ? 'This field is required' : null,
                 decoration: _inputDecoration(hint: 'Enter Full Name'),
               ),
             ),
@@ -310,7 +310,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 enabled: !_isSaving,
                 keyboardType: TextInputType.phone,
                 validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
+                    value == null || value.trim().isEmpty ? 'This field is required' : null,
                 decoration: _inputDecoration(hint: '+96433416...'),
               ),
             ),
