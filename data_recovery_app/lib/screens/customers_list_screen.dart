@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../models/customer.dart';
 import '../providers/customers_provider.dart';
 import 'customer_detail_screen.dart';
+import 'widgets/app_bottom_nav.dart';
 
 class CustomersListScreen extends ConsumerStatefulWidget {
   const CustomersListScreen({super.key});
@@ -109,6 +110,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
     );
   }
 

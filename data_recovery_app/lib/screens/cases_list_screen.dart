@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
 import 'create_case_screen.dart';
+import 'widgets/app_bottom_nav.dart';
 import 'widgets/notify_customer_sheet.dart';
 import 'widgets/update_status_sheet.dart';
 
@@ -143,19 +144,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
           child: const Icon(Icons.add, color: Colors.white, size: 28),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: _accent,
-        unselectedItemColor: const Color(0xFF9CA3AF),
-        onTap: (_) {},
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder_outlined), label: 'Cases'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Customer'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Setting'),
-        ],
-      ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
 
