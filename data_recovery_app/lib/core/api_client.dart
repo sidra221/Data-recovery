@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../models/customer.dart';
+import '../models/dashboard_stats.dart';
 import '../models/job.dart';
 import 'constants.dart';
 import 'secure_storage.dart';
@@ -144,6 +145,11 @@ class ApiClient {
   Future<Map<String, dynamic>> health() async {
     final data = await _get('health/');
     return data as Map<String, dynamic>;
+  }
+
+  Future<DashboardStats> getDashboardStats() async {
+    final data = await _get('dashboard/stats/');
+    return DashboardStats.fromJson(data as Map<String, dynamic>);
   }
 
   Future<PaginatedCustomers> listCustomers({String? search}) async {
