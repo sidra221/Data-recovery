@@ -222,6 +222,20 @@ class JobApiTests(APITestCase):
         self.assertEqual(status_values, {"received", "finished", "completed", "has_problems"})
         self.assertTrue(Job.objects.count() == 0)
 
+    def test_dashboard_stats(self):
+        self.client.post("/api/jobs/", self.payload, format="json")
+        self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode="HD-2002"),
+            format="json",
+        )
+        response = self.client.get("/api/dashboard/stats/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status_counts"]["received"], 2)
+        self.assertEqual(response.data["total_jobs"], 2)
+        self.assertEqual(response.data["total_customers"], 1)
+        self.assertGreaterEqual(response.data["jobs_created_today"], 2)
+
 
 class CustomerApiTests(APITestCase):
     def setUp(self):

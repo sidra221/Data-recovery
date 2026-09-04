@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -192,3 +193,38 @@ def meta(request):
 @permission_classes([AllowAny])
 def health(request):
     return Response({"ok": True, "service": "01 Data Recovery"})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dashboard_stats(request):
+    status_counts = {
+        value: Job.objects.filter(status=value).count()
+        for value, _ in Job.Status.choices
+    }
+    client_report_counts = {
+        value: Job.objects.filter(client_report=value).count()
+        for value, _ in Job.ClientReport.choices
+    }
+    client_report_counts["unset"] = Job.objects.filter(client_report="").count()
+    work_status_counts = {
+        value: Job.objects.filter(work_status=value).count()
+        for value, _ in Job.WorkStatus.choices
+    }
+    work_status_counts["unset"] = Job.objects.filter(work_status="").count()
+
+    today = timezone.localdate()
+    jobs_created_today = Job.objects.filter(created_at__date=today).count()
+    status_changes_today = StatusLog.objects.filter(created_at__date=today).count()
+
+    return Response(
+        {
+            "status_counts": status_counts,
+            "client_report_counts": client_report_counts,
+            "work_status_counts": work_status_counts,
+            "total_customers": Customer.objects.count(),
+            "total_jobs": Job.objects.count(),
+            "jobs_created_today": jobs_created_today,
+            "status_changes_today": status_changes_today,
+        }
+    )
