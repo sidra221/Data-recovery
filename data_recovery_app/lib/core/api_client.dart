@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../models/customer.dart';
 import '../models/job.dart';
 import 'constants.dart';
 import 'secure_storage.dart';
@@ -145,6 +146,30 @@ class ApiClient {
     return data as Map<String, dynamic>;
   }
 
+  Future<PaginatedCustomers> listCustomers({String? search}) async {
+    final data = await _get(
+      'customers/',
+      query: {
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    return PaginatedCustomers.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<Customer> getCustomer(int id) async {
+    final data = await _get('customers/$id/');
+    return Customer.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<Customer> updateCustomer(int id, Map<String, dynamic> payload) async {
+    final data = await _patch('customers/$id/', payload);
+    return Customer.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteCustomer(int id) async {
+    await _delete('customers/$id/');
+  }
+
   Future<dynamic> _get(String path, {Map<String, dynamic>? query}) {
     return _send(() => _dio.get<dynamic>(path, queryParameters: query));
   }
@@ -155,6 +180,10 @@ class ApiClient {
 
   Future<dynamic> _patch(String path, Map<String, dynamic> data) {
     return _send(() => _dio.patch<dynamic>(path, data: data));
+  }
+
+  Future<dynamic> _delete(String path) {
+    return _send(() => _dio.delete<dynamic>(path));
   }
 
   Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
