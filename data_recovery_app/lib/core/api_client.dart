@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../models/customer.dart';
 import '../models/dashboard_stats.dart';
 import '../models/job.dart';
+import '../models/quotation.dart';
 import 'constants.dart';
 import 'secure_storage.dart';
 
@@ -174,6 +175,21 @@ class ApiClient {
 
   Future<void> deleteCustomer(int id) async {
     await _delete('customers/$id/');
+  }
+
+  Future<PaginatedQuotations> listQuotations({required int jobId}) async {
+    final data = await _get('quotations/', query: {'job': jobId});
+    return PaginatedQuotations.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<Quotation> createQuotation(Map<String, dynamic> payload) async {
+    final data = await _post('quotations/', payload);
+    return Quotation.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<Quotation> sendQuotation(int id) async {
+    final data = await _post('quotations/$id/send/', {});
+    return Quotation.fromJson(data as Map<String, dynamic>);
   }
 
   Future<dynamic> _get(String path, {Map<String, dynamic>? query}) {
