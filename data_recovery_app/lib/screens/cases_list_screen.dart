@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
 import 'create_case_screen.dart';
+import 'widgets/update_status_sheet.dart';
 
 class CasesListScreen extends ConsumerStatefulWidget {
   const CasesListScreen({super.key});
@@ -204,7 +205,10 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
         itemCount: jobsState.jobs.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => _CaseCard(job: jobsState.jobs[index]),
+        itemBuilder: (context, index) => _CaseCard(
+          job: jobsState.jobs[index],
+          onStatusUpdated: _load,
+        ),
       ),
     );
   }
@@ -318,9 +322,10 @@ class _CaseColors {
 }
 
 class _CaseCard extends StatelessWidget {
-  const _CaseCard({required this.job});
+  const _CaseCard({required this.job, required this.onStatusUpdated});
 
   final Job job;
+  final Future<void> Function() onStatusUpdated;
 
   @override
   Widget build(BuildContext context) {
@@ -417,25 +422,36 @@ class _CaseCard extends StatelessWidget {
                             Expanded(
                               child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: colors.badgeBg,
+                            Material(
+                              color: colors.badgeBg,
+                              borderRadius: BorderRadius.circular(999),
+                              child: InkWell(
+                                onTap: () {
+                                  UpdateStatusSheet.show(
+                                    context,
+                                    jobId: job.id,
+                                    currentStatus: job.status,
+                                    onUpdated: onStatusUpdated,
+                                  );
+                                },
                                 borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    job.statusLabel,
-                                    style: TextStyle(
-                                      color: colors.badgeText,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        job.statusLabel,
+                                        style: TextStyle(
+                                          color: colors.badgeText,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Icon(Icons.keyboard_arrow_down, size: 16, color: colors.badgeText),
+                                    ],
                                   ),
-                                  Icon(Icons.keyboard_arrow_down, size: 16, color: colors.badgeText),
-                                ],
+                                ),
                               ),
                             ),
                           ],
