@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
 import '../models/quotation.dart';
 import '../providers/quotations_provider.dart';
+import 'invoice_view_screen.dart';
 
 class QuotationScreen extends ConsumerStatefulWidget {
   const QuotationScreen({
@@ -118,12 +119,13 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
         createdAt: DateTime.now(),
       );
 
-      await ref.read(quotationsProvider.notifier).createAndSend(quotation.toCreatePayload());
+      final sent = await ref.read(quotationsProvider.notifier).createAndSend(quotation.toCreatePayload());
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('تم إرسال عرض السعر')));
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => InvoiceViewScreen(quotationId: sent.id),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(error.message.isNotEmpty ? error.message : 'تعذّر إرسال عرض السعر');

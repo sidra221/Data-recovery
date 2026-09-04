@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
 import 'create_case_screen.dart';
+import 'quotation_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'widgets/notify_customer_sheet.dart';
 import 'widgets/update_status_sheet.dart';
@@ -411,6 +412,22 @@ class _CaseCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => QuotationScreen(
+                                      jobId: job.id,
+                                      jobCustomerName: job.customerName,
+                                      jobCustomerPhone: job.customerPhone,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.request_quote),
+                              color: const Color(0xFF6B7280),
+                              visualDensity: VisualDensity.compact,
                             ),
                             // TODO: restrict bell icon visibility to appropriate status once naming decision confirmed
                             IconButton(
