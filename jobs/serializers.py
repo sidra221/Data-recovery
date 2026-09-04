@@ -3,7 +3,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from django.db.models import Sum
 
-from .models import Customer, Job, StatusLog
+from .models import Customer, Job, Quotation, QuotationItem, StatusLog
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -198,3 +198,46 @@ class InvoiceSerializer(serializers.ModelSerializer):
         phone = "".join(ch for ch in obj.customer_phone if ch.isdigit())
         text = self.get_share_text(obj)
         return f"https://wa.me/{phone}?text={quote(text)}"
+
+
+class QuotationItemSerializer(serializers.ModelSerializer):
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = QuotationItem
+        fields = ("id", "description", "quantity", "unit_price", "total")
+
+
+class QuotationSerializer(serializers.ModelSerializer):
+    items = QuotationItemSerializer(many=True)
+    subtotal = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    tax_amount = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    created_by_name = serializers.CharField(source="created_by.username", read_only=True)
+
+    class Meta:
+        model = Quotation
+        fields = (
+            "id", "job", "items", "discount", "tax_rate", "terms",
+            "subtotal", "tax_amount", "total", "created_by_name",
+            "created_at", "sent_at",
+        )
+        read_only_fields = ("id", "created_by_name", "created_at", "sent_at")
+
+    def create(self, validated_data):
+        items_data = validated_data.pop("items")
+        quotation = Quotation.objects.create(**validated_data)
+        for item in items_data:
+            QuotationItem.objects.create(quotation=quotation, **item)
+        return quotation
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop("items", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if items_data is not None:
+            instance.items.all().delete()
+            for item in items_data:
+                QuotationItem.objects.create(quotation=instance, **item)
+        return instance

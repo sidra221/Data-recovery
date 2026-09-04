@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Customer, Job, StatusLog
+from .models import Customer, Job, Quotation, QuotationItem, StatusLog
 
 
 @admin.register(Customer)
@@ -42,3 +42,18 @@ class StatusLogAdmin(admin.ModelAdmin):
     list_display = ("job", "field_name", "status", "note", "created_by", "created_at")
     list_filter = ("field_name", "status", "created_at")
     search_fields = ("job__invoice_number", "job__barcode", "note")
+
+
+class QuotationItemInline(admin.TabularInline):
+    model = QuotationItem
+    extra = 0
+
+
+@admin.register(Quotation)
+class QuotationAdmin(admin.ModelAdmin):
+    list_display = ("id", "job", "total_display", "sent_at", "created_at")
+    inlines = [QuotationItemInline]
+
+    @admin.display(description="الإجمالي")
+    def total_display(self, obj):
+        return obj.total

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
@@ -145,6 +147,53 @@ class Job(models.Model):
     def mark_ready_notified(self):
         self.ready_notified_at = timezone.now()
         self.save(update_fields=["ready_notified_at", "updated_at"])
+
+
+class Quotation(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="quotations")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="quotations"
+    )
+    discount = models.DecimalField("الخصم", max_digits=10, decimal_places=2, default=0)
+    tax_rate = models.DecimalField(
+        "نسبة الضريبة %", max_digits=5, decimal_places=2, default=0
+    )
+    terms = models.TextField("الشروط والأحكام", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def subtotal(self):
+        return sum((item.quantity * item.unit_price for item in self.items.all()), Decimal("0"))
+
+    @property
+    def tax_amount(self):
+        return (self.subtotal - self.discount) * (self.tax_rate / Decimal("100"))
+
+    @property
+    def total(self):
+        return self.subtotal - self.discount + self.tax_amount
+
+    def mark_sent(self):
+        self.sent_at = timezone.now()
+        self.save(update_fields=["sent_at"])
+
+    def __str__(self):
+        return f"Quotation #{self.pk} — {self.job.invoice_number}"
+
+
+class QuotationItem(models.Model):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name="items")
+    description = models.CharField("الوصف", max_length=255)
+    quantity = models.DecimalField("الكمية", max_digits=10, decimal_places=2, default=1)
+    unit_price = models.DecimalField("سعر الوحدة", max_digits=10, decimal_places=2)
+
+    @property
+    def total(self):
+        return self.quantity * self.unit_price
+
+    def __str__(self):
+        return self.description
 
 
 class StatusLog(models.Model):

@@ -8,12 +8,13 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Customer, Job, StatusLog
+from .models import Customer, Job, Quotation, StatusLog
 from .serializers import (
     CustomerSerializer,
     InvoiceSerializer,
     JobCreateSerializer,
     JobSerializer,
+    QuotationSerializer,
     StatusUpdateSerializer,
 )
 
@@ -166,6 +167,30 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class QuotationViewSet(viewsets.ModelViewSet):
+    queryset = Quotation.objects.select_related("created_by").prefetch_related("items")
+    serializer_class = QuotationSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        job_id = self.request.query_params.get("job")
+        if job_id:
+            queryset = queryset.filter(job_id=job_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def send(self, request, pk=None):
+        quotation = self.get_object()
+        quotation.mark_sent()
+        quotation = self.get_queryset().get(pk=quotation.pk)
+        return Response(QuotationSerializer(quotation).data)
 
 
 @api_view(["GET"])

@@ -298,3 +298,88 @@ class CustomerApiTests(APITestCase):
         response = self.client.delete(f"/api/customers/{customer.id}/")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Customer.objects.count(), 1)
+
+
+class QuotationApiTests(APITestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(username="emp", password="pass12345")
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.payload = {
+            "customer_name": "أحمد علي",
+            "customer_phone": "0791234567",
+            "hard_disk_type": "hdd_25",
+            "barcode": "HD-1001",
+            "notes": "هارد ما بقلع",
+        }
+        self.items = [
+            {"description": "فحص", "quantity": "2", "unit_price": "50.00"},
+            {"description": "إصلاح", "quantity": "1", "unit_price": "100.00"},
+        ]
+
+    def _create_job(self, barcode="HD-1001"):
+        response = self.client.post(
+            "/api/jobs/",
+            dict(self.payload, barcode=barcode),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        return response.data["id"]
+
+    def test_create_quotation_with_items(self):
+        job_id = self._create_job()
+        response = self.client.post(
+            "/api/quotations/",
+            {"job": job_id, "items": self.items, "discount": "0", "tax_rate": "0"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(str(response.data["subtotal"]), "200.00")
+        self.assertEqual(str(response.data["total"]), "200.00")
+
+    def test_quotation_totals_with_discount_and_tax(self):
+        job_id = self._create_job()
+        response = self.client.post(
+            "/api/quotations/",
+            {
+                "job": job_id,
+                "items": self.items,
+                "discount": "20.00",
+                "tax_rate": "10.00",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(str(response.data["subtotal"]), "200.00")
+        self.assertEqual(str(response.data["tax_amount"]), "18.00")
+        self.assertEqual(str(response.data["total"]), "198.00")
+
+    def test_quotation_filtered_by_job(self):
+        first_job = self._create_job("HD-1001")
+        second_job = self._create_job("HD-2002")
+        self.client.post(
+            "/api/quotations/",
+            {"job": first_job, "items": self.items},
+            format="json",
+        )
+        self.client.post(
+            "/api/quotations/",
+            {"job": second_job, "items": self.items},
+            format="json",
+        )
+        response = self.client.get(f"/api/quotations/?job={first_job}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["job"], first_job)
+
+    def test_send_quotation(self):
+        job_id = self._create_job()
+        created = self.client.post(
+            "/api/quotations/",
+            {"job": job_id, "items": self.items},
+            format="json",
+        )
+        response = self.client.post(f"/api/quotations/{created.data['id']}/send/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data["sent_at"])
