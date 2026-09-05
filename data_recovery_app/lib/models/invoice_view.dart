@@ -27,6 +27,29 @@ class InvoiceViewItem {
   }
 }
 
+class CompanyInfo {
+  CompanyInfo({
+    required this.name,
+    required this.taxNumber,
+    required this.crNumber,
+    required this.address,
+  });
+
+  final String name;
+  final String taxNumber;
+  final String crNumber;
+  final String address;
+
+  factory CompanyInfo.fromJson(Map<String, dynamic> json) {
+    return CompanyInfo(
+      name: json['name'] as String? ?? '',
+      taxNumber: json['tax_number'] as String? ?? '',
+      crNumber: json['cr_number'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+    );
+  }
+}
+
 class InvoiceView {
   InvoiceView({
     required this.company,
@@ -47,7 +70,7 @@ class InvoiceView {
     required this.createdAt,
   });
 
-  final String company;
+  final CompanyInfo company;
   final String invoiceNumber;
   final String customerName;
   final String customerPhone;
@@ -67,8 +90,9 @@ class InvoiceView {
   factory InvoiceView.fromJson(Map<String, dynamic> json) {
     final customer = json['customer'] as Map<String, dynamic>? ?? const {};
     final device = json['device'] as Map<String, dynamic>? ?? const {};
+    final company = json['company'] as Map<String, dynamic>? ?? const {};
     return InvoiceView(
-      company: json['company'] as String? ?? '',
+      company: CompanyInfo.fromJson(company),
       invoiceNumber: json['invoice_number'] as String? ?? '',
       customerName: customer['name'] as String? ?? '',
       customerPhone: customer['phone'] as String? ?? '',

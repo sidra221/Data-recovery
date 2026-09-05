@@ -152,13 +152,29 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
       child: Column(
         children: [
           Text(
-            invoice.company,
+            invoice.company.name,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: _accent,
               fontWeight: FontWeight.w800,
               fontSize: 18,
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'VAT: ${invoice.company.taxNumber}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          ),
+          Text(
+            'CR: ${invoice.company.crNumber}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          ),
+          Text(
+            invoice.company.address,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(
