@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -381,3 +382,7 @@ class QuotationApiTests(APITestCase):
         self.assertEqual(response.data["customer"]["name"], "أحمد علي")
         self.assertEqual(len(response.data["items"]), 2)
         self.assertEqual(str(response.data["total"]), "200.00")
+        self.assertEqual(response.data["company"]["name"], settings.COMPANY_NAME)
+        self.assertEqual(
+            response.data["company"]["tax_number"], settings.COMPANY_TAX_NUMBER
+        )

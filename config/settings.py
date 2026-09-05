@@ -97,7 +97,12 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-COMPANY_NAME = "01 Data Recovery"
+COMPANY_NAME = "مكتب من الصفر الى الواحد للدعاية والاعلان"
+COMPANY_TAX_NUMBER = os.environ.get("COMPANY_TAX_NUMBER", "312738260800003")
+COMPANY_CR_NUMBER = os.environ.get("COMPANY_CR_NUMBER", "7043150239")
+COMPANY_ADDRESS = os.environ.get(
+    "COMPANY_ADDRESS", "الرياض، وادي الشعراء، حي الشعراء العليا 12211"
+)
 INVOICE_PREFIX = "01"
 
 MAILERS = {

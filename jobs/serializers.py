@@ -252,7 +252,14 @@ class QuotationInvoiceSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField(read_only=True)
 
     def get_company(self, obj):
-        return InvoiceSerializer().get_company(obj.job)
+        from django.conf import settings
+
+        return {
+            "name": settings.COMPANY_NAME,
+            "tax_number": settings.COMPANY_TAX_NUMBER,
+            "cr_number": settings.COMPANY_CR_NUMBER,
+            "address": settings.COMPANY_ADDRESS,
+        }
 
     def get_customer(self, obj):
         job = obj.job
