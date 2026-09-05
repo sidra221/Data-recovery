@@ -15,7 +15,6 @@ class JobApiTests(APITestCase):
             "customer_name": "أحمد علي",
             "customer_phone": "0791234567",
             "hard_disk_type": "hdd_25",
-            "barcode": "HD-1001",
             "notes": "هارد ما بقلع",
         }
 
@@ -23,22 +22,24 @@ class JobApiTests(APITestCase):
         response = self.client.post("/api/jobs/", self.payload, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["customer_name"], "أحمد علي")
-        self.assertEqual(response.data["barcode"], "HD-1001")
+        self.assertEqual(response.data["barcode"], response.data["invoice_number"])
         self.assertEqual(response.data["status"], "received")
         self.assertTrue(response.data["invoice_number"].startswith("01-"))
         self.assertEqual(len(response.data["status_logs"]), 1)
 
     def test_scan_barcode(self):
-        self.client.post("/api/jobs/", self.payload, format="json")
-        response = self.client.get("/api/jobs/scan/HD-1001/")
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        barcode = created.data["barcode"]
+        response = self.client.get(f"/api/jobs/scan/{barcode}/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["customer_phone"], "0791234567")
 
-    def test_duplicate_barcode_rejected(self):
-        self.client.post("/api/jobs/", self.payload, format="json")
+    def test_barcode_matches_invoice_number(self):
+        self.assertNotIn("barcode", self.payload)
         response = self.client.post("/api/jobs/", self.payload, format="json")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("barcode", response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["barcode"], response.data["invoice_number"])
+        self.assertTrue(response.data["invoice_number"])
 
     def test_update_followup_status(self):
         created = self.client.post("/api/jobs/", self.payload, format="json")
@@ -138,8 +139,7 @@ class JobApiTests(APITestCase):
 
     def test_filter_by_status(self):
         self.client.post("/api/jobs/", self.payload, format="json")
-        other = dict(self.payload, barcode="HD-2002")
-        created = self.client.post("/api/jobs/", other, format="json")
+        created = self.client.post("/api/jobs/", self.payload, format="json")
         self.client.post(
             f"/api/jobs/{created.data['id']}/status/",
             {"status": "has_problems"},
@@ -148,23 +148,23 @@ class JobApiTests(APITestCase):
         response = self.client.get("/api/jobs/?status=has_problems")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["barcode"], "HD-2002")
+        self.assertEqual(response.data["results"][0]["barcode"], created.data["barcode"])
 
     def test_search_by_new_fields(self):
-        self.client.post(
+        first = self.client.post(
             "/api/jobs/",
-            dict(self.payload, barcode="HD-1001", device_model="Western Digital"),
+            dict(self.payload, device_model="Western Digital"),
             format="json",
         )
         self.client.post(
             "/api/jobs/",
-            dict(self.payload, barcode="HD-2002", device_model="Toshiba"),
+            dict(self.payload, device_model="Toshiba"),
             format="json",
         )
         response = self.client.get("/api/jobs/?search=Western")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["barcode"], "HD-1001")
+        self.assertEqual(response.data["results"][0]["barcode"], first.data["barcode"])
         self.assertEqual(response.data["results"][0]["device_model"], "Western Digital")
 
     def test_unauthenticated_rejected(self):
@@ -224,11 +224,7 @@ class JobApiTests(APITestCase):
 
     def test_dashboard_stats(self):
         self.client.post("/api/jobs/", self.payload, format="json")
-        self.client.post(
-            "/api/jobs/",
-            dict(self.payload, barcode="HD-2002"),
-            format="json",
-        )
+        self.client.post("/api/jobs/", self.payload, format="json")
         response = self.client.get("/api/dashboard/stats/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["status_counts"]["received"], 2)
@@ -247,7 +243,6 @@ class CustomerApiTests(APITestCase):
             "customer_name": "أحمد علي",
             "customer_phone": "0791234567",
             "hard_disk_type": "hdd_25",
-            "barcode": "HD-1001",
             "notes": "هارد ما بقلع",
         }
 
@@ -266,11 +261,7 @@ class CustomerApiTests(APITestCase):
 
     def test_customer_stats(self):
         first = self.client.post("/api/jobs/", self.payload, format="json")
-        self.client.post(
-            "/api/jobs/",
-            dict(self.payload, barcode="HD-2002"),
-            format="json",
-        )
+        self.client.post("/api/jobs/", self.payload, format="json")
         self.client.patch(
             f"/api/jobs/{first.data['id']}/",
             {"price": "100.00"},
@@ -284,11 +275,7 @@ class CustomerApiTests(APITestCase):
 
     def test_second_job_reuses_existing_customer(self):
         self.client.post("/api/jobs/", self.payload, format="json")
-        self.client.post(
-            "/api/jobs/",
-            dict(self.payload, barcode="HD-2002"),
-            format="json",
-        )
+        self.client.post("/api/jobs/", self.payload, format="json")
         self.assertEqual(Customer.objects.count(), 1)
         self.assertEqual(Job.objects.count(), 2)
 
@@ -310,7 +297,6 @@ class QuotationApiTests(APITestCase):
             "customer_name": "أحمد علي",
             "customer_phone": "0791234567",
             "hard_disk_type": "hdd_25",
-            "barcode": "HD-1001",
             "notes": "هارد ما بقلع",
         }
         self.items = [
@@ -318,12 +304,8 @@ class QuotationApiTests(APITestCase):
             {"description": "إصلاح", "quantity": "1", "unit_price": "100.00"},
         ]
 
-    def _create_job(self, barcode="HD-1001"):
-        response = self.client.post(
-            "/api/jobs/",
-            dict(self.payload, barcode=barcode),
-            format="json",
-        )
+    def _create_job(self):
+        response = self.client.post("/api/jobs/", self.payload, format="json")
         self.assertEqual(response.status_code, 201)
         return response.data["id"]
 
@@ -356,8 +338,8 @@ class QuotationApiTests(APITestCase):
         self.assertEqual(str(response.data["total"]), "198.00")
 
     def test_quotation_filtered_by_job(self):
-        first_job = self._create_job("HD-1001")
-        second_job = self._create_job("HD-2002")
+        first_job = self._create_job()
+        second_job = self._create_job()
         self.client.post(
             "/api/quotations/",
             {"job": first_job, "items": self.items},

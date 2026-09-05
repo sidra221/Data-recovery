@@ -78,7 +78,9 @@ curl -X POST http://127.0.0.1:8000/api/auth/login/ \
   -d '{"username":"emp","password":"pass12345"}'
 ```
 
-### إنشاء فاتورة بعد مسح الباركود
+### إنشاء فاتورة
+
+`barcode` يتولّد تلقائياً = `invoice_number` (لا يُرسل عند الإنشاء).
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/jobs/ \
@@ -87,15 +89,14 @@ curl -X POST http://127.0.0.1:8000/api/jobs/ \
   -d '{
     "customer_name": "أحمد علي",
     "customer_phone": "0791234567",
-    "hard_disk_type": "hdd_25",
-    "barcode": "HD-1001"
+    "hard_disk_type": "hdd_25"
   }'
 ```
 
 ### قراءة الباركود (جلب الفاتورة)
 
 ```bash
-curl http://127.0.0.1:8000/api/jobs/scan/HD-1001/ \
+curl http://127.0.0.1:8000/api/jobs/scan/<invoice_number>/ \
   -H "Authorization: Token <TOKEN>"
 ```
 

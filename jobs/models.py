@@ -119,11 +119,13 @@ class Job(models.Model):
         return f"{self.invoice_number} — {self.customer_name}"
 
     def save(self, *args, **kwargs):
-        self.barcode = self.barcode.strip()
+        self.barcode = (self.barcode or "").strip()
         self.customer_name = self.customer_name.strip()
         self.customer_phone = "".join(self.customer_phone.split())
         if not self.invoice_number:
             self.invoice_number = self._next_invoice_number()
+        if not self.barcode:
+            self.barcode = self.invoice_number
         super().save(*args, **kwargs)
 
     @classmethod

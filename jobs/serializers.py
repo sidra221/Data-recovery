@@ -107,6 +107,7 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "invoice_number",
+            "barcode",
             "status",
             "created_by_name",
             "invoice_sent",
@@ -119,12 +120,6 @@ class JobSerializer(serializers.ModelSerializer):
 
     def get_invoice_sent(self, obj):
         return obj.invoice_sent_at is not None
-
-    def validate_barcode(self, value):
-        value = value.strip()
-        if not value:
-            raise serializers.ValidationError("الباركود مطلوب.")
-        return value
 
     def validate_customer_phone(self, value):
         digits = "".join(ch for ch in value if ch.isdigit() or ch == "+")
@@ -139,7 +134,6 @@ class JobCreateSerializer(JobSerializer):
             "customer_name": {"required": True},
             "customer_phone": {"required": True},
             "hard_disk_type": {"required": True},
-            "barcode": {"required": True},
         }
 
 
