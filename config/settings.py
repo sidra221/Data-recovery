@@ -105,6 +105,12 @@ COMPANY_ADDRESS = os.environ.get(
 )
 INVOICE_PREFIX = "01"
 
+# قابل للتغيير - القيمة الحالية يوم واحد كبداية، تُحدَّث لاحقاً
+WAIT_CLIENT_ALERT_DAYS = int(os.environ.get("WAIT_CLIENT_ALERT_DAYS", "1"))
+
+WHATSAPP_API_URL = os.environ.get("WHATSAPP_API_URL", "")
+WHATSAPP_API_TOKEN = os.environ.get("WHATSAPP_API_TOKEN", "")
+
 MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",

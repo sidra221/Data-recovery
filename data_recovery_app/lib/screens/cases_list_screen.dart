@@ -358,6 +358,15 @@ class _CaseCard extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (job.waitClientOverdue)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 6, right: 6),
+                                child: Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 18,
+                                  color: Color(0xFFF59E0B),
+                                ),
+                              ),
                             Text(
                               '#${job.invoiceNumber}',
                               style: const TextStyle(

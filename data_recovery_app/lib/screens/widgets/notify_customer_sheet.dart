@@ -81,12 +81,26 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
 
     setState(() => _isSending = true);
     try {
+      final result = await ref.read(apiClientProvider).sendInvoice(widget.jobId);
+      if (!mounted) return;
+
+      final autoSend = result['auto_send'];
+      final sentAutomatically = autoSend is Map && autoSend['sent'] == true;
+      if (sentAutomatically) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('تم الإرسال تلقائياً عبر السيرفر')),
+          );
+        Navigator.of(context).pop();
+        return;
+      }
+
       final uri = _launchUri(rawUrl, _messageController.text);
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
         throw Exception('could not launch');
       }
-      await ref.read(apiClientProvider).sendInvoice(widget.jobId);
       if (!mounted) return;
       Navigator.of(context).pop();
     } on ApiException catch (error) {

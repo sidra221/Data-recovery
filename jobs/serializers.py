@@ -69,6 +69,7 @@ class JobSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source="created_by.username", read_only=True)
     status_logs = StatusLogSerializer(many=True, read_only=True)
     invoice_sent = serializers.SerializerMethodField()
+    wait_client_overdue = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Job
@@ -103,6 +104,7 @@ class JobSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "status_logs",
+            "wait_client_overdue",
         )
         read_only_fields = (
             "id",
@@ -116,6 +118,7 @@ class JobSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "status_logs",
+            "wait_client_overdue",
         )
 
     def get_invoice_sent(self, obj):

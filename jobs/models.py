@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
@@ -149,6 +150,18 @@ class Job(models.Model):
     def mark_ready_notified(self):
         self.ready_notified_at = timezone.now()
         self.save(update_fields=["ready_notified_at", "updated_at"])
+
+    @property
+    def wait_client_overdue(self):
+        if self.client_report != self.ClientReport.WAIT_CLIENT:
+            return False
+        last_change = self.status_logs.filter(
+            field_name=StatusLog.FieldName.CLIENT_REPORT
+        ).order_by("-created_at").first()
+        reference_time = last_change.created_at if last_change else self.updated_at
+        return timezone.now() - reference_time > timedelta(
+            days=settings.WAIT_CLIENT_ALERT_DAYS
+        )
 
 
 class Quotation(models.Model):

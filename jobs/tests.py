@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import Customer, Job
+from .models import Customer, Job, StatusLog
 
 
 class JobApiTests(APITestCase):
@@ -136,6 +139,35 @@ class JobApiTests(APITestCase):
 
         sent = self.client.post(f"/api/jobs/{job_id}/send/")
         self.assertEqual(sent.status_code, 200)
+        self.assertIsNotNone(sent.data["invoice_sent_at"])
+
+    def test_wait_client_overdue_flag(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        job_id = created.data["id"]
+        response = self.client.patch(
+            f"/api/jobs/{job_id}/",
+            {"client_report": "wait_client"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["wait_client_overdue"])
+
+        StatusLog.objects.filter(
+            job_id=job_id,
+            field_name=StatusLog.FieldName.CLIENT_REPORT,
+        ).update(created_at=timezone.now() - timedelta(days=2))
+
+        response = self.client.get(f"/api/jobs/{job_id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["wait_client_overdue"])
+
+    def test_send_invoice_includes_auto_send_status(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        sent = self.client.post(f"/api/jobs/{created.data['id']}/send/")
+        self.assertEqual(sent.status_code, 200)
+        self.assertIn("auto_send", sent.data)
+        self.assertFalse(sent.data["auto_send"]["sent"])
+        self.assertEqual(sent.data["auto_send"]["provider"], "none")
         self.assertIsNotNone(sent.data["invoice_sent_at"])
 
     def test_filter_by_status(self):

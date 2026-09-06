@@ -34,6 +34,7 @@ class Job {
     required this.createdAt,
     required this.updatedAt,
     required this.statusLogs,
+    required this.waitClientOverdue,
   });
 
   final int id;
@@ -63,6 +64,7 @@ class Job {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<StatusLog> statusLogs;
+  final bool waitClientOverdue;
 
   factory Job.fromJson(Map<String, dynamic> json) {
     return Job(
@@ -96,6 +98,7 @@ class Job {
         for (final item in json['status_logs'] as List<dynamic>? ?? const [])
           StatusLog.fromJson(item as Map<String, dynamic>),
       ],
+      waitClientOverdue: json['wait_client_overdue'] as bool? ?? false,
     );
   }
 
@@ -128,6 +131,7 @@ class Job {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'status_logs': [for (final log in statusLogs) log.toJson()],
+      'wait_client_overdue': waitClientOverdue,
     };
   }
 }

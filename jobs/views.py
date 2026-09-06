@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Customer, Job, Quotation, StatusLog
+from .services.whatsapp import send_whatsapp_message
 from .serializers import (
     CustomerSerializer,
     InvoiceSerializer,
@@ -63,6 +64,15 @@ class JobViewSet(viewsets.ModelViewSet):
                 | Q(serial_number__icontains=search)
                 | Q(problem__icontains=search)
             )
+        overdue = self.request.query_params.get("overdue")
+        if overdue == "true":
+            # property مش عمود DB — فلترة Python بعد تقييد wait_client.
+            # إذا كبر الحجم نحوّلها لحقل DB.
+            wait_client_jobs = list(
+                queryset.filter(client_report=Job.ClientReport.WAIT_CLIENT)
+            )
+            overdue_ids = [job.pk for job in wait_client_jobs if job.wait_client_overdue]
+            queryset = queryset.filter(pk__in=overdue_ids)
         return queryset
 
     def perform_create(self, serializer):
@@ -140,7 +150,12 @@ class JobViewSet(viewsets.ModelViewSet):
     def send(self, request, pk=None):
         job = self.get_object()
         job.mark_invoice_sent()
-        return Response(InvoiceSerializer(job).data)
+        invoice = InvoiceSerializer(job).data
+        invoice["auto_send"] = send_whatsapp_message(
+            job.customer_phone,
+            invoice["share_text"],
+        )
+        return Response(invoice)
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
