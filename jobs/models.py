@@ -16,6 +16,28 @@ class Customer(models.Model):
         return f"{self.full_name} ({self.phone})"
 
 
+class AppSettings(models.Model):
+    wait_client_alert_days = models.PositiveIntegerField(
+        "مهلة تنبيه انتظار العميل (بالأيام)", default=1,
+    )
+
+    class Meta:
+        verbose_name = "إعدادات النظام"
+        verbose_name_plural = "إعدادات النظام"
+
+    def __str__(self):
+        return "إعدادات النظام"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+
 class Job(models.Model):
     class DiskType(models.TextChoices):
         HDD_35 = "hdd_35", "HDD 3.5"
@@ -160,7 +182,7 @@ class Job(models.Model):
         ).order_by("-created_at").first()
         reference_time = last_change.created_at if last_change else self.updated_at
         return timezone.now() - reference_time > timedelta(
-            days=settings.WAIT_CLIENT_ALERT_DAYS
+            days=AppSettings.get_solo().wait_client_alert_days
         )
 
 

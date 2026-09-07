@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import Customer, Job, StatusLog
+from .models import AppSettings, Customer, Job, StatusLog
 
 
 class JobApiTests(APITestCase):
@@ -142,6 +142,7 @@ class JobApiTests(APITestCase):
         self.assertIsNotNone(sent.data["invoice_sent_at"])
 
     def test_wait_client_overdue_flag(self):
+        AppSettings.objects.create(wait_client_alert_days=1)
         created = self.client.post("/api/jobs/", self.payload, format="json")
         job_id = created.data["id"]
         response = self.client.patch(

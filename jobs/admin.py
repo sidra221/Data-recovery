@@ -1,12 +1,23 @@
 from django.contrib import admin
 
-from .models import Customer, Job, Quotation, QuotationItem, StatusLog
+from .models import AppSettings, Customer, Job, Quotation, QuotationItem, StatusLog
 
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ("full_name", "phone", "email", "created_at")
     search_fields = ("full_name", "phone", "email")
+
+
+@admin.register(AppSettings)
+class AppSettingsAdmin(admin.ModelAdmin):
+    list_display = ("wait_client_alert_days",)
+
+    def has_add_permission(self, request):
+        return not AppSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class StatusLogInline(admin.TabularInline):
