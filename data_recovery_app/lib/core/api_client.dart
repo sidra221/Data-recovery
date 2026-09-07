@@ -60,6 +60,9 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Token $token';
           }
+          if (AppConstants.apiBaseUrl.contains('ngrok')) {
+            options.headers['ngrok-skip-browser-warning'] = 'true';
+          }
           handler.next(options);
         },
         onError: (error, handler) async {

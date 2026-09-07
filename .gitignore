@@ -4,6 +4,8 @@ __pycache__/
 *.sqlite3
 db.sqlite3
 .env
+.ngrok_url
+config/ngrok_runtime.py
 *.log
 staticfiles/
 .idea/

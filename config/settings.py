@@ -3,6 +3,30 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def _load_dotenv(path: Path) -> None:
+    if not path.is_file():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+_load_dotenv(BASE_DIR / ".env")
+
+try:
+    from .ngrok_runtime import NGROK_HOST, NGROK_PUBLIC_URL
+except ImportError:
+    NGROK_HOST = os.environ.get("NGROK_HOST", "").strip()
+    NGROK_PUBLIC_URL = os.environ.get("NGROK_PUBLIC_URL", "").strip()
+
 # بالإنتاج لازم يتحدد DJANGO_SECRET_KEY كمتغير بيئة حقيقي.
 # لا تعتمدوا على القيمة الافتراضية "django-insecure-..." بره بيئة التطوير.
 SECRET_KEY = os.environ.get(
@@ -17,6 +41,41 @@ ALLOWED_HOSTS = [
     for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "http://localhost:8000,http://127.0.0.1:8000",
+    ).split(",")
+    if origin.strip()
+]
+
+# ngrok tunnels used when sharing the backend with external testers
+if DEBUG:
+    ALLOWED_HOSTS.extend(
+        [
+            ".ngrok-free.app",
+            ".ngrok-free.dev",
+            ".ngrok.app",
+            ".ngrok.io",
+        ]
+    )
+    CSRF_TRUSTED_ORIGINS.extend(
+        [
+            "https://*.ngrok-free.app",
+            "https://*.ngrok-free.dev",
+            "https://*.ngrok.app",
+            "https://*.ngrok.io",
+        ]
+    )
+
+if NGROK_HOST and NGROK_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(NGROK_HOST)
+if NGROK_PUBLIC_URL:
+    origin = NGROK_PUBLIC_URL.rstrip("/")
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
