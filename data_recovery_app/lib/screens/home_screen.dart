@@ -1,10 +1,10 @@
-// TODO: align with final dashboard design once status naming confirmed
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../models/dashboard_stats.dart';
 import '../providers/auth_provider.dart';
+import 'cases_list_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -15,6 +15,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  static const _accent = Color(0xFF33BEE9);
+
   DashboardStats? _stats;
   String? _error;
   bool _isLoading = true;
@@ -67,29 +69,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   int _count(Map<String, int> source, String key) => source[key] ?? 0;
 
+  void _openCases() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const CasesListScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Text(
-                'Home',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 28,
+                    height: 28,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.storage,
+                      size: 28,
+                      color: _accent,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Data Recovery',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _accent,
+                      ),
+                    ),
+                  ),
+                  Material(
+                    color: Colors.white,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      onPressed: () {
+                        // TODO: notifications not implemented yet
+                      },
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(child: _buildBody()),
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: const AppFab(),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
@@ -119,29 +159,159 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     final stats = _stats!;
+    final pending = _count(stats.workStatusCounts, 'pending');
+    final inProgress = _count(stats.workStatusCounts, 'in_progress');
+    final finishedWork = _count(stats.workStatusCounts, 'finished');
+    final agree = _count(stats.clientReportCounts, 'agree');
+    final readyForReturn = _count(stats.clientReportCounts, 'finished');
+
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
         children: [
           Row(
             children: [
               Expanded(
-                child: _StatCard(
-                  label: 'Received',
-                  value: '${_count(stats.statusCounts, 'received')}',
-                  icon: Icons.inventory_2_outlined,
+                child: _HeroCard(
+                  label: 'Wait Client',
+                  value: '${_count(stats.clientReportCounts, 'wait_client')}',
+                  icon: Icons.schedule,
+                  iconBg: const Color(0xFFFFF7ED),
+                  accent: const Color(0xFFF59E0B),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _HeroCard(
+                  label: 'Rejected',
+                  value: '${_count(stats.clientReportCounts, 'rejected')}',
+                  icon: Icons.cancel_outlined,
+                  iconBg: const Color(0xFFFFF5F3),
+                  accent: const Color(0xFFF04D4E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroCard(
+                  label: 'Inspection',
+                  value: '$inProgress',
+                  icon: Icons.science_outlined,
+                  iconBg: const Color(0xFFE5F9FD),
+                  accent: const Color(0xFF33BEE9),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _HeroCard(
+                  label: 'Delivery',
+                  value: '${stats.totalDelivered}',
+                  icon: Icons.local_shipping_outlined,
+                  iconBg: const Color(0xFFF5F3FF),
+                  accent: const Color(0xFFA855F7),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Recovery Progress',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7FFED),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Agree $agree',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF22C55E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _WorkStat(
+                  label: 'Pending',
+                  value: pending,
+                  color: const Color(0xFFFFC562),
+                ),
+              ),
+              Expanded(
+                child: _WorkStat(
+                  label: 'In Progress',
+                  value: inProgress,
+                  color: const Color(0xFF33BEE9),
+                ),
+              ),
+              Expanded(
+                child: _WorkStat(
+                  label: 'Finished',
+                  value: finishedWork,
+                  color: const Color(0xFF1AC86C),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _WorkStatusBar(
+            pending: pending,
+            inProgress: inProgress,
+            finished: finishedWork,
+          ),
+          const SizedBox(height: 20),
+          _ReadyBanner(
+            count: readyForReturn,
+            onViewCases: _openCases,
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            "Today's Activity",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ActivityCard(
+                  label: 'New Cases',
+                  value: '${stats.jobsCreatedToday}',
+                  icon: Icons.description_outlined,
                   iconBg: const Color(0xFFE5F9FD),
                   iconColor: const Color(0xFF33BEE9),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _StatCard(
-                  label: 'Finished',
-                  value: '${_count(stats.statusCounts, 'finished')}',
-                  icon: Icons.check_circle_outline,
+                child: _ActivityCard(
+                  label: 'Updates',
+                  value: '${stats.statusChangesToday}',
+                  icon: Icons.my_location,
                   iconBg: const Color(0xFFE7FFED),
                   iconColor: const Color(0xFF22C55E),
                 ),
@@ -152,95 +322,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             children: [
               Expanded(
-                child: _StatCard(
-                  label: 'Completed',
-                  value: '${_count(stats.statusCounts, 'completed')}',
-                  icon: Icons.done_all,
-                  iconBg: const Color(0xFFF5F5F5),
-                  iconColor: const Color(0xFF878688),
+                child: _ActivityCard(
+                  label: 'Agree',
+                  value: '$agree',
+                  icon: Icons.thumb_up_outlined,
+                  iconBg: const Color(0xFFE7FFED),
+                  iconColor: const Color(0xFF22C55E),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _StatCard(
-                  label: 'Has Problems',
-                  value: '${_count(stats.statusCounts, 'has_problems')}',
-                  icon: Icons.error_outline,
-                  iconBg: const Color(0xFFFFF5F3),
-                  iconColor: const Color(0xFFF04D4E),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Work Status',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _WorkStat(
-                  label: 'Pending',
-                  value: _count(stats.workStatusCounts, 'pending'),
-                ),
-              ),
-              Expanded(
-                child: _WorkStat(
-                  label: 'In Progress',
-                  value: _count(stats.workStatusCounts, 'in_progress'),
-                ),
-              ),
-              Expanded(
-                child: _WorkStat(
-                  label: 'Finished',
-                  value: _count(stats.workStatusCounts, 'finished'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Today',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'New Cases Today',
-                  value: '${stats.jobsCreatedToday}',
-                  icon: Icons.note_add_outlined,
-                  iconBg: const Color(0xFFE5F9FD),
-                  iconColor: const Color(0xFF33BEE9),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Status Updates Today',
-                  value: '${stats.statusChangesToday}',
-                  icon: Icons.sync,
+                child: _ActivityCard(
+                  label: 'Delivered',
+                  value: '${stats.totalDelivered}',
+                  icon: Icons.send_outlined,
                   iconBg: const Color(0xFFFFF7ED),
                   iconColor: const Color(0xFFF59E0B),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Total customers: ${stats.totalCustomers}',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
         ],
       ),
@@ -248,11 +348,151 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconBg,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color iconBg;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 0,
+      shadowColor: const Color(0x14000000),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 16,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 4, color: accent),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: iconBg,
+                          child: Icon(icon, size: 18, color: accent),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          value,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                            height: 1,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          label.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkStatusBar extends StatelessWidget {
+  const _WorkStatusBar({
+    required this.pending,
+    required this.inProgress,
+    required this.finished,
+  });
+
+  final int pending;
+  final int inProgress;
+  final int finished;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = pending + inProgress + finished;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: SizedBox(
+        height: 10,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const ColoredBox(color: Color(0xFFE5E7EB)),
+            if (total > 0)
+              Row(
+                children: [
+                  if (pending > 0)
+                    Expanded(
+                      flex: pending,
+                      child: const ColoredBox(color: Color(0xFFFFC562)),
+                    ),
+                  if (inProgress > 0)
+                    Expanded(
+                      flex: inProgress,
+                      child: const ColoredBox(color: Color(0xFF33BEE9)),
+                    ),
+                  if (finished > 0)
+                    Expanded(
+                      flex: finished,
+                      child: const ColoredBox(color: Color(0xFF1AC86C)),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _WorkStat extends StatelessWidget {
-  const _WorkStat({required this.label, required this.value});
+  const _WorkStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   final String label;
   final int value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -260,25 +500,130 @@ class _WorkStat extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF111827),
+            fontWeight: FontWeight.w800,
+            color: color,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          label,
+          label.toUpperCase(),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: Color(0xFF9CA3AF),
+          ),
         ),
       ],
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
+class _ReadyBanner extends StatelessWidget {
+  const _ReadyBanner({required this.count, required this.onViewCases});
+
+  final int count;
+  final VoidCallback onViewCases;
+
+  static const _gradientStart = Color(0xFF5CCBED);
+  static const _gradientEnd = Color(0xFF2EABD2);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [_gradientStart, _gradientEnd],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF33BEE9).withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.local_shipping_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'READY FOR RETURN',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$count Cases',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Finished / ready to collect',
+                      style: TextStyle(
+                        color: Color(0xE6FFFFFF),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                child: InkWell(
+                  onTap: onViewCases,
+                  borderRadius: BorderRadius.circular(999),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Text(
+                      'View Cases →',
+                      style: TextStyle(
+                        color: Color(0xFF2EABD2),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  const _ActivityCard({
     required this.label,
     required this.value,
     required this.icon,
@@ -299,10 +644,22 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: iconBg,
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,23 +667,17 @@ class _StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     fontSize: 18,
                     color: Color(0xFF111827),
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
                   label,
                   style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ],
             ),
-          ),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: iconBg,
-            child: Icon(icon, size: 18, color: iconColor),
           ),
         ],
       ),

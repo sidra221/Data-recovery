@@ -93,12 +93,19 @@ class ApiClient {
     return LoginResult.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<PaginatedJobs> listJobs({String? search, String? status}) async {
+  Future<PaginatedJobs> listJobs({
+    String? search,
+    String? status,
+    String? clientReport,
+    String? workStatus,
+  }) async {
     final data = await _get(
       'jobs/',
       query: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (status != null && status.isNotEmpty) 'status': status,
+        if (clientReport != null && clientReport.isNotEmpty) 'client_report': clientReport,
+        if (workStatus != null && workStatus.isNotEmpty) 'work_status': workStatus,
       },
     );
     return PaginatedJobs.fromJson(data as Map<String, dynamic>);

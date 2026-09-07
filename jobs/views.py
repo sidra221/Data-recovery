@@ -51,9 +51,15 @@ class JobViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         status_filter = self.request.query_params.get("status")
+        client_report_filter = self.request.query_params.get("client_report")
+        work_status_filter = self.request.query_params.get("work_status")
         search = self.request.query_params.get("search")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+        if client_report_filter:
+            queryset = queryset.filter(client_report=client_report_filter)
+        if work_status_filter:
+            queryset = queryset.filter(work_status=work_status_filter)
         if search:
             queryset = queryset.filter(
                 Q(customer_name__icontains=search)
@@ -156,6 +162,12 @@ class JobViewSet(viewsets.ModelViewSet):
             invoice["share_text"],
         )
         return Response(invoice)
+
+    @action(detail=True, methods=["post"])
+    def deliver(self, request, pk=None):
+        job = self.get_object()
+        job.mark_delivered()
+        return Response(JobSerializer(job).data)
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -272,5 +284,6 @@ def dashboard_stats(request):
             "total_jobs": Job.objects.count(),
             "jobs_created_today": jobs_created_today,
             "status_changes_today": status_changes_today,
+            "total_delivered": Job.objects.filter(delivered_at__isnull=False).count(),
         }
     )

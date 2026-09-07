@@ -59,6 +59,7 @@ class Job(models.Model):
         AGREE = "agree", "موافق على السعر"
         WAIT_CLIENT = "wait_client", "بانتظار رد العميل"
         FINISHED = "finished", "خلص / جاهز للاستلام"
+        REJECTED = "rejected", "مرفوض من العميل"
 
     class WorkStatus(models.TextChoices):
         PENDING = "pending", "قيد الانتظار"
@@ -112,6 +113,7 @@ class Job(models.Model):
         help_text="ملاحظات الموظف بعد الفحص - منفصلة عن كلام العميل",
     )
     ready_notified_at = models.DateTimeField("وقت تبليغ العميل بالجاهزية", null=True, blank=True)
+    delivered_at = models.DateTimeField("وقت التسليم الفعلي للعميل", null=True, blank=True)
     price = models.DecimalField(
         "السعر الإجمالي", max_digits=10, decimal_places=2, null=True, blank=True,
     )
@@ -172,6 +174,10 @@ class Job(models.Model):
     def mark_ready_notified(self):
         self.ready_notified_at = timezone.now()
         self.save(update_fields=["ready_notified_at", "updated_at"])
+
+    def mark_delivered(self):
+        self.delivered_at = timezone.now()
+        self.save(update_fields=["delivered_at", "updated_at"])
 
     @property
     def wait_client_overdue(self):

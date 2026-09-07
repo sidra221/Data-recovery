@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_client.dart';
 import '../../providers/auth_provider.dart';
+import 'app_button.dart';
+import 'soft_surface.dart';
 
 enum _NotifyStep { channel, preview }
 
@@ -21,7 +23,7 @@ class NotifyCustomerSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) => NotifyCustomerSheet(jobId: jobId),
     );
@@ -32,9 +34,6 @@ class NotifyCustomerSheet extends ConsumerStatefulWidget {
 }
 
 class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
-
   _NotifyStep _step = _NotifyStep.channel;
   bool _isLoadingInvoice = false;
   bool _isSending = false;
@@ -90,7 +89,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(content: Text('تم الإرسال تلقائياً عبر السيرفر')),
+            const SnackBar(content: Text('Sent automatically via server')),
           );
         Navigator.of(context).pop();
         return;
@@ -152,15 +151,19 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
             ),
             const SizedBox(height: 16),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.notifications_outlined, color: Color(0xFF111827)),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Icon(Icons.notifications_active, color: Color(0xFF22C55E)),
+                ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Notify Customer - Device Ready',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF111827),
                     ),
                   ),
@@ -244,42 +247,11 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
                     ),
                   ),
                   const Spacer(),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      gradient: const LinearGradient(
-                        colors: [_gradientStart, _gradientEnd],
-                      ),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _isSending ? null : _sendWhatsApp,
-                        borderRadius: BorderRadius.circular(999),
-                        child: SizedBox(
-                          height: 44,
-                          width: 120,
-                          child: Center(
-                            child: _isSending
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Send',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  AppButton(
+                    label: 'Send',
+                    width: 140,
+                    isLoading: _isSending,
+                    onPressed: _sendWhatsApp,
                   ),
                 ],
               ),
@@ -312,38 +284,47 @@ class _ChannelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return SoftSurface(
+      radius: 20,
       color: background,
-      borderRadius: BorderRadius.circular(16),
+      shadowColor: iconColor.withValues(alpha: 0.12),
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(16),
         child: SizedBox(
           width: double.infinity,
           height: 120,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: iconColor,
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: iconColor.withValues(alpha: 0.18),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
                 child: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
                         child: CircularProgressIndicator(
                           strokeWidth: 2.2,
-                          color: Colors.white,
+                          color: iconColor,
                         ),
                       )
-                    : Icon(icon, color: Colors.white),
+                    : Icon(icon, color: iconColor),
               ),
               const SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(
                   color: iconColor,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
               ),

@@ -6,6 +6,7 @@ import '../core/api_client.dart';
 import '../models/customer.dart';
 import '../providers/auth_provider.dart';
 import '../providers/customers_provider.dart';
+import 'widgets/app_button.dart';
 
 class CustomerDetailScreen extends ConsumerStatefulWidget {
   const CustomerDetailScreen({super.key, required this.customerId});
@@ -17,14 +18,11 @@ class CustomerDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
-  static const _accent = Color(0xFF33BEE9);
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
-
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _nameFocus = FocusNode();
 
   Customer? _customer;
   String? _error;
@@ -43,6 +41,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -83,7 +82,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
   String _formatDate(DateTime? value) {
     if (value == null) return '-';
-    return DateFormat('d MMM yyyy').format(value.toLocal());
+    return DateFormat('d MMM yyyy', 'en').format(value.toLocal());
   }
 
   Future<void> _update() async {
@@ -117,20 +116,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Customer'),
-        content: const Text('Are you sure you want to delete this customer?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      barrierColor: const Color(0x66000000),
+      builder: (context) => const _DeleteCustomerDialog(),
     );
     if (confirmed != true || !mounted) return;
 
@@ -180,17 +167,36 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           PopupMenuButton<String>(
             enabled: !_isSaving && !_isDeleting && _customer != null,
             icon: const Icon(Icons.more_vert, color: Color(0xFF111827)),
+            color: Colors.white,
+            elevation: 4,
+            shadowColor: const Color(0x33000000),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            position: PopupMenuPosition.under,
             onSelected: (value) {
-              if (value == 'delete') _confirmDelete();
+              if (value == 'edit') {
+                _nameFocus.requestFocus();
+              } else if (value == 'delete') {
+                _confirmDelete();
+              }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, color: Color(0xFF111827), size: 20),
+                    SizedBox(width: 10),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 20),
+                    SizedBox(width: 10),
+                    Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
                   ],
                 ),
               ),
@@ -294,71 +300,48 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             const SizedBox(height: 16),
             _LabeledField(
               label: 'Full Name',
-              child: TextFormField(
-                controller: _nameController,
-                enabled: !_isSaving,
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'This field is required' : null,
-                decoration: _inputDecoration(hint: 'Enter Full Name'),
+              child: _SoftSurface(
+                child: TextFormField(
+                  controller: _nameController,
+                  focusNode: _nameFocus,
+                  enabled: !_isSaving,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'This field is required' : null,
+                  decoration: _inputDecoration(hint: 'Enter Full Name'),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             _LabeledField(
-              label: 'phone Number',
-              child: TextFormField(
-                controller: _phoneController,
-                enabled: !_isSaving,
-                keyboardType: TextInputType.phone,
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'This field is required' : null,
-                decoration: _inputDecoration(hint: '+96433416...'),
+              label: 'Phone Number',
+              child: _SoftSurface(
+                child: TextFormField(
+                  controller: _phoneController,
+                  enabled: !_isSaving,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'This field is required' : null,
+                  decoration: _inputDecoration(hint: '+96433416...'),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             _LabeledField(
               label: 'Email Address',
-              child: TextFormField(
-                controller: _emailController,
-                enabled: !_isSaving,
-                keyboardType: TextInputType.emailAddress,
-                decoration: _inputDecoration(hint: '@example.com'),
+              child: _SoftSurface(
+                child: TextFormField(
+                  controller: _emailController,
+                  enabled: !_isSaving,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDecoration(hint: '@example.com'),
+                ),
               ),
             ),
             const SizedBox(height: 28),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                gradient: const LinearGradient(colors: [_gradientStart, _gradientEnd]),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _isSaving ? null : _update,
-                  borderRadius: BorderRadius.circular(999),
-                  child: SizedBox(
-                    height: 52,
-                    child: Center(
-                      child: _isSaving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Update',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ),
+            AppButton(
+              label: 'Update',
+              isLoading: _isSaving,
+              onPressed: _update,
             ),
           ],
         ),
@@ -371,20 +354,11 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       hintText: hint,
       hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _accent, width: 1.2),
-      ),
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
     );
   }
 }
@@ -406,41 +380,136 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+    return _SoftSurface(
+      radius: 16,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: iconBg,
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+class _SoftSurface extends StatelessWidget {
+  const _SoftSurface({required this.child, this.radius = 12});
+
+  final Widget child;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: Material(
+          color: Colors.white,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteCustomerDialog extends StatelessWidget {
+  const _DeleteCustomerDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      elevation: 8,
+      shadowColor: const Color(0x33000000),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEF4444),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.warning_rounded, color: Colors.white, size: 32),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Delete Customer',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Are you sure you want to delete this Customer?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280), height: 1.4),
+            ),
+            const SizedBox(height: 24),
+            Row(
               children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Color(0xFF111827),
+                Expanded(
+                  child: AppTextButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(false),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton(
+                    label: 'Delete',
+                    variant: AppButtonVariant.danger,
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
                 ),
               ],
             ),
-          ),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: iconBg,
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

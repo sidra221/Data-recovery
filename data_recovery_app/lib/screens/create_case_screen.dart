@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
+import '../models/customer.dart';
+import '../providers/customers_provider.dart';
 import '../providers/jobs_provider.dart';
+import 'widgets/app_button.dart';
+import 'widgets/soft_surface.dart';
 
 class CreateCaseScreen extends ConsumerStatefulWidget {
   const CreateCaseScreen({super.key});
@@ -18,11 +22,9 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   final _emailController = TextEditingController();
   final _serialController = TextEditingController();
   final _problemController = TextEditingController();
+  final _nameFocus = FocusNode();
 
   static const _accent = Color(0xFF33BEE9);
-  static const _scanner = Color(0xFF2998BA);
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
 
   static const _deviceTypes = <(String value, String label)>[
     ('hdd_35', 'HDD 3.5'),
@@ -39,12 +41,23 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      try {
+        await ref.read(customersProvider.notifier).fetchCustomers();
+      } catch (_) {}
+    });
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _serialController.dispose();
     _problemController.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -96,169 +109,216 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
     return null;
   }
 
+  Iterable<Customer> _nameOptions(TextEditingValue value) {
+    final customers = ref.read(customersProvider).customers;
+    final query = value.text.trim().toLowerCase();
+    if (query.isEmpty) return customers.take(8);
+    return customers.where((customer) {
+      return customer.fullName.toLowerCase().contains(query) ||
+          customer.phone.contains(query);
+    }).take(8);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Create New Case',
-          style: TextStyle(
-            color: Color(0xFF111827),
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: Column(
             children: [
-              const _SectionTitle('CUSTOMER INFORMATION'),
-              const SizedBox(height: 16),
-              _LabeledField(
-                label: 'Full Name',
-                child: TextFormField(
-                  controller: _nameController,
-                  enabled: !_isSubmitting,
-                  textInputAction: TextInputAction.next,
-                  validator: _required,
-                  decoration: _inputDecoration(hint: 'Enter Full Name'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _LabeledField(
-                label: 'phone Number',
-                child: TextFormField(
-                  controller: _phoneController,
-                  enabled: !_isSubmitting,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  validator: _required,
-                  decoration: _inputDecoration(hint: '+96433416...'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _LabeledField(
-                label: 'Email Address',
-                child: TextFormField(
-                  controller: _emailController,
-                  enabled: !_isSubmitting,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: _inputDecoration(hint: '@example.com'),
-                ),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle('DEVICE DETAILS'),
-              const SizedBox(height: 16),
-              _LabeledField(
-                label: 'Device Type',
-                child: DropdownButtonFormField<String>(
-                  initialValue: _deviceType,
-                  isExpanded: true,
-                  decoration: _inputDecoration(hint: 'Select device type'),
-                  items: [
-                    for (final item in _deviceTypes)
-                      DropdownMenuItem(value: item.$1, child: Text(item.$2)),
-                  ],
-                  onChanged: _isSubmitting
-                      ? null
-                      : (value) => setState(() => _deviceType = value),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'This field is required' : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _LabeledField(
-                label: 'Serial Number',
-                child: TextFormField(
-                  controller: _serialController,
-                  enabled: !_isSubmitting,
-                  textInputAction: TextInputAction.next,
-                  validator: _required,
-                  decoration: _inputDecoration(
-                    hint: '#4232323..',
-                    suffix: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.qr_code_scanner, color: _scanner),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
+                  children: [
+                    _CircleBackButton(
+                      onPressed: _isSubmitting ? () {} : () => Navigator.of(context).pop(),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // TODO: confirm actual meaning/options for Recovery Details
-              _LabeledField(
-                label: 'Recovery Details',
-                child: TextFormField(
-                  controller: _problemController,
-                  enabled: !_isSubmitting,
-                  textInputAction: TextInputAction.done,
-                  decoration: _inputDecoration(hint: 'Describe the problem'),
-                ),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle('MEDIA & DOCUMENT'),
-              const SizedBox(height: 16),
-              // TODO: no file upload support in backend yet
-              const _UploadPlaceholder(),
-              const SizedBox(height: 28),
-              const _SectionTitle('STATUS'),
-              const SizedBox(height: 16),
-              // TODO: backend always sets status=received on creation, this field is display-only
-              _LabeledField(
-                label: 'Current Status',
-                child: TextFormField(
-                  enabled: false,
-                  initialValue: 'Received',
-                  decoration: _inputDecoration(hint: 'Received'),
-                ),
-              ),
-              const SizedBox(height: 28),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  gradient: const LinearGradient(
-                    colors: [_gradientStart, _gradientEnd],
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _isSubmitting ? null : _submit,
-                    borderRadius: BorderRadius.circular(999),
-                    child: SizedBox(
-                      height: 52,
-                      child: Center(
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.4,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Add Case',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    const Expanded(
+                      child: Text(
+                        'Create New Case',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF1F2937),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  children: [
+                    const _SectionTitle('CUSTOMER INFORMATION'),
+                    const SizedBox(height: 16),
+                    _LabeledField(
+                      label: 'Full Name',
+                      wrap: false,
+                      child: RawAutocomplete<Customer>(
+                        textEditingController: _nameController,
+                        focusNode: _nameFocus,
+                        displayStringForOption: (customer) => customer.fullName,
+                        optionsBuilder: _nameOptions,
+                        onSelected: (customer) {
+                          _nameController.text = customer.fullName;
+                          _phoneController.text = customer.phone;
+                          _emailController.text = customer.email;
+                          setState(() {});
+                        },
+                        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                          return SoftSurface(
+                            radius: 14,
+                            child: TextFormField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              enabled: !_isSubmitting,
+                              textInputAction: TextInputAction.next,
+                              validator: _required,
+                              decoration: _inputDecoration(
+                                hint: 'Enter Full Name',
+                                suffix: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+                              ),
+                            ),
+                          );
+                        },
+                        optionsViewBuilder: (context, onSelected, options) {
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              elevation: 6,
+                              borderRadius: BorderRadius.circular(12),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxHeight: 200, maxWidth: 360),
+                                child: ListView(
+                                  padding: EdgeInsets.zero,
+                                  shrinkWrap: true,
+                                  children: [
+                                    for (final customer in options)
+                                      ListTile(
+                                        dense: true,
+                                        title: Text(customer.fullName),
+                                        subtitle: Text(customer.phone),
+                                        onTap: () => onSelected(customer),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _LabeledField(
+                      label: 'phone Number',
+                      child: TextFormField(
+                        controller: _phoneController,
+                        enabled: !_isSubmitting,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        validator: _required,
+                        decoration: _inputDecoration(hint: '+96433416...'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _LabeledField(
+                      label: 'Email Address',
+                      child: TextFormField(
+                        controller: _emailController,
+                        enabled: !_isSubmitting,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: _inputDecoration(hint: '@example.com'),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const _SectionTitle('DEVICE DETAILS'),
+                    const SizedBox(height: 16),
+                    _LabeledField(
+                      label: 'Device Type',
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _deviceType,
+                        isExpanded: true,
+                        hint: const Text(
+                          'Device type',
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                        ),
+                        decoration: _inputDecoration(hint: 'Device type'),
+                        items: [
+                          for (final item in _deviceTypes)
+                            DropdownMenuItem(value: item.$1, child: Text(item.$2)),
+                        ],
+                        onChanged: _isSubmitting
+                            ? null
+                            : (value) => setState(() => _deviceType = value),
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'This field is required' : null,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _LabeledField(
+                      label: 'Serial Number',
+                      child: TextFormField(
+                        controller: _serialController,
+                        enabled: !_isSubmitting,
+                        textInputAction: TextInputAction.next,
+                        validator: _required,
+                        decoration: _inputDecoration(
+                          hint: '#4232323..',
+                          suffix: IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.qr_code_scanner, color: _accent),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // TODO: confirm actual meaning/options for Recovery Details
+                    _LabeledField(
+                      label: 'Recovery Details',
+                      child: TextFormField(
+                        controller: _problemController,
+                        enabled: !_isSubmitting,
+                        textInputAction: TextInputAction.done,
+                        decoration: _inputDecoration(
+                          hint: 'select type',
+                          suffix: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const _SectionTitle('MEDIA & DOCUMENT'),
+                    const SizedBox(height: 16),
+                    // TODO: no file upload support in backend yet
+                    const _UploadPlaceholder(),
+                    const SizedBox(height: 28),
+                    const _SectionTitle('STATUS'),
+                    const SizedBox(height: 16),
+                    // TODO: backend always sets status=received on creation, this field is display-only
+                    _LabeledField(
+                      label: 'Current Status',
+                      child: DropdownButtonFormField<String>(
+                        initialValue: 'received',
+                        isExpanded: true,
+                        decoration: _inputDecoration(hint: 'Select Status'),
+                        items: const [
+                          DropdownMenuItem(value: 'received', child: Text('Received')),
+                        ],
+                        onChanged: null,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    AppButton(
+                      label: 'Add Case',
+                      isLoading: _isSubmitting,
+                      onPressed: _submit,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -274,23 +334,50 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
       suffixIcon: suffix,
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: _accent, width: 1.2),
       ),
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+      ),
+    );
+  }
+}
+
+class _CircleBackButton extends StatelessWidget {
+  const _CircleBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF3F4F6),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(Icons.chevron_left, color: Color(0xFF111827), size: 26),
+        ),
       ),
     );
   }
@@ -306,8 +393,8 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 3,
-          height: 14,
+          width: 4,
+          height: 16,
           decoration: BoxDecoration(
             color: const Color(0xFF33BEE9),
             borderRadius: BorderRadius.circular(999),
@@ -319,8 +406,8 @@ class _SectionTitle extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             letterSpacing: 0.6,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF9CA3AF),
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF6B7280),
           ),
         ),
       ],
@@ -329,10 +416,11 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _LabeledField extends StatelessWidget {
-  const _LabeledField({required this.label, required this.child});
+  const _LabeledField({required this.label, required this.child, this.wrap = true});
 
   final String label;
   final Widget child;
+  final bool wrap;
 
   @override
   Widget build(BuildContext context) {
@@ -341,10 +429,10 @@ class _LabeledField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563), fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
-        child,
+        wrap ? SoftSurface(radius: 14, child: child) : child,
       ],
     );
   }
@@ -355,24 +443,25 @@ class _UploadPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD1D5DB), width: 1.4),
-      ),
+    return CustomPaint(
+      painter: _DashedRRectPainter(color: const Color(0xFFD1D5DB), radius: 16),
       child: InkWell(
         onTap: () {},
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 28, horizontal: 16),
           child: Column(
             children: [
-              Icon(Icons.cloud_upload_outlined, size: 36, color: Color(0xFF33BEE9)),
-              SizedBox(height: 8),
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: Color(0xFF1E3A5F),
+                child: Icon(Icons.cloud_upload, color: Colors.white, size: 22),
+              ),
+              SizedBox(height: 10),
               Text(
                 'Add Photos/Documents',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                 ),
               ),
@@ -387,4 +476,34 @@ class _UploadPlaceholder extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedRRectPainter extends CustomPainter {
+  const _DashedRRectPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    const dashWidth = 6.0;
+    const dashSpace = 4.0;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = distance + dashWidth;
+        canvas.drawPath(metric.extractPath(distance, next.clamp(0, metric.length)), paint);
+        distance = next + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

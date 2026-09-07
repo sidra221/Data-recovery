@@ -113,6 +113,24 @@ class JobApiTests(APITestCase):
         self.assertEqual(logs[1]["field_name"], "client_report")
         self.assertEqual(logs[-1]["field_name"], "status")
 
+    def test_reject_client_report(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        response = self.client.patch(
+            f"/api/jobs/{created.data['id']}/",
+            {"client_report": "rejected"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["client_report"], "rejected")
+        self.assertEqual(response.data["client_report_label"], "مرفوض من العميل")
+
+    def test_mark_delivered(self):
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertIsNone(created.data["delivered_at"])
+        response = self.client.post(f"/api/jobs/{created.data['id']}/deliver/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data["delivered_at"])
+
     def test_update_price_and_report_flag(self):
         created = self.client.post("/api/jobs/", self.payload, format="json")
         job_id = created.data["id"]
@@ -183,6 +201,30 @@ class JobApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["barcode"], created.data["barcode"])
+
+    def test_filter_by_client_report_and_work_status(self):
+        rejected = self.client.post("/api/jobs/", self.payload, format="json")
+        in_progress = self.client.post("/api/jobs/", self.payload, format="json")
+        self.client.patch(
+            f"/api/jobs/{rejected.data['id']}/",
+            {"client_report": "rejected"},
+            format="json",
+        )
+        self.client.patch(
+            f"/api/jobs/{in_progress.data['id']}/",
+            {"work_status": "in_progress"},
+            format="json",
+        )
+
+        response = self.client.get("/api/jobs/?client_report=rejected")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], rejected.data["id"])
+
+        response = self.client.get("/api/jobs/?work_status=in_progress")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], in_progress.data["id"])
 
     def test_search_by_new_fields(self):
         first = self.client.post(
@@ -259,12 +301,18 @@ class JobApiTests(APITestCase):
     def test_dashboard_stats(self):
         self.client.post("/api/jobs/", self.payload, format="json")
         self.client.post("/api/jobs/", self.payload, format="json")
+        second = self.client.post("/api/jobs/", self.payload, format="json")
         response = self.client.get("/api/dashboard/stats/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["status_counts"]["received"], 2)
-        self.assertEqual(response.data["total_jobs"], 2)
+        self.assertEqual(response.data["status_counts"]["received"], 3)
+        self.assertEqual(response.data["total_jobs"], 3)
         self.assertEqual(response.data["total_customers"], 1)
-        self.assertGreaterEqual(response.data["jobs_created_today"], 2)
+        self.assertGreaterEqual(response.data["jobs_created_today"], 3)
+        self.assertEqual(response.data["total_delivered"], 0)
+        delivered = self.client.post(f"/api/jobs/{second.data['id']}/deliver/")
+        self.assertEqual(delivered.status_code, 200)
+        response = self.client.get("/api/dashboard/stats/")
+        self.assertEqual(response.data["total_delivered"], 1)
 
 
 class CustomerApiTests(APITestCase):

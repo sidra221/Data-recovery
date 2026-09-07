@@ -41,10 +41,20 @@ class JobsNotifier extends Notifier<JobsState> {
 
   ApiClient get _client => ref.read(apiClientProvider);
 
-  Future<void> fetchJobs({String? search, String? status}) async {
+  Future<void> fetchJobs({
+    String? search,
+    String? status,
+    String? clientReport,
+    String? workStatus,
+  }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final page = await _client.listJobs(search: search, status: status);
+      final page = await _client.listJobs(
+        search: search,
+        status: status,
+        clientReport: clientReport,
+        workStatus: workStatus,
+      );
       state = state.copyWith(
         jobs: page.results,
         count: page.count,

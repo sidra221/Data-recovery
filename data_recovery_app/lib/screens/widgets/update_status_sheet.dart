@@ -2,37 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../../models/job.dart';
 import '../../providers/jobs_provider.dart';
+import '../quotation_screen.dart';
+import 'app_button.dart';
+import 'soft_surface.dart';
 
 class UpdateStatusSheet extends ConsumerStatefulWidget {
   const UpdateStatusSheet({
     super.key,
-    required this.jobId,
-    required this.currentStatus,
+    required this.job,
     this.onUpdated,
   });
 
-  final int jobId;
-  final String currentStatus;
+  final Job job;
   final VoidCallback? onUpdated;
 
   static Future<void> show(
     BuildContext context, {
-    required int jobId,
-    required String currentStatus,
+    required Job job,
     VoidCallback? onUpdated,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (_) => UpdateStatusSheet(
-        jobId: jobId,
-        currentStatus: currentStatus,
-        onUpdated: onUpdated,
-      ),
+      builder: (_) => UpdateStatusSheet(job: job, onUpdated: onUpdated),
     );
   }
 
@@ -41,49 +38,15 @@ class UpdateStatusSheet extends ConsumerStatefulWidget {
 }
 
 class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
-  String? _submittingStatus;
+  String? _submitting;
 
-  // TODO: replace with context-aware status transitions once naming decision confirmed
-  static const _options = <_StatusOption>[
-    _StatusOption(
-      value: 'received',
-      label: 'Received',
-      icon: Icons.inventory_2_outlined,
-      badgeBg: Color(0xFFE5F9FD),
-      badgeText: Color(0xFF33BEE9),
-    ),
-    _StatusOption(
-      value: 'finished',
-      label: 'Finished',
-      icon: Icons.check_circle_outline,
-      badgeBg: Color(0xFFE7FFED),
-      badgeText: Color(0xFF22C55E),
-    ),
-    _StatusOption(
-      value: 'completed',
-      label: 'Completed',
-      icon: Icons.done_all,
-      badgeBg: Color(0xFFF5F5F5),
-      badgeText: Color(0xFF878688),
-    ),
-    _StatusOption(
-      value: 'has_problems',
-      label: 'Has Problems',
-      icon: Icons.error_outline,
-      badgeBg: Color(0xFFFFF5F3),
-      badgeText: Color(0xFFF04D4E),
-    ),
-  ];
-
-  Future<void> _select(_StatusOption option) async {
-    if (_submittingStatus != null) return;
-
-    setState(() => _submittingStatus = option.value);
+  Future<void> _setWorkStatus(String value) async {
+    if (_submitting != null) return;
+    setState(() => _submitting = value);
     try {
-      await ref.read(jobsProvider.notifier).updateStatus(
-            widget.jobId,
-            status: option.value,
-          );
+      await ref.read(jobsProvider.notifier).updateJob(widget.job.id, {
+        'work_status': value,
+      });
       if (!mounted) return;
       Navigator.of(context).pop();
       widget.onUpdated?.call();
@@ -94,8 +57,21 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
       if (!mounted) return;
       _showError('Failed to update status');
     } finally {
-      if (mounted) setState(() => _submittingStatus = null);
+      if (mounted) setState(() => _submitting = null);
     }
+  }
+
+  void _openQuotation() {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QuotationScreen(
+          jobId: widget.job.id,
+          jobCustomerName: widget.job.customerName,
+          jobCustomerPhone: widget.job.customerPhone,
+        ),
+      ),
+    );
   }
 
   void _showError(String message) {
@@ -106,11 +82,8 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final options = [
-      for (final option in _options)
-        if (option.value != widget.currentStatus) option,
-    ];
-    final busy = _submittingStatus != null;
+    final busy = _submitting != null;
+    final current = widget.job.workStatus;
 
     return SafeArea(
       child: Padding(
@@ -129,15 +102,15 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.sync, color: Color(0xFF111827)),
+                const Icon(Icons.sync, color: Color(0xFF1E3A5F)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Update Status',
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E3A5F),
                     ),
                   ),
                 ),
@@ -147,15 +120,39 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
                 ),
               ],
             ),
-            const Divider(height: 24),
-            for (final option in options) ...[
-              _StatusChoiceCard(
-                option: option,
-                enabled: !busy,
-                isLoading: _submittingStatus == option.value,
-                onTap: () => _select(option),
+            const Divider(height: 20),
+            if (current == 'in_progress' || current == 'finished') ...[
+              _ActionRow(
+                icon: Icons.chat_bubble_outline,
+                iconBg: const Color(0xFFDBF0FB),
+                iconColor: const Color(0xFF0EA5E9),
+                title: 'Create Report & Invoice',
+                subtitle: 'Send Report to user',
+                bordered: true,
+                onTap: busy ? null : _openQuotation,
+              ),
+            ] else ...[
+              _ActionRow(
+                icon: Icons.sync,
+                iconBg: const Color(0xFFDBEAFE),
+                iconColor: const Color(0xFF2563EB),
+                title: 'In Progress',
+                subtitle: 'Technician working on repair',
+                background: const Color(0xFFEFF6FF),
+                isLoading: _submitting == 'in_progress',
+                onTap: busy ? null : () => _setWorkStatus('in_progress'),
               ),
               const SizedBox(height: 10),
+              _ActionRow(
+                icon: Icons.verified,
+                iconBg: const Color(0xFFBBF7D0),
+                iconColor: const Color(0xFF16A34A),
+                title: 'Done',
+                subtitle: 'Cancelled or unrepairable',
+                background: const Color(0xFFECFDF5),
+                isLoading: _submitting == 'finished',
+                onTap: busy ? null : () => _setWorkStatus('finished'),
+              ),
             ],
           ],
         ),
@@ -164,60 +161,60 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
   }
 }
 
-class _StatusOption {
-  const _StatusOption({
-    required this.value,
-    required this.label,
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
     required this.icon,
-    required this.badgeBg,
-    required this.badgeText,
+    required this.iconBg,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    this.background = Colors.white,
+    this.bordered = false,
+    this.isLoading = false,
+    this.onTap,
   });
 
-  final String value;
-  final String label;
   final IconData icon;
-  final Color badgeBg;
-  final Color badgeText;
-}
-
-class _StatusChoiceCard extends StatelessWidget {
-  const _StatusChoiceCard({
-    required this.option,
-    required this.enabled,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  final _StatusOption option;
-  final bool enabled;
+  final Color iconBg;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final Color background;
+  final bool bordered;
   final bool isLoading;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: option.badgeBg,
-      borderRadius: BorderRadius.circular(16),
+    return SoftSurface(
+      radius: AppButton.radius,
+      color: background,
+      shadowColor: iconColor.withValues(alpha: 0.12),
       child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        onTap: onTap,
+        child: Container(
+          decoration: bordered
+              ? BoxDecoration(
+                  border: Border.all(color: const Color(0xFFBAE6FD)),
+                  borderRadius: BorderRadius.circular(AppButton.radius),
+                )
+              : null,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white.withValues(alpha: 0.7),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: isLoading
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          color: option.badgeText,
-                        ),
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: CircularProgressIndicator(strokeWidth: 2.2, color: iconColor),
                       )
-                    : Icon(option.icon, color: option.badgeText, size: 22),
+                    : Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -225,24 +222,22 @@ class _StatusChoiceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      option.label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
                         fontSize: 16,
-                        color: option.badgeText,
+                        color: Color(0xFF111827),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Mark this case as ${option.label}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
+                      subtitle,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
                   ],
                 ),
               ),
+              if (bordered) const Icon(Icons.chevron_right, color: Color(0xFF38BDF8)),
             ],
           ),
         ),

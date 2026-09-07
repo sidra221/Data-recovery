@@ -1,0 +1,196 @@
+import 'package:flutter/material.dart';
+
+import 'app_button.dart';
+import 'soft_surface.dart';
+
+enum CasesDateRange { allTime, custom, thisWeek, today, thisMonth }
+
+class CasesFilterResult {
+  const CasesFilterResult({required this.range});
+
+  final CasesDateRange range;
+}
+
+class CasesFilterSheet extends StatefulWidget {
+  const CasesFilterSheet({super.key, required this.initialRange});
+
+  final CasesDateRange initialRange;
+
+  static Future<CasesFilterResult?> show(
+    BuildContext context, {
+    required CasesDateRange initialRange,
+  }) {
+    return showModalBottomSheet<CasesFilterResult>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (_) => CasesFilterSheet(initialRange: initialRange),
+    );
+  }
+
+  @override
+  State<CasesFilterSheet> createState() => _CasesFilterSheetState();
+}
+
+class _CasesFilterSheetState extends State<CasesFilterSheet> {
+  late CasesDateRange _range;
+
+  static const _options = <(CasesDateRange, String)>[
+    (CasesDateRange.allTime, 'All Time'),
+    (CasesDateRange.custom, 'Custom'),
+    (CasesDateRange.thisWeek, 'This week'),
+    (CasesDateRange.today, 'Today'),
+    (CasesDateRange.thisMonth, 'This month'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _range = widget.initialRange;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1D5DB),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.tune, color: Color(0xFF111827)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Filter',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Date Range',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final option in _options)
+                  _FilterPill(
+                    label: option.$2,
+                    selected: _range == option.$1,
+                    onTap: () {
+                      if (option.$1 == CasesDateRange.custom) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(content: Text('Custom date range coming soon')),
+                          );
+                        return;
+                      }
+                      setState(() => _range = option.$1);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => _range = CasesDateRange.allTime),
+                  child: const Text(
+                    'Clear All',
+                    style: TextStyle(
+                      color: Color(0xFF33BEE9),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                AppButton(
+                  label: 'Apply Filter',
+                  width: 160,
+                  onPressed: () => Navigator.of(context).pop(CasesFilterResult(range: _range)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftSurface(
+      radius: 999,
+      color: selected ? const Color(0xFF33BEE9) : Colors.white,
+      shadowColor: selected ? const Color(0x4033BEE9) : const Color(0x14000000),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: selected
+              ? const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF5CCBED), Color(0xFF2EABD2)],
+                  ),
+                )
+              : null,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : const Color(0xFF374151),
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

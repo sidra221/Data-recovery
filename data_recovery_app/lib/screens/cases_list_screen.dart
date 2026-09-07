@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../core/api_client.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
 import 'create_case_screen.dart';
 import 'quotation_screen.dart';
 import 'widgets/app_bottom_nav.dart';
+import 'widgets/app_button.dart';
+import 'widgets/cases_filter_sheet.dart';
 import 'widgets/notify_customer_sheet.dart';
+import 'widgets/soft_surface.dart';
 import 'widgets/update_status_sheet.dart';
 
 class CasesListScreen extends ConsumerStatefulWidget {
@@ -18,21 +24,30 @@ class CasesListScreen extends ConsumerStatefulWidget {
 }
 
 class _CasesListScreenState extends ConsumerState<CasesListScreen> {
-  static const _accent = Color(0xFF33BEE9);
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
-
-  // TODO: revisit tab-to-status mapping once naming decision confirmed
-  static const _tabs = <_CaseTab>[
-    _CaseTab(label: 'All', status: null, color: _accent),
-    _CaseTab(label: 'Agree', status: 'finished', color: Color(0xFF22C55E)),
-    _CaseTab(label: 'Inspection', status: 'received', color: Color(0xFF8B5CF6)),
-    _CaseTab(label: 'Wait Client', status: 'completed', color: Color(0xFF878688)),
-    _CaseTab(label: 'Rejected', status: 'has_problems', color: Color(0xFFF04D4E)),
+  static const _reportTabs = <_FilterTab>[
+    _FilterTab(label: 'All', color: Color(0xFF33BEE9)),
+    _FilterTab(label: 'Agree', color: Color(0xFF22C55E), clientReport: 'agree'),
+    _FilterTab(label: 'Inspection', color: Color(0xFF8B5CF6), workStatus: 'in_progress'),
+    _FilterTab(label: 'Wait Client', color: Color(0xFF6B7280), clientReport: 'wait_client'),
+    _FilterTab(label: 'Rejected', color: Color(0xFFF04D4E), clientReport: 'rejected'),
   ];
 
-  int _selectedTab = 0;
+  static const _progressTabs = <_FilterTab>[
+    _FilterTab(label: 'All', color: Color(0xFF4B5563)),
+    _FilterTab(label: 'Pending', color: Color(0xFFF5B942), workStatus: 'pending'),
+    _FilterTab(label: 'In progress', color: Color(0xFF33BEE9), workStatus: 'in_progress'),
+    _FilterTab(label: 'Done', color: Color(0xFF22C55E), workStatus: 'finished'),
+  ];
+
+  int _selectedReport = 0;
+  int _selectedProgress = 0;
+  CasesDateRange _dateRange = CasesDateRange.allTime;
   bool _isRefreshing = false;
+  bool _showSearch = false;
+  bool _isScanning = false;
+  final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -40,14 +55,24 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     Future.microtask(_load);
   }
 
-  String? get _selectedStatus => _tabs[_selectedTab].status;
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> _load() async {
+    final report = _reportTabs[_selectedReport];
+    final progress = _progressTabs[_selectedProgress];
     try {
-      await ref.read(jobsProvider.notifier).fetchJobs(status: _selectedStatus);
-    } catch (_) {
-      // الخطأ محفوظ بـ jobsProvider
-    }
+      await ref.read(jobsProvider.notifier).fetchJobs(
+            search: _searchController.text.trim(),
+            clientReport: report.clientReport,
+            workStatus: report.workStatus ?? progress.workStatus,
+          );
+    } catch (_) {}
   }
 
   Future<void> _refresh() async {
@@ -59,10 +84,117 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     }
   }
 
-  Future<void> _selectTab(int index) async {
-    if (_selectedTab == index) return;
-    setState(() => _selectedTab = index);
+  Future<void> _selectReport(int index) async {
+    if (_selectedReport == index) return;
+    setState(() => _selectedReport = index);
     await _load();
+  }
+
+  Future<void> _selectProgress(int index) async {
+    if (_selectedProgress == index) return;
+    setState(() => _selectedProgress = index);
+    await _load();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), _load);
+  }
+
+  Future<void> _openFilter() async {
+    final result = await CasesFilterSheet.show(context, initialRange: _dateRange);
+    if (result == null || !mounted) return;
+    setState(() => _dateRange = result.range);
+  }
+
+  void _openSearch() {
+    setState(() => _showSearch = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _searchFocus.unfocus();
+    _searchController.clear();
+    setState(() => _showSearch = false);
+    _load();
+  }
+
+  Future<void> _scanBarcode() async {
+    final barcode = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Scan barcode'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Enter barcode or invoice number',
+            ),
+            onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('Scan'),
+            ),
+          ],
+        );
+      },
+    );
+    if (barcode == null || barcode.isEmpty || !mounted) return;
+
+    setState(() => _isScanning = true);
+    try {
+      final job = await ref.read(jobsProvider.notifier).scanBarcode(barcode);
+      if (!mounted) return;
+      _searchController.text = job.invoiceNumber;
+      await _load();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(error.message.isNotEmpty ? error.message : 'Barcode not found')),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Barcode not found')));
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  List<Job> _visibleJobs(List<Job> jobs) {
+    return jobs.where((job) => _matchesDate(job.createdAt)).toList();
+  }
+
+  bool _matchesDate(DateTime createdAt) {
+    final created = createdAt.toLocal();
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    switch (_dateRange) {
+      case CasesDateRange.allTime:
+      case CasesDateRange.custom:
+        return true;
+      case CasesDateRange.today:
+        return !created.isBefore(startOfToday);
+      case CasesDateRange.thisWeek:
+        final weekStart = startOfToday.subtract(Duration(days: now.weekday - 1));
+        return !created.isBefore(weekStart);
+      case CasesDateRange.thisMonth:
+        return created.year == now.year && created.month == now.month;
+    }
   }
 
   @override
@@ -70,81 +202,102 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     final jobsState = ref.watch(jobsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Cases',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
+      backgroundColor: const Color(0xFFF7F8FA),
+      body: Column(
+        children: [
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: _showSearch
+                  ? const BoxDecoration(color: Colors.white)
+                  : const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFFEAF8FC), Color(0xFFF7F8FA)],
                       ),
                     ),
-                  ),
-                  _RoundIconButton(icon: Icons.tune, onPressed: () {}),
-                  const SizedBox(width: 8),
-                  _RoundIconButton(icon: Icons.search, onPressed: () {}),
-                ],
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_showSearch)
+                      _CasesSearchBar(
+                        controller: _searchController,
+                        focusNode: _searchFocus,
+                        isScanning: _isScanning,
+                        onChanged: _onSearchChanged,
+                        onClose: _closeSearch,
+                        onScan: _scanBarcode,
+                      )
+                    else ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Cases',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1F2937),
+                                ),
+                              ),
+                            ),
+                            _RoundIconButton(icon: Icons.tune, onPressed: _openFilter),
+                            const SizedBox(width: 8),
+                            _RoundIconButton(
+                              icon: Icons.search,
+                              onPressed: _openSearch,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SoftSurface(
+                          radius: 22,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: _FilterRow(
+                              tabs: _reportTabs,
+                              selectedIndex: _selectedReport,
+                              onSelected: _selectReport,
+                              allCount: jobsState.count,
+                              padded: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _FilterRow(
+                        tabs: _progressTabs,
+                        selectedIndex: _selectedProgress,
+                        onSelected: _selectProgress,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Expanded(child: _buildBody(jobsState)),
+                  ],
+                ),
               ),
             ),
-            SizedBox(
-              height: 44,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _tabs.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final tab = _tabs[index];
-                  final selected = index == _selectedTab;
-                  return _StatusTabChip(
-                    tab: tab,
-                    selected: selected,
-                    onTap: () => _selectTab(index),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(child: _buildBody(jobsState)),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(colors: [_gradientStart, _gradientEnd]),
-          boxShadow: [
-            BoxShadow(
-              color: _accent.withValues(alpha: 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _showSearch
+          ? null
+          : AppFab(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const CreateCaseScreen()),
+                );
+                await _load();
+              },
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const CreateCaseScreen(),
-              ),
-            );
-            await _load();
-          },
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: const Icon(Icons.add, color: Colors.white, size: 28),
-        ),
-      ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
@@ -167,24 +320,23 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(
-                onPressed: _load,
-                child: const Text('Retry'),
-              ),
+              AppTextButton(label: 'Retry', onPressed: _load),
             ],
           ),
         ),
       );
     }
 
-    if (jobsState.jobs.isEmpty) {
+    final jobs = _visibleJobs(jobsState.jobs);
+
+    if (jobs.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
-            SizedBox(height: 180),
-            Center(child: Text('No cases found')),
+            SizedBox(height: 80),
+            _EmptyRepairs(),
           ],
         ),
       );
@@ -194,10 +346,11 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
       onRefresh: _refresh,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-        itemCount: jobsState.jobs.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemCount: jobs.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 14),
         itemBuilder: (context, index) => _CaseCard(
-          job: jobsState.jobs[index],
+          job: jobs[index],
+          inspectionStyle: _selectedReport == 2,
           onStatusUpdated: _load,
         ),
       ),
@@ -205,29 +358,72 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   }
 }
 
-class _CaseTab {
-  const _CaseTab({
+class _FilterTab {
+  const _FilterTab({
     required this.label,
-    required this.status,
     required this.color,
+    this.clientReport,
+    this.workStatus,
   });
 
   final String label;
-  final String? status;
   final Color color;
+  final String? clientReport;
+  final String? workStatus;
+}
+
+class _FilterRow extends StatelessWidget {
+  const _FilterRow({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onSelected,
+    this.allCount,
+    this.padded = true,
+  });
+
+  final List<_FilterTab> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final int? allCount;
+  final bool padded;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: padded ? 20 : 10),
+        itemCount: tabs.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final tab = tabs[index];
+          final label = index == 0 && allCount != null ? '$allCount All' : tab.label;
+          return _StatusTabChip(
+            label: label,
+            color: tab.color,
+            selected: index == selectedIndex,
+            onTap: () => onSelected(index),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({required this.icon, required this.onPressed});
+  const _RoundIconButton({required this.icon, this.onPressed});
 
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: const Color(0xFFF3F4F6),
       shape: const CircleBorder(),
+      elevation: 1,
+      shadowColor: const Color(0x14000000),
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(icon, color: const Color(0xFF374151)),
@@ -236,35 +432,149 @@ class _RoundIconButton extends StatelessWidget {
   }
 }
 
+class _CasesSearchBar extends StatelessWidget {
+  const _CasesSearchBar({
+    required this.controller,
+    required this.focusNode,
+    required this.isScanning,
+    required this.onChanged,
+    required this.onClose,
+    required this.onScan,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool isScanning;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClose;
+  final VoidCallback onScan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onClose,
+            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF374151)),
+          ),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFFA5E1EF)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 14),
+                  const Icon(Icons.search, color: Color(0xFF111827), size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      onChanged: onChanged,
+                      cursorColor: const Color(0xFF33BEE9),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        hintText: '',
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF33BEE9).withValues(alpha: 0.28),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: isScanning ? null : onScan,
+                        icon: isScanning
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.qr_code_scanner, color: Color(0xFF33BEE9)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotifyBellButton extends StatelessWidget {
+  const _NotifyBellButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(6),
+          child: Icon(Icons.notifications, size: 22, color: Color(0xFF22C55E)),
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusTabChip extends StatelessWidget {
   const _StatusTabChip({
-    required this.tab,
+    required this.label,
+    required this.color,
     required this.selected,
     required this.onTap,
   });
 
-  final _CaseTab tab;
+  final String label;
+  final Color color;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final background = selected ? const Color(0xFF33BEE9) : tab.color.withValues(alpha: 0.14);
-    final foreground = selected ? Colors.white : tab.color;
-
     return Material(
-      color: background,
+      color: selected ? color : color.withValues(alpha: 0.14),
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Text(
-            tab.label,
+            label,
             style: TextStyle(
-              color: foreground,
-              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : color,
+              fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
           ),
@@ -274,222 +584,342 @@ class _StatusTabChip extends StatelessWidget {
   }
 }
 
-class _CaseColors {
-  const _CaseColors({required this.stripe, required this.badgeBg, required this.badgeText});
+class _EmptyRepairs extends StatelessWidget {
+  const _EmptyRepairs();
 
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          decoration: const BoxDecoration(
+            color: Color(0xFFD9F3FB),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.build, size: 52, color: Colors.white),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'No Repairs',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'You have no repairs currently',
+          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+  }
+}
+
+class _CaseLook {
+  const _CaseLook({
+    required this.label,
+    required this.icon,
+    required this.stripe,
+    required this.badgeBg,
+    required this.accent,
+  });
+
+  final String label;
+  final IconData icon;
   final Color stripe;
   final Color badgeBg;
-  final Color badgeText;
+  final Color accent;
 
-  static _CaseColors forStatus(String status) {
-    switch (status) {
-      case 'finished':
-        return const _CaseColors(
-          stripe: Color(0xFF22C55E),
-          badgeBg: Color(0xFFE7FFED),
-          badgeText: Color(0xFF22C55E),
+  static const _rejected = _CaseLook(
+    label: 'Rejected',
+    icon: Icons.close,
+    stripe: Color(0xFFF04D4E),
+    badgeBg: Color(0xFFFFE4E6),
+    accent: Color(0xFFF04D4E),
+  );
+
+  static const _done = _CaseLook(
+    label: 'Done',
+    icon: Icons.check_circle,
+    stripe: Color(0xFF22C55E),
+    badgeBg: Color(0xFFDCFCE7),
+    accent: Color(0xFF16A34A),
+  );
+
+  static const _pending = _CaseLook(
+    label: 'Pending',
+    icon: Icons.history,
+    stripe: Color(0xFFF5B942),
+    badgeBg: Color(0xFFFFF4E5),
+    accent: Color(0xFFE08A1A),
+  );
+
+  static _CaseLook of(Job job, {bool inspectionStyle = false}) {
+    if (job.clientReport == 'rejected') return _rejected;
+    if (job.clientReport == 'wait_client') {
+      return const _CaseLook(
+        label: 'Wait Client',
+        icon: Icons.timelapse,
+        stripe: Color(0xFF6B7280),
+        badgeBg: Color(0xFFF3F4F6),
+        accent: Color(0xFF4B5563),
+      );
+    }
+    if (job.workStatus == 'in_progress') {
+      if (inspectionStyle) {
+        return const _CaseLook(
+          label: 'Inspection',
+          icon: Icons.sync,
+          stripe: Color(0xFF8B5CF6),
+          badgeBg: Color(0xFFF3E8FF),
+          accent: Color(0xFF7C3AED),
         );
+      }
+      return const _CaseLook(
+        label: 'In Progress',
+        icon: Icons.sync,
+        stripe: Color(0xFF33BEE9),
+        badgeBg: Color(0xFFE5F9FD),
+        accent: Color(0xFF0EA5E9),
+      );
+    }
+    if (job.workStatus == 'finished' || job.clientReport == 'finished') {
+      return _done;
+    }
+    if (job.workStatus == 'pending') return _pending;
+    switch (job.status) {
       case 'has_problems':
-        return const _CaseColors(
-          stripe: Color(0xFFF04D4E),
-          badgeBg: Color(0xFFFFF5F3),
-          badgeText: Color(0xFFF04D4E),
-        );
+        return _rejected;
+      case 'finished':
       case 'completed':
-        return const _CaseColors(
-          stripe: Color(0xFF878688),
-          badgeBg: Color(0xFFF5F5F5),
-          badgeText: Color(0xFF878688),
-        );
-      case 'received':
+        return _done;
       default:
-        return const _CaseColors(
-          stripe: Color(0xFF33BEE9),
-          badgeBg: Color(0xFFE5F9FD),
-          badgeText: Color(0xFF33BEE9),
-        );
+        return _pending;
     }
   }
 }
 
 class _CaseCard extends StatelessWidget {
-  const _CaseCard({required this.job, required this.onStatusUpdated});
+  const _CaseCard({
+    required this.job,
+    required this.onStatusUpdated,
+    this.inspectionStyle = false,
+  });
 
   final Job job;
   final Future<void> Function() onStatusUpdated;
+  final bool inspectionStyle;
+
+  String get _diskLabel {
+    switch (job.hardDiskType) {
+      case 'hdd_35':
+        return 'HDD 3.5';
+      case 'hdd_25':
+        return 'HDD 2.5';
+      case 'ssd':
+        return 'SSD';
+      case 'nvme':
+        return 'NVMe';
+      case 'external':
+        return 'External HDD';
+      case 'usb':
+        return 'USB Flash';
+      case 'memory_card':
+        return 'Memory Card';
+      default:
+        return 'Other';
+    }
+  }
+
+  Future<void> _openQuotation(BuildContext context) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QuotationScreen(
+          jobId: job.id,
+          jobCustomerName: job.customerName,
+          jobCustomerPhone: job.customerPhone,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colors = _CaseColors.forStatus(job.status);
-    final dateText = DateFormat('d MMM yyyy').format(job.createdAt.toLocal());
+    final look = _CaseLook.of(job, inspectionStyle: inspectionStyle);
+    final dateText = DateFormat('d MMM yyyy', 'en').format(job.createdAt.toLocal());
 
-    return Material(
-      color: Colors.white,
-      elevation: 1.5,
-      shadowColor: const Color(0x14000000),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        // TODO: navigate to case detail
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(width: 4, color: colors.stripe),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                    child: Column(
+    return SoftSurface(
+      radius: 24,
+      child: GestureDetector(
+        onLongPress: () => _openQuotation(context),
+        child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: look.stripe),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 4, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                job.customerName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                            ),
-                            if (job.waitClientOverdue)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 6, right: 6),
-                                child: Icon(
-                                  Icons.warning_amber_rounded,
-                                  size: 18,
-                                  color: Color(0xFFF59E0B),
-                                ),
-                              ),
-                            Text(
-                              '#${job.invoiceNumber}',
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              job.customerName,
                               style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: Color(0xFF111827),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.schedule, size: 14, color: Color(0xFF9CA3AF)),
-                            const SizedBox(width: 4),
-                            Text(
-                              dateText,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: colors.badgeBg,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.sd_storage_outlined, size: 16, color: colors.badgeText),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  job.hardDiskTypeLabel,
-                                  style: TextStyle(
-                                    color: colors.badgeText,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ),
-                        if (job.customerEmail.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          _InfoRow(icon: Icons.mail_outline, text: job.customerEmail),
-                        ],
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
+                        if (job.waitClientOverdue)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 6, left: 6),
+                            child: Icon(
+                              Icons.warning_amber_rounded,
+                              size: 18,
+                              color: Color(0xFFF59E0B),
                             ),
-                            IconButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => QuotationScreen(
-                                      jobId: job.id,
-                                      jobCustomerName: job.customerName,
-                                      jobCustomerPhone: job.customerPhone,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.request_quote),
-                              color: const Color(0xFF6B7280),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            // TODO: restrict bell icon visibility to appropriate status once naming decision confirmed
-                            IconButton(
-                              onPressed: () {
-                                NotifyCustomerSheet.show(
-                                  context,
-                                  jobId: job.id,
-                                );
-                              },
-                              icon: const Icon(Icons.notifications_none),
-                              color: const Color(0xFF6B7280),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            Material(
-                              color: colors.badgeBg,
-                              borderRadius: BorderRadius.circular(999),
-                              child: InkWell(
-                                onTap: () {
-                                  UpdateStatusSheet.show(
-                                    context,
-                                    jobId: job.id,
-                                    currentStatus: job.status,
-                                    onUpdated: onStatusUpdated,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(999),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        job.statusLabel,
-                                        style: TextStyle(
-                                          color: colors.badgeText,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      Icon(Icons.keyboard_arrow_down, size: 16, color: colors.badgeText),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, right: 10),
+                          child: Text(
+                            '#${job.invoiceNumber}',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule, size: 14, color: Color(0xFF9CA3AF)),
+                        const SizedBox(width: 4),
+                        Text(
+                          dateText,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: look.badgeBg,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.build_outlined, size: 16, color: look.accent),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _diskLabel,
+                              style: TextStyle(
+                                color: look.accent,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (job.customerEmail.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      _InfoRow(icon: Icons.mail_outline, text: job.customerEmail),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
+                        ),
+                        if (look.label == 'Done') ...[
+                          _NotifyBellButton(
+                            onTap: () => NotifyCustomerSheet.show(context, jobId: job.id),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        _StatusChipButton(
+                          label: look.label,
+                          icon: look.icon,
+                          background: look.badgeBg,
+                          foreground: look.accent,
+                          onTap: () {
+                            UpdateStatusSheet.show(
+                              context,
+                              job: job,
+                              onUpdated: onStatusUpdated,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+      ),
+    );
+  }
+}
+
+class _StatusChipButton extends StatelessWidget {
+  const _StatusChipButton({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: foreground),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+              Icon(Icons.keyboard_arrow_down, size: 16, color: foreground),
+            ],
           ),
         ),
       ),

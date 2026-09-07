@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../core/api_client.dart';
 import '../models/quotation.dart';
 import '../providers/quotations_provider.dart';
 import 'invoice_view_screen.dart';
+import 'widgets/app_button.dart';
+import 'widgets/soft_surface.dart';
 
 class QuotationScreen extends ConsumerStatefulWidget {
   const QuotationScreen({
@@ -25,8 +28,6 @@ class QuotationScreen extends ConsumerStatefulWidget {
 
 class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   static const _accent = Color(0xFF33BEE9);
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
   static const _companyName = '01 Data Recovery';
 
   final _formKey = GlobalKey<FormState>();
@@ -158,97 +159,152 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'QUOTATION',
-          style: TextStyle(
-            color: Color(0xFF111827),
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
                   children: [
-                    _buildQuoteCard(),
-                    const SizedBox(height: 20),
-                    const _SectionTitle('Financial Offer'),
-                    const SizedBox(height: 12),
-                    _buildItemsTable(),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: _isSubmitting ? null : _addItem,
-                        icon: const Icon(Icons.add, color: _accent, size: 20),
-                        label: const Text(
-                          'Add Item',
-                          style: TextStyle(
-                            color: _accent,
-                            fontWeight: FontWeight.w600,
-                          ),
+                    _CircleBackButton(
+                      onPressed: _isSubmitting ? () {} : () => Navigator.of(context).pop(),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'QUOTATION',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF111827),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _LabeledField(
-                            label: 'Discount',
-                            child: TextFormField(
-                              controller: _discountController,
-                              enabled: !_isSubmitting,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  children: [
+                    SoftSurface(
+                      radius: 24,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildQuoteHeader(),
+                            const SizedBox(height: 20),
+                            _buildPartyGrid(),
+                            const SizedBox(height: 22),
+                            const Row(
+                              children: [
+                                Icon(Icons.sell_outlined, color: _accent, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Financial Offer',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: Color(0xFF111827),
+                                  ),
+                                ),
                               ],
-                              decoration: _inputDecoration(hint: '0.00'),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _LabeledField(
-                            label: 'Tax Rate %',
-                            child: TextFormField(
-                              controller: _taxRateController,
-                              enabled: !_isSubmitting,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                            const SizedBox(height: 12),
+                            _buildItemsTable(),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed: _isSubmitting ? null : _addItem,
+                                icon: const Icon(Icons.add, color: _accent, size: 20),
+                                label: const Text(
+                                  'Add Item',
+                                  style: TextStyle(
+                                    color: _accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _LabeledField(
+                                    label: 'Discount',
+                                    child: TextFormField(
+                                      controller: _discountController,
+                                      enabled: !_isSubmitting,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                      ],
+                                      decoration: _inputDecoration(hint: '0.00'),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _LabeledField(
+                                    label: 'Tax Rate %',
+                                    child: TextFormField(
+                                      controller: _taxRateController,
+                                      enabled: !_isSubmitting,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                      ],
+                                      decoration: _inputDecoration(hint: '0'),
+                                    ),
+                                  ),
+                                ),
                               ],
-                              decoration: _inputDecoration(hint: '0'),
                             ),
-                          ),
+                            const SizedBox(height: 20),
+                            const Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundColor: Color(0xFFD9F3FB),
+                                  child: Icon(Icons.edit_note, size: 16, color: _accent),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'TERMS AND CONDITIONS:',
+                                  style: TextStyle(
+                                    color: _accent,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _termsController,
+                              enabled: !_isSubmitting,
+                              minLines: 2,
+                              maxLines: 5,
+                              decoration: _inputDecoration(hint: 'Payment: 100% CASH'),
+                            ),
+                            const SizedBox(height: 10),
+                            const _NumberedTerm(
+                              number: '2',
+                              text: 'All prices are in Saudi Riyals.',
+                            ),
+                            const SizedBox(height: 6),
+                            const _NumberedTerm(
+                              number: '3',
+                              text: 'Prices are quoted for quantity mentioned and not applicable if change in quantity.',
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const _SectionTitle('Terms and Conditions'),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _termsController,
-                      enabled: !_isSubmitting,
-                      minLines: 3,
-                      maxLines: 6,
-                      decoration: _inputDecoration(hint: 'Payment: 100% CASH'),
+                      ),
                     ),
                   ],
                 ),
@@ -261,78 +317,96 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
     );
   }
 
-  Widget _buildQuoteCard() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+  Widget _buildQuoteHeader() {
+    return Column(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F7FC),
+            shape: BoxShape.circle,
+            border: Border.all(color: _accent, width: 1.4),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F7FC),
-              shape: BoxShape.circle,
-              border: Border.all(color: _accent, width: 1.4),
-            ),
-            child: const Icon(Icons.business, color: _accent, size: 32),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'QUOTATION',
-            style: TextStyle(
-              color: _accent,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-              letterSpacing: 1.4,
+          child: const Center(
+            child: Text(
+              '01',
+              style: TextStyle(
+                color: _accent,
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+              ),
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoBlock(
-                  title: 'To',
-                  value: _customerName,
-                ),
-              ),
-              Expanded(
-                child: _InfoBlock(
-                  title: 'From',
-                  value: _companyName,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          _companyName,
+          style: TextStyle(
+            color: Color(0xFF111827),
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoBlock(
-                  title: 'Person name',
-                  value: _customerName,
-                ),
-              ),
-              Expanded(
-                child: _InfoBlock(
-                  title: 'Mobile',
-                  value: _customerPhone,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'QUOTATION',
+          style: TextStyle(
+            color: _accent,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: 1.4,
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartyGrid() {
+    final dateText = DateFormat('d MMM yyyy', 'en').format(DateTime.now());
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _MetaLine(label: 'To :', value: _customerName),
+                  const SizedBox(height: 10),
+                  _MetaLine(label: 'Person name', value: _customerName),
+                  const SizedBox(height: 10),
+                  const _MetaLine(label: 'Tel', value: '—'),
+                ],
+              ),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _MetaLine(label: 'From:', value: _companyName),
+                  const SizedBox(height: 10),
+                  _MetaLine(label: 'Mobile', value: _customerPhone),
+                  const SizedBox(height: 10),
+                  _MetaLine(label: 'Date', value: dateText),
+                ],
+              ),
+            ),
+          ],
+        ),
+        CustomPaint(
+          size: const Size(1, 110),
+          painter: _DashedLinePainter(),
+        ),
+        const CircleAvatar(
+          radius: 16,
+          backgroundColor: _accent,
+          child: Icon(Icons.description_outlined, color: Colors.white, size: 18),
+        ),
+      ],
     );
   }
 
@@ -356,19 +430,19 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                 ),
                 Expanded(
                   flex: 3,
-                  child: Text('Description', style: _headerStyle),
+                  child: Text('DESCRIPTION', style: _headerStyle),
                 ),
                 SizedBox(
                   width: 52,
-                  child: Text('Qty', style: _headerStyle),
+                  child: Text('QTY', style: _headerStyle),
                 ),
                 SizedBox(
                   width: 72,
-                  child: Text('Unit Price', style: _headerStyle),
+                  child: Text('UNIT PRICE', style: _headerStyle),
                 ),
                 SizedBox(
                   width: 58,
-                  child: Text('Total', style: _headerStyle, textAlign: TextAlign.end),
+                  child: Text('TOTAL', style: _headerStyle, textAlign: TextAlign.end),
                 ),
                 SizedBox(width: 28),
               ],
@@ -510,50 +584,18 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
             child: const Text(
               'Cancel',
               style: TextStyle(
-                color: Color(0xFF6B7280),
-                fontWeight: FontWeight.w600,
+                color: Color(0xFF33BEE9),
                 fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
           const Spacer(),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              gradient: const LinearGradient(
-                colors: [_gradientStart, _gradientEnd],
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _isSubmitting ? null : _send,
-                borderRadius: BorderRadius.circular(999),
-                child: SizedBox(
-                  height: 48,
-                  width: 132,
-                  child: Center(
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Send',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
+          AppButton(
+            label: 'Send',
+            width: 140,
+            isLoading: _isSubmitting,
+            onPressed: _send,
           ),
         ],
       ),
@@ -648,28 +690,80 @@ class _LineItem {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
+class _NumberedTerm extends StatelessWidget {
+  const _NumberedTerm({required this.number, required this.text});
 
-  final String title;
+  final String number;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 3,
-          height: 14,
-          decoration: BoxDecoration(
-            color: const Color(0xFF33BEE9),
-            borderRadius: BorderRadius.circular(999),
+        CircleAvatar(
+          radius: 10,
+          backgroundColor: const Color(0xFF33BEE9),
+          child: Text(
+            number,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF111827), height: 1.35),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CircleBackButton extends StatelessWidget {
+  const _CircleBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF3F4F6),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(Icons.chevron_left, color: Color(0xFF111827), size: 26),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Text(
-          title,
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF33BEE9), fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
             color: Color(0xFF111827),
           ),
@@ -677,6 +771,25 @@ class _SectionTitle extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFD1D5DB)
+      ..strokeWidth = 1.2;
+    const dash = 4.0;
+    const gap = 3.0;
+    var y = 0.0;
+    while (y < size.height) {
+      canvas.drawLine(Offset(size.width / 2, y), Offset(size.width / 2, y + dash), paint);
+      y += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _LabeledField extends StatelessWidget {
@@ -701,31 +814,3 @@ class _LabeledField extends StatelessWidget {
   }
 }
 
-class _InfoBlock extends StatelessWidget {
-  const _InfoBlock({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
-        ),
-      ],
-    );
-  }
-}

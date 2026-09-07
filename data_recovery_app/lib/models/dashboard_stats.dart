@@ -7,6 +7,7 @@ class DashboardStats {
     required this.totalJobs,
     required this.jobsCreatedToday,
     required this.statusChangesToday,
+    required this.totalDelivered,
   });
 
   final Map<String, int> statusCounts;
@@ -16,6 +17,7 @@ class DashboardStats {
   final int totalJobs;
   final int jobsCreatedToday;
   final int statusChangesToday;
+  final int totalDelivered;
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
@@ -26,6 +28,7 @@ class DashboardStats {
       totalJobs: json['total_jobs'] as int? ?? 0,
       jobsCreatedToday: json['jobs_created_today'] as int? ?? 0,
       statusChangesToday: json['status_changes_today'] as int? ?? 0,
+      totalDelivered: json['total_delivered'] as int? ?? 0,
     );
   }
 

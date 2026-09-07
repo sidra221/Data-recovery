@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
 import '../providers/auth_provider.dart';
 import 'home_screen.dart';
+import 'widgets/app_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,9 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isSubmitting = false;
 
-  static const _accent = Color(0xFF0891B2);
-  static const _gradientStart = Color(0xFF5CCBED);
-  static const _gradientEnd = Color(0xFF2EABD2);
+  static const _accent = Color(0xFF33BEE9);
 
   @override
   void dispose() {
@@ -72,12 +71,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+      hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
       prefixIcon: prefix,
       suffixIcon: suffix,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(999),
         borderSide: BorderSide.none,
@@ -106,9 +105,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       borderRadius: BorderRadius.circular(999),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x14000000),
-          blurRadius: 16,
-          offset: Offset(0, 6),
+          color: Color(0x1A000000),
+          blurRadius: 18,
+          offset: Offset(0, 8),
         ),
       ],
     );
@@ -129,197 +128,174 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: ClipPath(
                 clipper: _HeaderBlobClipper(),
                 child: ColoredBox(
-                  color: Color(0xFFF3F4F6),
-                  child: SizedBox(height: 210, width: double.infinity),
+                  color: Color(0xFFF1F2F4),
+                  child: SizedBox(height: 250, width: double.infinity),
                 ),
               ),
             ),
           ),
           const Positioned(
-            top: -20,
-            right: -15,
+            top: 18,
+            left: -40,
             child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.25,
-                child: ClipOval(
-                  child: CustomPaint(
-                    size: Size(90, 90),
-                    painter: _StripedCirclePainter(),
-                  ),
+              child: ClipPath(
+                clipper: _SoftWaveClipper(),
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: SizedBox(width: 220, height: 90),
                 ),
               ),
             ),
           ),
-          Column(
-            children: [
-              SizedBox(
-                height: 210,
-                width: double.infinity,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 96,
-                      height: 96,
-                      errorBuilder: (context, error, stackTrace) => const CircleAvatar(
-                        radius: 32,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.storage_rounded, size: 32, color: _accent),
-                      ),
-                    ),
-                  ),
-                ),
+          const Positioned(
+            top: 210,
+            right: -48,
+            child: IgnorePointer(
+              child: CustomPaint(
+                size: Size(120, 120),
+                painter: _StripedCirclePainter(),
               ),
-              Expanded(
-                child: SafeArea(
-                  top: false,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Welcome Back',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Access your dashboard and manage recovery cases',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          DecoratedBox(
-                            decoration: _fieldShadow,
-                            child: TextFormField(
-                              controller: _identifierController,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              enabled: !_isSubmitting,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'This field is required';
-                                }
-                                return null;
-                              },
-                              decoration: _fieldDecoration(
-                                hint: 'Email or Phone',
-                                prefix: const Icon(Icons.person_outline, color: Color(0xFF6B7280)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          DecoratedBox(
-                            decoration: _fieldShadow,
-                            child: TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              enabled: !_isSubmitting,
-                              onFieldSubmitted: (_) => _submit(),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'This field is required';
-                                }
-                                return null;
-                              },
-                              decoration: _fieldDecoration(
-                                hint: 'Password',
-                                prefix: const Icon(Icons.lock_outline, color: Color(0xFF6B7280)),
-                                suffix: IconButton(
-                                  onPressed: () {
-                                    setState(() => _obscurePassword = !_obscurePassword);
-                                  },
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isSubmitting ? null : () {},
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  color: _accent,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(999),
-                              gradient: const LinearGradient(
-                                colors: [_gradientStart, _gradientEnd],
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: _isSubmitting ? null : _submit,
-                                borderRadius: BorderRadius.circular(999),
-                                child: SizedBox(
-                                  height: 52,
-                                  child: Center(
-                                    child: _isSubmitting
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.4,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Text(
-                                            'Sign in',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
           const Positioned(
-            right: -20,
-            bottom: -10,
+            right: -30,
+            bottom: -24,
             child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.4,
-                child: CustomPaint(
-                  size: Size(190, 76),
-                  painter: _WavesPainter(),
+              child: CustomPaint(
+                size: Size(240, 140),
+                painter: _BrushStrokePainter(),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(28, 24, 28, 32),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x14000000),
+                              blurRadius: 16,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 88,
+                          height: 88,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.storage_rounded,
+                            size: 48,
+                            color: _accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    const Text(
+                      'Welcome Back',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1F2937),
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Access your dashboard and manage recovery cases',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    DecoratedBox(
+                      decoration: _fieldShadow,
+                      child: TextFormField(
+                        controller: _identifierController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        enabled: !_isSubmitting,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'This field is required';
+                          }
+                          return null;
+                        },
+                        decoration: _fieldDecoration(
+                          hint: 'Email or Phone',
+                          prefix: const Icon(Icons.person_outline, color: Color(0xFF9CA3AF)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    DecoratedBox(
+                      decoration: _fieldShadow,
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        enabled: !_isSubmitting,
+                        onFieldSubmitted: (_) => _submit(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'This field is required';
+                          }
+                          return null;
+                        },
+                        decoration: _fieldDecoration(
+                          hint: 'Password',
+                          prefix: const Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
+                          suffix: IconButton(
+                            onPressed: () {
+                              setState(() => _obscurePassword = !_obscurePassword);
+                            },
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _isSubmitting ? null : () {},
+                        child: const Text(
+                          'Forgot password?',
+                          style: TextStyle(
+                            color: _accent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    AppButton(
+                      label: 'Sign in',
+                      isLoading: _isSubmitting,
+                      onPressed: _submit,
+                    ),
+                    const SizedBox(height: 80),
+                  ],
                 ),
               ),
             ),
@@ -336,20 +312,46 @@ class _HeaderBlobClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path()..moveTo(0, 0);
-    path.lineTo(0, size.height * 0.62);
-    path.quadraticBezierTo(
-      size.width * 0.22,
-      size.height,
-      size.width * 0.52,
+    path.lineTo(0, size.height * 0.55);
+    path.cubicTo(
+      size.width * 0.18,
+      size.height * 1.05,
+      size.width * 0.42,
+      size.height * 0.62,
+      size.width * 0.62,
       size.height * 0.78,
     );
-    path.quadraticBezierTo(
+    path.cubicTo(
       size.width * 0.82,
-      size.height * 0.54,
+      size.height * 0.94,
+      size.width * 0.92,
+      size.height * 0.5,
       size.width,
-      size.height * 0.7,
+      size.height * 0.58,
     );
     path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _SoftWaveClipper extends CustomClipper<Path> {
+  const _SoftWaveClipper();
+
+  @override
+  Path getClip(Size size) {
+    final path = Path()..moveTo(0, size.height * 0.55);
+    path.quadraticBezierTo(
+      size.width * 0.35,
+      size.height * 0.05,
+      size.width,
+      size.height * 0.4,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
     path.close();
     return path;
   }
@@ -363,44 +365,58 @@ class _StripedCirclePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 1.5
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide / 2;
+    canvas.save();
+    canvas.clipPath(
+      Path()..addOval(Rect.fromCircle(center: center, radius: radius)),
+    );
+    canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF111827));
+    final stripe = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke;
-    for (var x = 3.0; x < size.width; x += 6) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    for (var x = 8.0; x < size.width; x += 7) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), stripe);
     }
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _WavesPainter extends CustomPainter {
-  const _WavesPainter();
+class _BrushStrokePainter extends CustomPainter {
+  const _BrushStrokePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.translate(0, size.height * 0.85);
-    canvas.rotate(-0.55);
+    canvas.translate(size.width * 0.15, size.height * 0.55);
+    canvas.rotate(-0.42);
 
     final paint = Paint()
       ..color = const Color(0xFF5CCBED)
-      ..strokeWidth = 1.8
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 18
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    for (var i = 0; i < 3; i++) {
-      final path = Path();
-      final baseline = i * 14.0;
-      path.moveTo(0, baseline);
-      for (var x = 0.0; x <= size.width * 1.15; x += 2) {
-        final y = baseline + math.sin((x / size.width) * math.pi * 2.4) * 8;
-        path.lineTo(x, y);
-      }
-      canvas.drawPath(path, paint);
+    final path = Path();
+    path.moveTo(0, 0);
+    for (var x = 0.0; x <= size.width; x += 2) {
+      final y = math.sin((x / size.width) * math.pi * 1.6) * 16;
+      path.lineTo(x, y);
     }
+    canvas.drawPath(path, paint);
+
+    final inner = Paint()
+      ..color = const Color(0x995CCBED)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+    canvas.translate(0, 16);
+    canvas.drawPath(path, inner);
     canvas.restore();
   }
 
