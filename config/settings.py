@@ -164,8 +164,9 @@ COMPANY_ADDRESS = os.environ.get(
 )
 INVOICE_PREFIX = "01"
 
-WHATSAPP_API_URL = os.environ.get("WHATSAPP_API_URL", "")
-WHATSAPP_API_TOKEN = os.environ.get("WHATSAPP_API_TOKEN", "")
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
+TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "")
 
 MAILERS = {
     "default": {
