@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../providers/auth_provider.dart';
-import 'home_screen.dart';
 import 'widgets/app_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -41,10 +40,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             username: _identifierController.text.trim(),
             password: _passwordController.text,
           );
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
-      );
+      // ما منتنقّل من هون: _AuthGate بـ main.dart بيبدّل الشاشة
+      // لما تصير الحالة authenticated. تنقّل يدوي هون بيكدّس HomeScreen مرتين.
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(
@@ -228,7 +225,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       decoration: _fieldShadow,
                       child: TextFormField(
                         controller: _identifierController,
-                        keyboardType: TextInputType.emailAddress,
+                        // اسم المستخدم فقط: create_employee ما بيحط إيميل،
+                        // وإيميل Django مش فريد. والكيبورد لازم ما يكبّر أول حرف.
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.none,
+                        autocorrect: false,
+                        enableSuggestions: false,
                         textInputAction: TextInputAction.next,
                         enabled: !_isSubmitting,
                         validator: (value) {
@@ -238,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           return null;
                         },
                         decoration: _fieldDecoration(
-                          hint: 'Email or Phone',
+                          hint: 'Username',
                           prefix: const Icon(Icons.person_outline, color: Color(0xFF9CA3AF)),
                         ),
                       ),

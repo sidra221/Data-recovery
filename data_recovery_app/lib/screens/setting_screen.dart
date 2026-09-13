@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 import 'help_center_screen.dart';
-import 'login_screen.dart';
 import 'personal_information_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'widgets/app_button.dart';
@@ -59,10 +58,8 @@ class SettingScreen extends ConsumerWidget {
 
     await ref.read(authProvider.notifier).logout();
     if (!context.mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
+    // _AuthGate بيرجّع شاشة الدخول لحالو؛ منشيل بس أي شاشات مدفوعة فوقه.
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
