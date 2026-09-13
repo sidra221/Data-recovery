@@ -165,6 +165,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
+# بالإنتاج CORS مقفول. لتشغيل `flutter run -d chrome` على السيرفر لازم
+# نسمح لمصدر التطوير بالتحديد — مثال: http://localhost:5000
+# التطبيقات الأصلية (APK) ما بتتأثر بهاد، المتصفح بس.
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
