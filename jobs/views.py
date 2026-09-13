@@ -195,10 +195,7 @@ class JobViewSet(viewsets.ModelViewSet):
             message = invoice["share_text"]
         job.mark_invoice_sent()
         invoice = InvoiceSerializer(job).data
-        invoice["auto_send"] = send_whatsapp_message(
-            job.customer_phone,
-            message,
-        )
+        invoice["auto_send"] = send_whatsapp_message(job)
         return Response(invoice)
 
     @action(detail=True, methods=["get", "post"], url_path="attachments")

@@ -563,5 +563,6 @@ class ProfileAndAttachmentApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         mock_send.assert_called_once()
-        self.assertEqual(mock_send.call_args[0][0], "0791234567")
-        self.assertEqual(mock_send.call_args[0][1], "hello custom")
+        sent_job = mock_send.call_args[0][0]
+        self.assertEqual(sent_job.pk, created.data["id"])
+        self.assertEqual(sent_job.customer_phone, "0791234567")

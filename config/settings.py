@@ -166,9 +166,8 @@ COMPANY_ADDRESS = os.environ.get(
 )
 INVOICE_PREFIX = "01"
 
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "")
+LIGHTOTP_API_KEY = os.environ.get("LIGHTOTP_API_KEY", "")
+LIGHTOTP_TEMPLATE_ID = os.environ.get("LIGHTOTP_TEMPLATE_ID", "")
 
 MAILERS = {
     "default": {
