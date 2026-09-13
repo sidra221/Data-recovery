@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$ROOT_DIR/data_recovery_app"
 NGROK_URL_FILE="$ROOT_DIR/.ngrok_url"
 LOCAL_API_URL="http://127.0.0.1:8000/api/"
+SERVER_API_URL="http://2.24.131.249/api/"
 
 cd "$ROOT_DIR"
 
@@ -14,11 +15,12 @@ echo
 echo "Which API should this build use?"
 echo "  1) localhost   (http://127.0.0.1:8000/api/)"
 echo "  2) ngrok       (public HTTPS URL for external testers)"
+echo "  3) server      (${SERVER_API_URL})"
 echo
 
 API_CHOICE=""
 while [[ -z "${API_CHOICE}" ]]; do
-  read -r -p "Enter 1 or 2: " REPLY
+  read -r -p "Enter 1, 2, or 3: " REPLY
   case "${REPLY}" in
     1)
       API_CHOICE="localhost"
@@ -26,8 +28,11 @@ while [[ -z "${API_CHOICE}" ]]; do
     2)
       API_CHOICE="ngrok"
       ;;
+    3)
+      API_CHOICE="server"
+      ;;
     *)
-      echo "Please enter 1 or 2."
+      echo "Please enter 1, 2, or 3."
       ;;
   esac
 done
@@ -69,6 +74,11 @@ if [[ "${API_CHOICE}" == "localhost" ]]; then
   echo
   echo "Using localhost API: ${API_BASE_URL}"
   echo "Note: this only works on this machine or an Android emulator."
+elif [[ "${API_CHOICE}" == "server" ]]; then
+  API_BASE_URL="${SERVER_API_URL}"
+  echo
+  echo "Using production server API: ${API_BASE_URL}"
+  echo "Note: this is plain HTTP - traffic is not encrypted."
 else
   NGROK_HTTPS="$(fetch_ngrok_https_url 2>/dev/null || true)"
   if [[ -z "${NGROK_HTTPS}" && -f "${ROOT_DIR}/.env" ]]; then
