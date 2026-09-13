@@ -713,7 +713,6 @@ class _CaseLook {
     switch (job.status) {
       case 'has_problems':
         return _rejected;
-      case 'finished':
       case 'completed':
         return _done;
       default:

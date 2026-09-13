@@ -73,27 +73,28 @@ class Job(models.Model):
         MEMORY_CARD = "memory_card", "كرت ذاكرة"
         OTHER = "other", "أخرى"
 
+    # التسميات إنكليزية حتى لوحة /admin/ تطابق التطبيق تماماً،
+    # وما يبقى للحالة الواحدة اسمين مختلفين.
     class Status(models.TextChoices):
-        RECEIVED = "received", "تم الاستلام"
-        FINISHED = "finished", "فنش"
-        COMPLETED = "completed", "خلص"
-        HAS_PROBLEMS = "has_problems", "في مشاكل"
+        RECEIVED = "received", "Received"
+        COMPLETED = "completed", "Completed"
+        HAS_PROBLEMS = "has_problems", "Has problems"
 
     class ClientReport(models.TextChoices):
-        AGREE = "agree", "موافق على السعر"
-        WAIT_CLIENT = "wait_client", "بانتظار رد العميل"
-        FINISHED = "finished", "خلص / جاهز للاستلام"
-        REJECTED = "rejected", "مرفوض من العميل"
+        AGREE = "agree", "Agree"
+        WAIT_CLIENT = "wait_client", "Wait client"
+        FINISHED = "finished", "Ready"
+        REJECTED = "rejected", "Rejected"
 
     class WorkStatus(models.TextChoices):
-        PENDING = "pending", "قيد الانتظار"
-        IN_PROGRESS = "in_progress", "قيد التنفيذ / البحث عن قطع"
-        FINISHED = "finished", "انتهى الإصلاح"
+        PENDING = "pending", "Pending"
+        IN_PROGRESS = "in_progress", "In progress"
+        FINISHED = "finished", "Done"
 
     class ReportFlag(models.TextChoices):
-        NONE = "none", "بدون"
-        NO_SPARE_PARTS = "no_spare_parts", "لا يوجد قطع غيار"
-        SEND_OUT_CHINA = "send_out_china", "يُرسل للصين"
+        NONE = "none", "None"
+        NO_SPARE_PARTS = "no_spare_parts", "No spare parts"
+        SEND_OUT_CHINA = "send_out_china", "Send to China"
 
     invoice_number = models.CharField("رقم الفاتورة", max_length=32, unique=True, editable=False)
     barcode = models.CharField("الباركود", max_length=64, unique=True, db_index=True)

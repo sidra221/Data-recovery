@@ -54,12 +54,12 @@ class JobApiTests(APITestCase):
         job_id = created.data["id"]
         response = self.client.post(
             f"/api/jobs/{job_id}/status/",
-            {"status": "finished", "note": "تم الإصلاح"},
+            {"status": "completed", "note": "تم الإصلاح"},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["status"], "finished")
-        self.assertEqual(response.data["status_label"], "فنش")
+        self.assertEqual(response.data["status"], "completed")
+        self.assertEqual(response.data["status_label"], "Completed")
         self.assertEqual(len(response.data["status_logs"]), 2)
 
     def test_update_client_report_and_work_status(self):
@@ -74,7 +74,7 @@ class JobApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["client_report"], "agree")
-        self.assertEqual(response.data["client_report_label"], "موافق على السعر")
+        self.assertEqual(response.data["client_report_label"], "Agree")
         self.assertEqual(response.data["status"], "received")
 
         response = self.client.patch(
@@ -84,7 +84,7 @@ class JobApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["work_status"], "in_progress")
-        self.assertEqual(response.data["work_status_label"], "قيد التنفيذ / البحث عن قطع")
+        self.assertEqual(response.data["work_status_label"], "In progress")
         self.assertEqual(response.data["client_report"], "agree")
         self.assertEqual(response.data["status"], "received")
 
@@ -126,7 +126,7 @@ class JobApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["client_report"], "rejected")
-        self.assertEqual(response.data["client_report_label"], "مرفوض من العميل")
+        self.assertEqual(response.data["client_report_label"], "Rejected")
 
     def test_mark_delivered(self):
         created = self.client.post("/api/jobs/", self.payload, format="json")
@@ -148,7 +148,7 @@ class JobApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(str(response.data["price"]), "150.00")
         self.assertEqual(response.data["report_flag"], "no_spare_parts")
-        self.assertEqual(response.data["report_flag_label"], "لا يوجد قطع غيار")
+        self.assertEqual(response.data["report_flag_label"], "No spare parts")
         self.assertEqual(response.data["status"], "received")
 
     def test_invoice_and_send(self):
@@ -299,7 +299,7 @@ class JobApiTests(APITestCase):
         response = self.client.get("/api/meta/")
         self.assertEqual(response.status_code, 200)
         status_values = {item["value"] for item in response.data["statuses"]}
-        self.assertEqual(status_values, {"received", "finished", "completed", "has_problems"})
+        self.assertEqual(status_values, {"received", "completed", "has_problems"})
         self.assertTrue(Job.objects.count() == 0)
 
     def test_dashboard_stats(self):
