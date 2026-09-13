@@ -85,6 +85,6 @@ def send_whatsapp_message(job) -> dict:
     except requests.RequestException as exc:
         return {
             "sent": False,
-            "provider": "whatsapp",
+            "provider": "lightotp",
             "detail": str(exc),
         }

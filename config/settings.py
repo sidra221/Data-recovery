@@ -120,12 +120,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# بالإنتاج منستعمل PostgreSQL. إذا POSTGRES_DB مش محدد، منرجع لـ SQLite
+# حتى التطوير المحلي والاختبارات يضلوا يشتغلوا بدون أي إعداد إضافي.
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "").strip()
+
+if POSTGRES_DB:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": POSTGRES_DB,
+            "USER": os.environ.get("POSTGRES_USER", ""),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+            "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.environ.get("POSTGRES_CONN_MAX_AGE", "60")),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -140,6 +157,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+# لازم لـ collectstatic بالإنتاج — nginx بيخدم الملفات من هون مباشرة.
+STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
