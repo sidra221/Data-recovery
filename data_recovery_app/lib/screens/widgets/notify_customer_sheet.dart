@@ -80,7 +80,10 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
 
     setState(() => _isSending = true);
     try {
-      final result = await ref.read(apiClientProvider).sendInvoice(widget.jobId);
+      final result = await ref.read(apiClientProvider).sendInvoice(
+            widget.jobId,
+            message: _messageController.text,
+          );
       if (!mounted) return;
 
       final autoSend = result['auto_send'];
@@ -190,20 +193,6 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
                 enabled: !_isLoadingInvoice,
                 isLoading: _isLoadingInvoice,
                 onTap: _openWhatsAppPreview,
-              ),
-              const SizedBox(height: 12),
-              // TODO: SMS not supported by backend yet
-              const Opacity(
-                opacity: 0.45,
-                child: IgnorePointer(
-                  child: _ChannelCard(
-                    label: 'SMS',
-                    background: Color(0xFFDEEBFF),
-                    iconColor: Color(0xFF3B82F6),
-                    icon: Icons.sms_outlined,
-                    enabled: false,
-                  ),
-                ),
               ),
             ] else ...[
               const SizedBox(height: 8),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/customer.dart';
 import '../models/dashboard_stats.dart';
+import '../models/employee_profile.dart';
 import '../models/invoice_view.dart';
 import '../models/job.dart';
 import '../models/quotation.dart';
@@ -19,26 +20,6 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-class LoginResult {
-  LoginResult({
-    required this.token,
-    required this.userId,
-    required this.username,
-  });
-
-  final String token;
-  final int userId;
-  final String username;
-
-  factory LoginResult.fromJson(Map<String, dynamic> json) {
-    return LoginResult(
-      token: json['token'] as String,
-      userId: json['user_id'] as int,
-      username: json['username'] as String,
-    );
-  }
-}
-
 class ApiClient {
   ApiClient({
     required this.storage,
@@ -48,7 +29,6 @@ class ApiClient {
            Dio(
              BaseOptions(
                baseUrl: AppConstants.apiBaseUrl,
-               headers: const {'Content-Type': 'application/json'},
                connectTimeout: const Duration(seconds: 20),
                receiveTimeout: const Duration(seconds: 20),
              ),
@@ -85,7 +65,7 @@ class ApiClient {
     return options.path.contains('auth/login');
   }
 
-  Future<LoginResult> login({
+  Future<EmployeeProfile> login({
     required String username,
     required String password,
   }) async {
@@ -93,7 +73,29 @@ class ApiClient {
       'auth/login/',
       {'username': username, 'password': password},
     );
-    return LoginResult.fromJson(data as Map<String, dynamic>);
+    return EmployeeProfile.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<EmployeeProfile> getMe() async {
+    final data = await _get('auth/me/');
+    return EmployeeProfile.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<EmployeeProfile> updateMe({
+    Map<String, dynamic>? fields,
+    String? photoPath,
+    String? photoFilename,
+  }) async {
+    if (photoPath != null) {
+      final form = FormData.fromMap({
+        ...?fields,
+        'photo': await MultipartFile.fromFile(photoPath, filename: photoFilename),
+      });
+      final data = await _send(() => _dio.patch<dynamic>('auth/me/', data: form));
+      return EmployeeProfile.fromJson(data as Map<String, dynamic>);
+    }
+    final data = await _patch('auth/me/', fields ?? const {});
+    return EmployeeProfile.fromJson(data as Map<String, dynamic>);
   }
 
   Future<PaginatedJobs> listJobs({
@@ -101,6 +103,8 @@ class ApiClient {
     String? status,
     String? clientReport,
     String? workStatus,
+    bool overdue = false,
+    int page = 1,
   }) async {
     final data = await _get(
       'jobs/',
@@ -109,6 +113,8 @@ class ApiClient {
         if (status != null && status.isNotEmpty) 'status': status,
         if (clientReport != null && clientReport.isNotEmpty) 'client_report': clientReport,
         if (workStatus != null && workStatus.isNotEmpty) 'work_status': workStatus,
+        if (overdue) 'overdue': 'true',
+        if (page > 1) 'page': page,
       },
     );
     return PaginatedJobs.fromJson(data as Map<String, dynamic>);
@@ -144,9 +150,37 @@ class ApiClient {
     return data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> sendInvoice(int id) async {
-    final data = await _post('jobs/$id/send/', {});
+  Future<Map<String, dynamic>> sendInvoice(int id, {String? message}) async {
+    final data = await _post(
+      'jobs/$id/send/',
+      {if (message != null && message.trim().isNotEmpty) 'message': message.trim()},
+    );
     return data as Map<String, dynamic>;
+  }
+
+  Future<Job> deliverJob(int id) async {
+    final data = await _post('jobs/$id/deliver/', {});
+    return Job.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<List<JobAttachment>> uploadJobAttachments({
+    required int jobId,
+    required List<({String path, String name})> files,
+  }) async {
+    final form = FormData();
+    for (final file in files) {
+      form.files.add(
+        MapEntry(
+          'files',
+          await MultipartFile.fromFile(file.path, filename: file.name),
+        ),
+      );
+    }
+    final data = await _send(() => _dio.post<dynamic>('jobs/$jobId/attachments/', data: form));
+    final list = data as List<dynamic>;
+    return [
+      for (final item in list) JobAttachment.fromJson(item as Map<String, dynamic>),
+    ];
   }
 
   Future<Map<String, dynamic>> meta() async {
@@ -164,11 +198,12 @@ class ApiClient {
     return DashboardStats.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<PaginatedCustomers> listCustomers({String? search}) async {
+  Future<PaginatedCustomers> listCustomers({String? search, int page = 1}) async {
     final data = await _get(
       'customers/',
       query: {
         if (search != null && search.isNotEmpty) 'search': search,
+        if (page > 1) 'page': page,
       },
     );
     return PaginatedCustomers.fromJson(data as Map<String, dynamic>);

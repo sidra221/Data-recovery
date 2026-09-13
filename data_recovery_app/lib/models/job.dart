@@ -5,6 +5,26 @@ DateTime? _parseDateTime(dynamic value) {
   return DateTime.tryParse(value as String);
 }
 
+class JobAttachment {
+  JobAttachment({
+    required this.id,
+    required this.originalName,
+    required this.url,
+  });
+
+  final int id;
+  final String originalName;
+  final String url;
+
+  factory JobAttachment.fromJson(Map<String, dynamic> json) {
+    return JobAttachment(
+      id: json['id'] as int,
+      originalName: json['original_name'] as String? ?? '',
+      url: json['url'] as String? ?? '',
+    );
+  }
+}
+
 class Job {
   Job({
     required this.id,
@@ -31,10 +51,12 @@ class Job {
     required this.invoiceSent,
     required this.invoiceSentAt,
     required this.readyNotifiedAt,
+    required this.deliveredAt,
     required this.createdAt,
     required this.updatedAt,
     required this.statusLogs,
     required this.waitClientOverdue,
+    this.attachments = const [],
   });
 
   final int id;
@@ -61,10 +83,12 @@ class Job {
   final bool invoiceSent;
   final DateTime? invoiceSentAt;
   final DateTime? readyNotifiedAt;
+  final DateTime? deliveredAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<StatusLog> statusLogs;
   final bool waitClientOverdue;
+  final List<JobAttachment> attachments;
 
   factory Job.fromJson(Map<String, dynamic> json) {
     return Job(
@@ -92,6 +116,7 @@ class Job {
       invoiceSent: json['invoice_sent'] as bool? ?? false,
       invoiceSentAt: _parseDateTime(json['invoice_sent_at']),
       readyNotifiedAt: _parseDateTime(json['ready_notified_at']),
+      deliveredAt: _parseDateTime(json['delivered_at']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       statusLogs: [
@@ -99,6 +124,10 @@ class Job {
           StatusLog.fromJson(item as Map<String, dynamic>),
       ],
       waitClientOverdue: json['wait_client_overdue'] as bool? ?? false,
+      attachments: [
+        for (final item in json['attachments'] as List<dynamic>? ?? const [])
+          JobAttachment.fromJson(item as Map<String, dynamic>),
+      ],
     );
   }
 

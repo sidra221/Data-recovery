@@ -5,6 +5,7 @@ import '../core/api_client.dart';
 import '../models/dashboard_stats.dart';
 import '../providers/auth_provider.dart';
 import 'cases_list_screen.dart';
+import 'notifications_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -71,7 +72,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _openCases() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const CasesListScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => const CasesListScreen(initialClientReport: 'finished'),
+      ),
     );
   }
 
@@ -113,7 +116,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     shape: const CircleBorder(),
                     child: IconButton(
                       onPressed: () {
-                        // TODO: notifications not implemented yet
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
                       },
                       icon: const Icon(
                         Icons.notifications_outlined,
@@ -129,7 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: const AppFab(),
+      floatingActionButton: AppFab(onCreated: _load),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }

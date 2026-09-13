@@ -2,6 +2,29 @@ import requests
 from django.conf import settings
 
 
+def to_international(phone_number: str) -> str:
+    raw = "".join((phone_number or "").split())
+    if raw.lower().startswith("whatsapp:"):
+        raw = raw.split(":", 1)[1]
+    if raw.startswith("00"):
+        raw = "+" + raw[2:]
+    if raw.startswith("+"):
+        digits = "".join(ch for ch in raw[1:] if ch.isdigit())
+        return f"+{digits}" if digits else raw
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if digits.startswith("07") and len(digits) == 10:
+        return f"+962{digits[1:]}"
+    if digits.startswith("962"):
+        return f"+{digits}"
+    if digits:
+        return f"+{digits}"
+    return raw
+
+
+def wa_me_number(phone_number: str) -> str:
+    return "".join(ch for ch in to_international(phone_number) if ch.isdigit())
+
+
 def send_whatsapp_message(phone_number: str, message: str) -> dict:
     account_sid = getattr(settings, "TWILIO_ACCOUNT_SID", "") or ""
     auth_token = getattr(settings, "TWILIO_AUTH_TOKEN", "") or ""
@@ -13,10 +36,7 @@ def send_whatsapp_message(phone_number: str, message: str) -> dict:
             "detail": "WhatsApp API not configured yet - manual send required",
         }
 
-    destination = "".join((phone_number or "").split())
-    # TODO: stored customer numbers may not include a country code.
-    # If they don't start with +, we may need to prefix the local country code later.
-    to_number = f"whatsapp:{destination}"
+    to_number = f"whatsapp:{to_international(phone_number)}"
 
     url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"

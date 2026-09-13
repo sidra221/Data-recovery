@@ -3,7 +3,60 @@ from decimal import Decimal
 from rest_framework import serializers
 from django.db.models import Sum
 
-from .models import Customer, Job, Quotation, QuotationItem, StatusLog
+from .models import (
+    Customer,
+    EmployeeProfile,
+    Job,
+    JobAttachment,
+    Quotation,
+    QuotationItem,
+    StatusLog,
+)
+from .services.whatsapp import wa_me_number
+
+
+class EmployeeProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", allow_blank=True, required=False)
+    photo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeeProfile
+        fields = ("username", "email", "phone", "role", "department", "photo", "photo_url")
+        extra_kwargs = {"photo": {"write_only": True, "required": False}}
+
+    def get_photo_url(self, obj):
+        if not obj.photo:
+            return ""
+        request = self.context.get("request")
+        url = obj.photo.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        instance = super().update(instance, validated_data)
+        if user_data and "email" in user_data:
+            instance.user.email = user_data["email"]
+            instance.user.save(update_fields=["email"])
+        return instance
+
+
+class JobAttachmentSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobAttachment
+        fields = ("id", "original_name", "url", "uploaded_at")
+        read_only_fields = fields
+
+    def get_url(self, obj):
+        request = self.context.get("request")
+        url = obj.file.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -70,6 +123,7 @@ class JobSerializer(serializers.ModelSerializer):
     status_logs = StatusLogSerializer(many=True, read_only=True)
     invoice_sent = serializers.SerializerMethodField()
     wait_client_overdue = serializers.BooleanField(read_only=True)
+    attachments = JobAttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Job
@@ -106,6 +160,7 @@ class JobSerializer(serializers.ModelSerializer):
             "updated_at",
             "status_logs",
             "wait_client_overdue",
+            "attachments",
         )
         read_only_fields = (
             "id",
@@ -121,6 +176,7 @@ class JobSerializer(serializers.ModelSerializer):
             "updated_at",
             "status_logs",
             "wait_client_overdue",
+            "attachments",
         )
 
     def get_invoice_sent(self, obj):
@@ -194,7 +250,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def get_whatsapp_url(self, obj):
         from urllib.parse import quote
 
-        phone = "".join(ch for ch in obj.customer_phone if ch.isdigit())
+        phone = wa_me_number(obj.customer_phone)
         text = self.get_share_text(obj)
         return f"https://wa.me/{phone}?text={quote(text)}"
 

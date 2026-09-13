@@ -5,6 +5,7 @@ from .views import (
     CustomerViewSet,
     JobViewSet,
     LoginView,
+    MeView,
     QuotationViewSet,
     dashboard_stats,
     health,
@@ -19,6 +20,7 @@ router.register("quotations", QuotationViewSet, basename="quotation")
 urlpatterns = [
     path("health/", health, name="health"),
     path("auth/login/", LoginView.as_view(), name="login"),
+    path("auth/me/", MeView.as_view(), name="me"),
     path("meta/", meta, name="meta"),
     path("dashboard/stats/", dashboard_stats, name="dashboard-stats"),
     path("", include(router.urls)),

@@ -39,6 +39,14 @@ dependencies:
   flutter_secure_storage: ^11.0.0
   intl: ^0.20.3
   url_launcher: ^6.3.2
+  mobile_scanner: ^6.0.11
+  image_picker: ^1.1.2
+  file_picker: ^12.0.0
+  share_plus: ^13.0.0
+  printing: ^5.14.2
+  pdf: ^3.11.3
+  qr_flutter: ^4.1.0
+  signature: ^5.5.0
 
 dev_dependencies:
   flutter_test:

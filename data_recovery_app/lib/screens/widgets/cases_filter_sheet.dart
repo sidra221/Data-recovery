@@ -6,9 +6,15 @@ import 'soft_surface.dart';
 enum CasesDateRange { allTime, custom, thisWeek, today, thisMonth }
 
 class CasesFilterResult {
-  const CasesFilterResult({required this.range});
+  const CasesFilterResult({
+    required this.range,
+    this.customStart,
+    this.customEnd,
+  });
 
   final CasesDateRange range;
+  final DateTime? customStart;
+  final DateTime? customEnd;
 }
 
 class CasesFilterSheet extends StatefulWidget {
@@ -36,6 +42,8 @@ class CasesFilterSheet extends StatefulWidget {
 
 class _CasesFilterSheetState extends State<CasesFilterSheet> {
   late CasesDateRange _range;
+  DateTime? _customStart;
+  DateTime? _customEnd;
 
   static const _options = <(CasesDateRange, String)>[
     (CasesDateRange.allTime, 'All Time'),
@@ -109,13 +117,33 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
                   _FilterPill(
                     label: option.$2,
                     selected: _range == option.$1,
-                    onTap: () {
+                    onTap: () async {
                       if (option.$1 == CasesDateRange.custom) {
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            const SnackBar(content: Text('Custom date range coming soon')),
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now().add(const Duration(days: 1)),
+                          initialDateRange: _customStart != null && _customEnd != null
+                              ? DateTimeRange(start: _customStart!, end: _customEnd!)
+                              : null,
+                        );
+                        if (picked == null) return;
+                        setState(() {
+                          _range = CasesDateRange.custom;
+                          _customStart = DateTime(
+                            picked.start.year,
+                            picked.start.month,
+                            picked.start.day,
                           );
+                          _customEnd = DateTime(
+                            picked.end.year,
+                            picked.end.month,
+                            picked.end.day,
+                            23,
+                            59,
+                            59,
+                          );
+                        });
                         return;
                       }
                       setState(() => _range = option.$1);
@@ -127,7 +155,11 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
             Row(
               children: [
                 TextButton(
-                  onPressed: () => setState(() => _range = CasesDateRange.allTime),
+                  onPressed: () => setState(() {
+                    _range = CasesDateRange.allTime;
+                    _customStart = null;
+                    _customEnd = null;
+                  }),
                   child: const Text(
                     'Clear All',
                     style: TextStyle(
@@ -140,7 +172,13 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
                 AppButton(
                   label: 'Apply Filter',
                   width: 160,
-                  onPressed: () => Navigator.of(context).pop(CasesFilterResult(range: _range)),
+                  onPressed: () => Navigator.of(context).pop(
+                    CasesFilterResult(
+                      range: _range,
+                      customStart: _customStart,
+                      customEnd: _customEnd,
+                    ),
+                  ),
                 ),
               ],
             ),

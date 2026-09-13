@@ -1,12 +1,16 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import SimpleTestCase
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from .models import AppSettings, Customer, Job, StatusLog
+from .services.whatsapp import to_international, wa_me_number
 
 
 class JobApiTests(APITestCase):
@@ -467,3 +471,97 @@ class QuotationApiTests(APITestCase):
         self.assertEqual(
             response.data["company"]["tax_number"], settings.COMPANY_TAX_NUMBER
         )
+
+
+class WhatsAppNumberTests(SimpleTestCase):
+    def test_local_jordan_number(self):
+        self.assertEqual(to_international("0791111111"), "+962791111111")
+        self.assertEqual(wa_me_number("0791111111"), "962791111111")
+
+    def test_plus_number_unchanged(self):
+        self.assertEqual(to_international("+962791111111"), "+962791111111")
+
+
+class ProfileAndAttachmentApiTests(APITestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username="emp",
+            password="pass12345",
+            email="emp@datarecovery.io",
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+    def test_login_includes_profile(self):
+        self.client.credentials()
+        response = self.client.post(
+            "/api/auth/login/",
+            {"username": "emp", "password": "pass12345"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["email"], "emp@datarecovery.io")
+        self.assertEqual(response.data["role"], "IT Employee")
+        self.assertIn("phone", response.data)
+
+    def test_me_get_and_patch(self):
+        response = self.client.get("/api/auth/me/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["username"], "emp")
+        patched = self.client.patch(
+            "/api/auth/me/",
+            {"phone": "0790000000", "role": "Technician"},
+            format="json",
+        )
+        self.assertEqual(patched.status_code, 200)
+        self.assertEqual(patched.data["phone"], "0790000000")
+        self.assertEqual(patched.data["role"], "Technician")
+
+    def test_upload_job_attachment(self):
+        created = self.client.post(
+            "/api/jobs/",
+            {
+                "customer_name": "أحمد علي",
+                "customer_phone": "0791234567",
+                "hard_disk_type": "hdd_25",
+            },
+            format="json",
+        )
+        job_id = created.data["id"]
+        upload = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+        response = self.client.post(
+            f"/api/jobs/{job_id}/attachments/",
+            {"file": upload},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data[0]["original_name"], "note.txt")
+        listed = self.client.get(f"/api/jobs/{job_id}/")
+        self.assertEqual(len(listed.data["attachments"]), 1)
+
+    @patch("jobs.views.send_whatsapp_message")
+    def test_send_invoice_uses_custom_message(self, mock_send):
+        mock_send.return_value = {
+            "sent": False,
+            "provider": "none",
+            "detail": "WhatsApp API not configured yet - manual send required",
+        }
+        created = self.client.post(
+            "/api/jobs/",
+            {
+                "customer_name": "أحمد علي",
+                "customer_phone": "0791234567",
+                "hard_disk_type": "hdd_25",
+            },
+            format="json",
+        )
+        response = self.client.post(
+            f"/api/jobs/{created.data['id']}/send/",
+            {"message": "hello custom"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_send.assert_called_once()
+        self.assertEqual(mock_send.call_args[0][0], "0791234567")
+        self.assertEqual(mock_send.call_args[0][1], "hello custom")

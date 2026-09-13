@@ -9,18 +9,23 @@ class CustomersState {
     this.customers = const [],
     this.count = 0,
     this.isLoading = false,
+    this.isLoadingMore = false,
     this.error,
   });
 
   final List<Customer> customers;
   final int count;
   final bool isLoading;
+  final bool isLoadingMore;
   final String? error;
+
+  bool get hasMore => customers.length < count;
 
   CustomersState copyWith({
     List<Customer>? customers,
     int? count,
     bool? isLoading,
+    bool? isLoadingMore,
     String? error,
     bool clearError = false,
   }) {
@@ -28,6 +33,7 @@ class CustomersState {
       customers: customers ?? this.customers,
       count: count ?? this.count,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: clearError ? null : error ?? this.error,
     );
   }
@@ -41,21 +47,38 @@ class CustomersNotifier extends Notifier<CustomersState> {
   CustomersState build() => const CustomersState();
 
   ApiClient get _client => ref.read(apiClientProvider);
+  String? _search;
 
-  Future<void> fetchCustomers({String? search}) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+  Future<void> fetchCustomers({String? search, bool append = false}) async {
+    if (!append) {
+      _search = search;
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      if (!state.hasMore || state.isLoadingMore) return;
+      state = state.copyWith(isLoadingMore: true, clearError: true);
+    }
     try {
-      final page = await _client.listCustomers(search: search);
+      final page = await _client.listCustomers(
+        search: _search,
+        page: append ? (state.customers.length ~/ 20) + 1 : 1,
+      );
       state = state.copyWith(
-        customers: page.results,
+        customers: append ? [...state.customers, ...page.results] : page.results,
         count: page.count,
         isLoading: false,
+        isLoadingMore: false,
       );
     } on ApiException catch (error) {
-      state = state.copyWith(isLoading: false, error: error.message);
+      state = state.copyWith(
+        isLoading: false,
+        isLoadingMore: false,
+        error: error.message,
+      );
       rethrow;
     }
   }
+
+  Future<void> loadMore() => fetchCustomers(append: true);
 
   Future<Customer> updateCustomer(int id, Map<String, dynamic> payload) {
     return _client.updateCustomer(id, payload);

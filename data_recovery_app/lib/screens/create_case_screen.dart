@@ -1,10 +1,13 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../models/customer.dart';
+import '../providers/auth_provider.dart';
 import '../providers/customers_provider.dart';
 import '../providers/jobs_provider.dart';
+import 'barcode_scanner_screen.dart';
 import 'widgets/app_button.dart';
 import 'widgets/soft_surface.dart';
 
@@ -39,6 +42,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
 
   String? _deviceType;
   bool _isSubmitting = false;
+  final List<({String path, String name})> _files = [];
 
   @override
   void initState() {
@@ -76,12 +80,17 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
         'customer_phone': _phoneController.text.trim(),
         'hard_disk_type': _deviceType,
         'serial_number': serial,
-        'barcode': serial,
         if (email.isNotEmpty) 'customer_email': email,
         if (problem.isNotEmpty) 'problem': problem,
       };
 
-      await ref.read(jobsProvider.notifier).createJob(payload);
+      final job = await ref.read(jobsProvider.notifier).createJob(payload);
+      if (_files.isNotEmpty) {
+        await ref.read(apiClientProvider).uploadJobAttachments(
+              jobId: job.id,
+              files: _files,
+            );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -271,45 +280,71 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                         decoration: _inputDecoration(
                           hint: '#4232323..',
                           suffix: IconButton(
-                            onPressed: () {},
+                            onPressed: _isSubmitting
+                                ? null
+                                : () async {
+                                    final code = await BarcodeScannerScreen.scan(
+                                      context,
+                                      title: 'Scan serial',
+                                    );
+                                    if (code == null || !mounted) return;
+                                    _serialController.text = code;
+                                  },
                             icon: const Icon(Icons.qr_code_scanner, color: _accent),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // TODO: confirm actual meaning/options for Recovery Details
                     _LabeledField(
                       label: 'Recovery Details',
                       child: TextFormField(
                         controller: _problemController,
                         enabled: !_isSubmitting,
+                        maxLines: 3,
                         textInputAction: TextInputAction.done,
                         decoration: _inputDecoration(
-                          hint: 'select type',
-                          suffix: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+                          hint: 'What the customer reported',
                         ),
                       ),
                     ),
                     const SizedBox(height: 28),
                     const _SectionTitle('MEDIA & DOCUMENT'),
                     const SizedBox(height: 16),
-                    // TODO: no file upload support in backend yet
-                    const _UploadPlaceholder(),
+                    _UploadPlaceholder(
+                      files: _files,
+                      enabled: !_isSubmitting,
+                      onAdd: () async {
+                        final picked = await FilePicker.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
+                        );
+                        setState(() {
+                          for (final file in picked) {
+                            final path = file.path;
+                            if (path == null || path.isEmpty) continue;
+                            _files.add((path: path, name: file.name));
+                          }
+                        });
+                      },
+                      onRemove: (index) => setState(() => _files.removeAt(index)),
+                    ),
                     const SizedBox(height: 28),
                     const _SectionTitle('STATUS'),
                     const SizedBox(height: 16),
-                    // TODO: backend always sets status=received on creation, this field is display-only
                     _LabeledField(
                       label: 'Current Status',
-                      child: DropdownButtonFormField<String>(
-                        initialValue: 'received',
-                        isExpanded: true,
-                        decoration: _inputDecoration(hint: 'Select Status'),
-                        items: const [
-                          DropdownMenuItem(value: 'received', child: Text('Received')),
-                        ],
-                        onChanged: null,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        child: const Text(
+                          'Received',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -439,41 +474,65 @@ class _LabeledField extends StatelessWidget {
 }
 
 class _UploadPlaceholder extends StatelessWidget {
-  const _UploadPlaceholder();
+  const _UploadPlaceholder({
+    required this.files,
+    required this.onAdd,
+    required this.onRemove,
+    required this.enabled,
+  });
+
+  final List<({String path, String name})> files;
+  final VoidCallback onAdd;
+  final void Function(int index) onRemove;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedRRectPainter(color: const Color(0xFFD1D5DB), radius: 16),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: Color(0xFF1E3A5F),
-                child: Icon(Icons.cloud_upload, color: Colors.white, size: 22),
+    return Column(
+      children: [
+        CustomPaint(
+          painter: const _DashedRRectPainter(color: Color(0xFFD1D5DB), radius: 16),
+          child: InkWell(
+            onTap: enabled ? onAdd : null,
+            borderRadius: BorderRadius.circular(16),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Color(0xFF1E3A5F),
+                    child: Icon(Icons.cloud_upload, color: Colors.white, size: 22),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Add Photos/Documents',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Upload JPG, PNG or PDF up to 10MB',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  ),
+                ],
               ),
-              SizedBox(height: 10),
-              Text(
-                'Add Photos/Documents',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Upload JPG, PNG or PDF up to 10MB',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+        for (var i = 0; i < files.length; i++)
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.attach_file),
+            title: Text(files[i].name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            trailing: IconButton(
+              onPressed: enabled ? () => onRemove(i) : null,
+              icon: const Icon(Icons.close),
+            ),
+          ),
+      ],
     );
   }
 }

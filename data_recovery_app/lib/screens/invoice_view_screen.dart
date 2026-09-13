@@ -1,6 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:signature/signature.dart';
 
 import '../core/api_client.dart';
 import '../models/invoice_view.dart';
@@ -23,6 +31,8 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   InvoiceView? _invoice;
   String? _error;
   bool _isLoading = true;
+  Uint8List? _sellerSignature;
+  Uint8List? _receiverSignature;
 
   @override
   void initState() {
@@ -59,6 +69,115 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
 
   String _formatDateTime(DateTime value) {
     return DateFormat('yyyy-MM-dd hh:mm:ss a', 'en').format(value.toLocal());
+  }
+
+  String _shareText(InvoiceView invoice) {
+    return '${invoice.company.name}\n'
+        'Invoice: ${invoice.invoiceNumber}\n'
+        'Customer: ${invoice.customerName}\n'
+        'Phone: ${invoice.customerPhone}\n'
+        'Total: ${invoice.total.toStringAsFixed(2)}';
+  }
+
+  Future<void> _share() async {
+    final invoice = _invoice;
+    if (invoice == null) return;
+    await SharePlus.instance.share(ShareParams(text: _shareText(invoice)));
+  }
+
+  Future<void> _saveAndPrint() async {
+    final invoice = _invoice;
+    if (invoice == null) return;
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(invoice.company.name, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              pw.Text('Invoice: ${invoice.invoiceNumber}'),
+              pw.Text('Customer: ${invoice.customerName}'),
+              pw.Text('Phone: ${invoice.customerPhone}'),
+              pw.SizedBox(height: 16),
+              ...[
+                for (final item in invoice.items)
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Expanded(child: pw.Text(item.description)),
+                      pw.Text(item.total.toStringAsFixed(2)),
+                    ],
+                  ),
+              ],
+              pw.Divider(),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Total: ${invoice.total.toStringAsFixed(2)}',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text('Verification: ${invoice.invoiceNumber}'),
+              if (invoice.terms.isNotEmpty) pw.Text(invoice.terms),
+            ],
+          );
+        },
+      ),
+    );
+    await Printing.layoutPdf(onLayout: (_) => doc.save());
+  }
+
+  Future<void> _captureSignature({required bool seller}) async {
+    final controller = SignatureController(
+      penStrokeWidth: 2.4,
+      penColor: const Color(0xFF111827),
+    );
+    final saved = await showDialog<Uint8List>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(seller ? 'Seller Signature' : 'Receiver Signature'),
+          content: SizedBox(
+            width: 320,
+            height: 180,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Signature(controller: controller, backgroundColor: Colors.white),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(onPressed: controller.clear, child: const Text('Clear')),
+            TextButton(
+              onPressed: () async {
+                if (controller.isEmpty) {
+                  Navigator.pop(context);
+                  return;
+                }
+                final bytes = await controller.toPngBytes();
+                if (context.mounted) Navigator.pop(context, bytes);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (saved == null || !mounted) return;
+    setState(() {
+      if (seller) {
+        _sellerSignature = saved;
+      } else {
+        _receiverSignature = saved;
+      }
+    });
   }
 
   @override
@@ -399,21 +518,41 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildSignatures() {
-    return const Row(
+    final invoice = _invoice;
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(child: _SignatureBlock(label: 'Seller Signature')),
-        Expanded(child: _SignatureBlock(label: 'Receiver Signature')),
+        Expanded(
+          child: _SignatureBlock(
+            label: 'Seller Signature',
+            imageBytes: _sellerSignature,
+            onTap: () => _captureSignature(seller: true),
+          ),
+        ),
+        Expanded(
+          child: _SignatureBlock(
+            label: 'Receiver Signature',
+            imageBytes: _receiverSignature,
+            onTap: () => _captureSignature(seller: false),
+          ),
+        ),
         SizedBox(
           width: 72,
           child: Column(
             children: [
-              Icon(Icons.qr_code_2, size: 44, color: Color(0xFF33BEE9)),
-              SizedBox(height: 4),
+              if (invoice != null)
+                QrImageView(
+                  data: invoice.invoiceNumber,
+                  size: 64,
+                  backgroundColor: Colors.white,
+                )
+              else
+                const Icon(Icons.qr_code_2, size: 44, color: Color(0xFF33BEE9)),
+              const SizedBox(height: 4),
               Text(
-                'Verification Code',
+                invoice?.invoiceNumber ?? 'Verification Code',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 8, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -431,29 +570,22 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
       ),
       child: Row(
         children: [
-          // TODO: no PDF/share implementation yet
           TextButton(
-            onPressed: null,
-            child: Text(
+            onPressed: _share,
+            child: const Text(
               'Share',
               style: TextStyle(
-                color: Colors.grey.shade400,
+                color: Color(0xFF33BEE9),
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
             ),
           ),
           const Spacer(),
-          // TODO: no PDF generation in backend yet
-          Opacity(
-            opacity: 0.45,
-            child: IgnorePointer(
-              child: AppButton(
-                label: 'Save & Print',
-                width: 160,
-                onPressed: () {},
-              ),
-            ),
+          AppButton(
+            label: 'Save & Print',
+            width: 160,
+            onPressed: _saveAndPrint,
           ),
         ],
       ),
@@ -586,21 +718,35 @@ class _PaidBox extends StatelessWidget {
 }
 
 class _SignatureBlock extends StatelessWidget {
-  const _SignatureBlock({required this.label});
+  const _SignatureBlock({
+    required this.label,
+    required this.onTap,
+    this.imageBytes,
+  });
 
   final String label;
+  final VoidCallback onTap;
+  final Uint8List? imageBytes;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Text(
-          '~~~~~~~',
-          style: TextStyle(color: Color(0xFF33BEE9), fontSize: 16, letterSpacing: 1),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-      ],
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 48,
+            child: imageBytes != null
+                ? Image.memory(imageBytes!, fit: BoxFit.contain)
+                : const Text(
+                    'Tap to sign',
+                    style: TextStyle(color: Color(0xFF33BEE9), fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+        ],
+      ),
     );
   }
 }

@@ -1,23 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../core/api_client.dart';
+import '../providers/auth_provider.dart';
 import 'widgets/soft_surface.dart';
 
-class PersonalInformationScreen extends StatelessWidget {
-  const PersonalInformationScreen({
-    super.key,
-    this.username,
-  });
+class PersonalInformationScreen extends ConsumerStatefulWidget {
+  const PersonalInformationScreen({super.key});
 
-  final String? username;
+  @override
+  ConsumerState<PersonalInformationScreen> createState() =>
+      _PersonalInformationScreenState();
+}
 
-  String get _email {
-    final handle = (username ?? '').trim().toLowerCase();
-    if (handle.isEmpty) return 'a.wright@datarecovery.io';
-    return '$handle@datarecovery.io';
+class _PersonalInformationScreenState extends ConsumerState<PersonalInformationScreen> {
+  bool _uploading = false;
+
+  Future<void> _pickPhoto() async {
+    if (_uploading) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() => _uploading = true);
+    try {
+      await ref.read(apiClientProvider).updateMe(
+            photoPath: picked.path,
+            photoFilename: picked.name,
+          );
+      await ref.read(authProvider.notifier).refreshProfile();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Photo updated')));
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Failed to upload photo')));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(authProvider).profile;
+    final email = profile?.email ?? '';
+    final phone = profile?.phone ?? '';
+    final role = [
+      if ((profile?.role ?? '').isNotEmpty) profile!.role,
+      if ((profile?.department ?? '').isNotEmpty) profile!.department,
+    ].join(' • ');
+    final photoUrl = profile?.photoUrl ?? '';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -46,14 +90,15 @@ class PersonalInformationScreen extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFF3F4F6),
-                      ),
-                      child: const Icon(Icons.person, size: 64, color: Color(0xFFD1D5DB)),
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                      child: photoUrl.isEmpty
+                          ? const Icon(Icons.person, size: 64, color: Color(0xFFD1D5DB))
+                          : _uploading
+                              ? const CircularProgressIndicator()
+                              : null,
                     ),
                     Positioned(
                       right: 2,
@@ -65,13 +110,7 @@ class PersonalInformationScreen extends StatelessWidget {
                         shadowColor: const Color(0x33000000),
                         child: InkWell(
                           customBorder: const CircleBorder(),
-                          onTap: () {
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                const SnackBar(content: Text('Photo upload coming soon')),
-                              );
-                          },
+                          onTap: _uploading ? null : _pickPhoto,
                           child: const Padding(
                             padding: EdgeInsets.all(8),
                             child: Icon(Icons.photo_camera_outlined, size: 18, color: Color(0xFF111827)),
@@ -93,19 +132,19 @@ class PersonalInformationScreen extends StatelessWidget {
                     _InfoTile(
                       icon: Icons.mail_outline,
                       label: 'EMAIL ADDRESS',
-                      value: _email,
+                      value: email.isEmpty ? '—' : email,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                    const _InfoTile(
+                    _InfoTile(
                       icon: Icons.smartphone_outlined,
                       label: 'PHONE NUMBER',
-                      value: '+1 (555) 234-8901',
+                      value: phone.isEmpty ? '—' : phone,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                    const _InfoTile(
+                    _InfoTile(
                       icon: Icons.work_outline,
                       label: 'ROLE / DEPARTMENT',
-                      value: 'Data Recovery & Forensic Analysis',
+                      value: role.isEmpty ? '—' : role,
                     ),
                   ],
                 ),
@@ -162,17 +201,8 @@ class _InfoTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFF4B5563), size: 20),
-          ),
+          Icon(icon, color: const Color(0xFF6B7280)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -183,8 +213,8 @@ class _InfoTile extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     letterSpacing: 0.6,
-                    fontWeight: FontWeight.w600,
                     color: Color(0xFF9CA3AF),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),

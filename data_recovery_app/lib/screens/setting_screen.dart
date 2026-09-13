@@ -68,6 +68,7 @@ class SettingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final username = ref.watch(authProvider).username;
+    final profile = ref.watch(authProvider).profile;
     final name = _displayName(username);
 
     return Scaffold(
@@ -106,25 +107,15 @@ class SettingScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 28),
                     Center(
-                      child: Container(
-                        width: 96,
-                        height: 96,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x1A000000),
-                              blurRadius: 16,
-                              offset: Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 48,
-                          color: Color(0xFFD1D5DB),
-                        ),
+                      child: CircleAvatar(
+                        radius: 48,
+                        backgroundColor: Colors.white,
+                        backgroundImage: (profile?.photoUrl ?? '').isNotEmpty
+                            ? NetworkImage(profile!.photoUrl)
+                            : null,
+                        child: (profile?.photoUrl ?? '').isEmpty
+                            ? const Icon(Icons.person, size: 48, color: Color(0xFFD1D5DB))
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -138,10 +129,10 @@ class SettingScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'IT Employee',
+                    Text(
+                      profile?.role ?? 'IT Employee',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                     ),
                     const SizedBox(height: 28),
                     const _SectionLabel('ACCOUNT'),
@@ -152,9 +143,7 @@ class SettingScreen extends ConsumerWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => PersonalInformationScreen(
-                              username: username,
-                            ),
+                            builder: (_) => const PersonalInformationScreen(),
                           ),
                         );
                       },
@@ -194,49 +183,33 @@ class _LanguageChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      tooltip: 'Language',
-      color: Colors.white,
-      elevation: 4,
-      shadowColor: const Color(0x33000000),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (_) {},
-      itemBuilder: (context) => const [
-        PopupMenuItem(
-          value: 'en',
-          child: Text('English'),
-        ),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x14000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.language, size: 18, color: Color(0xFF6B7280)),
+          SizedBox(width: 6),
+          Text(
+            'English',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827),
             ),
-          ],
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.language, size: 18, color: Color(0xFF6B7280)),
-            SizedBox(width: 6),
-            Text(
-              'English',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF111827),
-              ),
-            ),
-            SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF6B7280)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

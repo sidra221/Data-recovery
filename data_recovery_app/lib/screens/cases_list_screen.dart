@@ -7,8 +7,8 @@ import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
-import 'create_case_screen.dart';
 import 'quotation_screen.dart';
+import 'barcode_scanner_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'widgets/app_button.dart';
 import 'widgets/cases_filter_sheet.dart';
@@ -17,7 +17,14 @@ import 'widgets/soft_surface.dart';
 import 'widgets/update_status_sheet.dart';
 
 class CasesListScreen extends ConsumerStatefulWidget {
-  const CasesListScreen({super.key});
+  const CasesListScreen({
+    super.key,
+    this.initialClientReport,
+    this.initialSearch,
+  });
+
+  final String? initialClientReport;
+  final String? initialSearch;
 
   @override
   ConsumerState<CasesListScreen> createState() => _CasesListScreenState();
@@ -29,6 +36,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     _FilterTab(label: 'Agree', color: Color(0xFF22C55E), clientReport: 'agree'),
     _FilterTab(label: 'Inspection', color: Color(0xFF8B5CF6), workStatus: 'in_progress'),
     _FilterTab(label: 'Wait Client', color: Color(0xFF6B7280), clientReport: 'wait_client'),
+    _FilterTab(label: 'Ready', color: Color(0xFF22C55E), clientReport: 'finished'),
     _FilterTab(label: 'Rejected', color: Color(0xFFF04D4E), clientReport: 'rejected'),
   ];
 
@@ -42,6 +50,8 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   int _selectedReport = 0;
   int _selectedProgress = 0;
   CasesDateRange _dateRange = CasesDateRange.allTime;
+  DateTime? _customStart;
+  DateTime? _customEnd;
   bool _isRefreshing = false;
   bool _showSearch = false;
   bool _isScanning = false;
@@ -52,6 +62,16 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   @override
   void initState() {
     super.initState();
+    final initialReport = widget.initialClientReport;
+    if (initialReport != null) {
+      final index = _reportTabs.indexWhere((tab) => tab.clientReport == initialReport);
+      if (index >= 0) _selectedReport = index;
+    }
+    final initialSearch = widget.initialSearch?.trim() ?? '';
+    if (initialSearch.isNotEmpty) {
+      _searchController.text = initialSearch;
+      _showSearch = true;
+    }
     Future.microtask(_load);
   }
 
@@ -86,13 +106,25 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
 
   Future<void> _selectReport(int index) async {
     if (_selectedReport == index) return;
-    setState(() => _selectedReport = index);
+    setState(() {
+      _selectedReport = index;
+      if (_reportTabs[index].workStatus == 'in_progress') {
+        _selectedProgress = 2;
+      }
+    });
     await _load();
   }
 
   Future<void> _selectProgress(int index) async {
     if (_selectedProgress == index) return;
-    setState(() => _selectedProgress = index);
+    setState(() {
+      _selectedProgress = index;
+      final reportWork = _reportTabs[_selectedReport].workStatus;
+      final progressWork = _progressTabs[index].workStatus;
+      if (reportWork != null && reportWork != progressWork) {
+        _selectedReport = 0;
+      }
+    });
     await _load();
   }
 
@@ -104,7 +136,11 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   Future<void> _openFilter() async {
     final result = await CasesFilterSheet.show(context, initialRange: _dateRange);
     if (result == null || !mounted) return;
-    setState(() => _dateRange = result.range);
+    setState(() {
+      _dateRange = result.range;
+      _customStart = result.customStart;
+      _customEnd = result.customEnd;
+    });
   }
 
   void _openSearch() {
@@ -122,34 +158,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   }
 
   Future<void> _scanBarcode() async {
-    final barcode = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Scan barcode'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Enter barcode or invoice number',
-            ),
-            onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Scan'),
-            ),
-          ],
-        );
-      },
-    );
+    final barcode = await BarcodeScannerScreen.scan(context);
     if (barcode == null || barcode.isEmpty || !mounted) return;
 
     setState(() => _isScanning = true);
@@ -186,7 +195,8 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     switch (_dateRange) {
       case CasesDateRange.allTime:
       case CasesDateRange.custom:
-        return true;
+        if (_customStart == null || _customEnd == null) return true;
+        return !created.isBefore(_customStart!) && !created.isAfter(_customEnd!);
       case CasesDateRange.today:
         return !created.isBefore(startOfToday);
       case CasesDateRange.thisWeek:
@@ -288,16 +298,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _showSearch
-          ? null
-          : AppFab(
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const CreateCaseScreen()),
-                );
-                await _load();
-              },
-            ),
+      floatingActionButton: _showSearch ? null : AppFab(onCreated: _load),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
@@ -346,13 +347,31 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
       onRefresh: _refresh,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-        itemCount: jobs.length,
+        itemCount: jobs.length + (jobsState.hasMore ? 1 : 0),
         separatorBuilder: (_, _) => const SizedBox(height: 14),
-        itemBuilder: (context, index) => _CaseCard(
-          job: jobs[index],
-          inspectionStyle: _selectedReport == 2,
-          onStatusUpdated: _load,
-        ),
+        itemBuilder: (context, index) {
+          if (index >= jobs.length) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Center(
+                child: jobsState.isLoadingMore
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(),
+                      )
+                    : AppTextButton(
+                        label: 'Load more',
+                        onPressed: () => ref.read(jobsProvider.notifier).loadMore(),
+                      ),
+              ),
+            );
+          }
+          return _CaseCard(
+            job: jobs[index],
+            inspectionStyle: _selectedReport == 2,
+            onStatusUpdated: _load,
+          );
+        },
       ),
     );
   }

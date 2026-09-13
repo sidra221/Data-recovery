@@ -1,6 +1,18 @@
 from django.contrib import admin
 
-from .models import AppSettings, Customer, Job, Quotation, QuotationItem, StatusLog
+from .models import AppSettings, Customer, EmployeeProfile, Job, JobAttachment, Quotation, QuotationItem, StatusLog
+
+
+@admin.register(EmployeeProfile)
+class EmployeeProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "phone", "role", "department")
+    search_fields = ("user__username", "phone", "role")
+
+
+@admin.register(JobAttachment)
+class JobAttachmentAdmin(admin.ModelAdmin):
+    list_display = ("job", "original_name", "uploaded_at")
+    search_fields = ("job__invoice_number", "original_name")
 
 
 @admin.register(Customer)

@@ -5,20 +5,32 @@ from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Customer, Job, Quotation, StatusLog
+from .models import Customer, EmployeeProfile, Job, JobAttachment, Quotation, StatusLog
 from .services.whatsapp import send_whatsapp_message
 from .serializers import (
     CustomerSerializer,
+    EmployeeProfileSerializer,
     InvoiceSerializer,
+    JobAttachmentSerializer,
     JobCreateSerializer,
     JobSerializer,
     QuotationInvoiceSerializer,
     QuotationSerializer,
     StatusUpdateSerializer,
 )
+
+
+MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+
+
+def _profile_data(user, request):
+    profile, _ = EmployeeProfile.objects.get_or_create(user=user)
+    return EmployeeProfileSerializer(profile, context={"request": request}).data
 
 
 class LoginView(ObtainAuthToken):
@@ -29,18 +41,38 @@ class LoginView(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, _ = Token.objects.get_or_create(user=user)
-        return Response(
-            {
-                "token": token.key,
-                "user_id": user.id,
-                "username": user.username,
-            }
+        data = _profile_data(user, request)
+        data.update({"token": token.key, "user_id": user.id, "username": user.username})
+        return Response(data)
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get(self, request):
+        return Response(_profile_data(request.user, request))
+
+    def patch(self, request):
+        profile, _ = EmployeeProfile.objects.get_or_create(user=request.user)
+        serializer = EmployeeProfileSerializer(
+            profile,
+            data=request.data,
+            partial=True,
+            context={"request": request},
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class JobViewSet(viewsets.ModelViewSet):
-    queryset = Job.objects.select_related("created_by").prefetch_related("status_logs__created_by")
+    queryset = Job.objects.select_related("created_by").prefetch_related(
+        "status_logs__created_by",
+        "attachments",
+    )
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_serializer_class(self):
@@ -155,13 +187,67 @@ class JobViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def send(self, request, pk=None):
         job = self.get_object()
+        invoice = InvoiceSerializer(job).data
+        message = ""
+        if hasattr(request.data, "get"):
+            message = (request.data.get("message") or "").strip()
+        if not message:
+            message = invoice["share_text"]
         job.mark_invoice_sent()
         invoice = InvoiceSerializer(job).data
         invoice["auto_send"] = send_whatsapp_message(
             job.customer_phone,
-            invoice["share_text"],
+            message,
         )
         return Response(invoice)
+
+    @action(detail=True, methods=["get", "post"], url_path="attachments")
+    def attachments(self, request, pk=None):
+        job = self.get_object()
+        if request.method == "GET":
+            serializer = JobAttachmentSerializer(
+                job.attachments.all(),
+                many=True,
+                context={"request": request},
+            )
+            return Response(serializer.data)
+
+        files = request.FILES.getlist("files")
+        if not files and "file" in request.FILES:
+            files = [request.FILES["file"]]
+        if not files:
+            return Response(
+                {"detail": "No file uploaded"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        created = []
+        for uploaded in files:
+            if uploaded.size and uploaded.size > MAX_ATTACHMENT_BYTES:
+                return Response(
+                    {"detail": "File is larger than 10MB"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            attachment = JobAttachment.objects.create(
+                job=job,
+                file=uploaded,
+                original_name=uploaded.name,
+            )
+            created.append(
+                JobAttachmentSerializer(attachment, context={"request": request}).data
+            )
+        return Response(created, status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path=r"attachments/(?P<attachment_id>[0-9]+)",
+    )
+    def delete_attachment(self, request, pk=None, attachment_id=None):
+        job = self.get_object()
+        attachment = get_object_or_404(job.attachments, pk=attachment_id)
+        attachment.file.delete(save=False)
+        attachment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def deliver(self, request, pk=None):

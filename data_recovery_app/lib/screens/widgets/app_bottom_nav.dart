@@ -7,9 +7,9 @@ import '../home_screen.dart';
 import '../setting_screen.dart';
 
 class AppFab extends StatelessWidget {
-  const AppFab({super.key, this.onPressed});
+  const AppFab({super.key, this.onCreated});
 
-  final VoidCallback? onPressed;
+  final Future<void> Function()? onCreated;
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +25,14 @@ class AppFab extends StatelessWidget {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: onPressed ??
-            () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const CreateCaseScreen(),
-                ),
-              );
-            },
+        onPressed: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const CreateCaseScreen(),
+            ),
+          );
+          await onCreated?.call();
+        },
         backgroundColor: Colors.transparent,
         elevation: 0,
         highlightElevation: 0,

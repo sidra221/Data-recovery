@@ -8,5 +8,6 @@ db.sqlite3
 config/ngrok_runtime.py
 *.log
 staticfiles/
+media/
 .idea/
 .vscode/

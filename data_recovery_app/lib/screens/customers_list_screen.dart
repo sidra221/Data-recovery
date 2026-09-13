@@ -128,7 +128,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: const AppFab(),
+      floatingActionButton: AppFab(onCreated: _load),
       bottomNavigationBar: const AppBottomNav(currentIndex: 2),
     );
   }
@@ -178,12 +178,27 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
       onRefresh: _refresh,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-        itemCount: state.customers.length,
+        itemCount: state.customers.length + (state.hasMore ? 1 : 0),
         separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => _CustomerCard(
-          customer: state.customers[index],
-          onReturned: _load,
-        ),
+        itemBuilder: (context, index) {
+          if (index >= state.customers.length) {
+            return Center(
+              child: state.isLoadingMore
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(),
+                    )
+                  : TextButton(
+                      onPressed: () => ref.read(customersProvider.notifier).loadMore(),
+                      child: const Text('Load more'),
+                    ),
+            );
+          }
+          return _CustomerCard(
+            customer: state.customers[index],
+            onReturned: _load,
+          );
+        },
       ),
     );
   }

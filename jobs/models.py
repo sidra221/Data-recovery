@@ -6,6 +6,30 @@ from django.db import models, transaction
 from django.utils import timezone
 
 
+class EmployeeProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name="الموظف",
+    )
+    phone = models.CharField("رقم التليفون", max_length=32, blank=True)
+    role = models.CharField("المسمى الوظيفي", max_length=120, default="IT Employee")
+    department = models.CharField(
+        "القسم",
+        max_length=120,
+        default="Data Recovery & Forensic Analysis",
+    )
+    photo = models.FileField("الصورة", upload_to="employee_photos/", blank=True)
+
+    class Meta:
+        verbose_name = "ملف الموظف"
+        verbose_name_plural = "ملفات الموظفين"
+
+    def __str__(self):
+        return self.user.get_username()
+
+
 class Customer(models.Model):
     full_name = models.CharField("اسم العميل", max_length=120)
     phone = models.CharField("رقم التليفون", max_length=32, unique=True, db_index=True)
@@ -190,6 +214,21 @@ class Job(models.Model):
         return timezone.now() - reference_time > timedelta(
             days=AppSettings.get_solo().wait_client_alert_days
         )
+
+
+class JobAttachment(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="attachments")
+    file = models.FileField("الملف", upload_to="job_attachments/%Y/%m/")
+    original_name = models.CharField("اسم الملف", max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+        verbose_name = "مرفق"
+        verbose_name_plural = "مرفقات القضية"
+
+    def __str__(self):
+        return self.original_name or self.file.name
 
 
 class Quotation(models.Model):

@@ -25,6 +25,7 @@ class UpdateStatusSheet extends ConsumerStatefulWidget {
   }) {
     return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -40,13 +41,15 @@ class UpdateStatusSheet extends ConsumerStatefulWidget {
 class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
   String? _submitting;
 
-  Future<void> _setWorkStatus(String value) async {
+  Future<void> _patch(Map<String, dynamic> payload, String key) async {
     if (_submitting != null) return;
-    setState(() => _submitting = value);
+    setState(() => _submitting = key);
     try {
-      await ref.read(jobsProvider.notifier).updateJob(widget.job.id, {
-        'work_status': value,
-      });
+      if (payload.containsKey('deliver')) {
+        await ref.read(jobsProvider.notifier).deliverJob(widget.job.id);
+      } else {
+        await ref.read(jobsProvider.notifier).updateJob(widget.job.id, payload);
+      }
       if (!mounted) return;
       Navigator.of(context).pop();
       widget.onUpdated?.call();
@@ -83,20 +86,23 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
   @override
   Widget build(BuildContext context) {
     final busy = _submitting != null;
-    final current = widget.job.workStatus;
+    final job = widget.job;
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(999),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1D5DB),
+                  borderRadius: BorderRadius.circular(999),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -121,41 +127,134 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               ],
             ),
             const Divider(height: 20),
-            if (current == 'in_progress' || current == 'finished') ...[
-              _ActionRow(
-                icon: Icons.chat_bubble_outline,
-                iconBg: const Color(0xFFDBF0FB),
-                iconColor: const Color(0xFF0EA5E9),
-                title: 'Create Report & Invoice',
-                subtitle: 'Send Report to user',
-                bordered: true,
-                onTap: busy ? null : _openQuotation,
-              ),
-            ] else ...[
-              _ActionRow(
-                icon: Icons.sync,
-                iconBg: const Color(0xFFDBEAFE),
-                iconColor: const Color(0xFF2563EB),
-                title: 'In Progress',
-                subtitle: 'Technician working on repair',
-                background: const Color(0xFFEFF6FF),
-                isLoading: _submitting == 'in_progress',
-                onTap: busy ? null : () => _setWorkStatus('in_progress'),
-              ),
-              const SizedBox(height: 10),
-              _ActionRow(
-                icon: Icons.verified,
-                iconBg: const Color(0xFFBBF7D0),
-                iconColor: const Color(0xFF16A34A),
-                title: 'Done',
-                subtitle: 'Cancelled or unrepairable',
-                background: const Color(0xFFECFDF5),
-                isLoading: _submitting == 'finished',
-                onTap: busy ? null : () => _setWorkStatus('finished'),
-              ),
-            ],
+            const _SectionLabel('WORK STATUS'),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.history,
+              iconBg: const Color(0xFFFFF4E5),
+              iconColor: const Color(0xFFE08A1A),
+              title: 'Pending',
+              subtitle: 'Waiting to start',
+              selected: job.workStatus == 'pending' || job.workStatus.isEmpty,
+              isLoading: _submitting == 'pending',
+              onTap: busy ? null : () => _patch({'work_status': 'pending'}, 'pending'),
+            ),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.sync,
+              iconBg: const Color(0xFFDBEAFE),
+              iconColor: const Color(0xFF2563EB),
+              title: 'In Progress',
+              subtitle: 'Technician working on repair',
+              selected: job.workStatus == 'in_progress',
+              isLoading: _submitting == 'in_progress',
+              onTap: busy ? null : () => _patch({'work_status': 'in_progress'}, 'in_progress'),
+            ),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.verified,
+              iconBg: const Color(0xFFBBF7D0),
+              iconColor: const Color(0xFF16A34A),
+              title: 'Done',
+              subtitle: 'Repair finished',
+              selected: job.workStatus == 'finished',
+              isLoading: _submitting == 'finished',
+              onTap: busy ? null : () => _patch({'work_status': 'finished'}, 'finished'),
+            ),
+            const SizedBox(height: 16),
+            const _SectionLabel('CLIENT DECISION'),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.thumb_up_outlined,
+              iconBg: const Color(0xFFDCFCE7),
+              iconColor: const Color(0xFF16A34A),
+              title: 'Agree',
+              subtitle: 'Customer accepted the price',
+              selected: job.clientReport == 'agree',
+              isLoading: _submitting == 'agree',
+              onTap: busy ? null : () => _patch({'client_report': 'agree'}, 'agree'),
+            ),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.schedule,
+              iconBg: const Color(0xFFF3F4F6),
+              iconColor: const Color(0xFF4B5563),
+              title: 'Wait Client',
+              subtitle: 'Waiting for the customer reply',
+              selected: job.clientReport == 'wait_client',
+              isLoading: _submitting == 'wait_client',
+              onTap: busy ? null : () => _patch({'client_report': 'wait_client'}, 'wait_client'),
+            ),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.close,
+              iconBg: const Color(0xFFFFE4E6),
+              iconColor: const Color(0xFFF04D4E),
+              title: 'Rejected',
+              subtitle: 'Customer rejected the offer',
+              selected: job.clientReport == 'rejected',
+              isLoading: _submitting == 'rejected',
+              onTap: busy ? null : () => _patch({'client_report': 'rejected'}, 'rejected'),
+            ),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.local_shipping_outlined,
+              iconBg: const Color(0xFFE5F9FD),
+              iconColor: const Color(0xFF0EA5E9),
+              title: 'Ready for return',
+              subtitle: 'Finished and ready to collect',
+              selected: job.clientReport == 'finished',
+              isLoading: _submitting == 'ready',
+              onTap: busy ? null : () => _patch({'client_report': 'finished'}, 'ready'),
+            ),
+            const SizedBox(height: 16),
+            const _SectionLabel('HANDOVER'),
+            const SizedBox(height: 8),
+            _ActionRow(
+              icon: Icons.task_alt,
+              iconBg: const Color(0xFFF5F3FF),
+              iconColor: const Color(0xFFA855F7),
+              title: job.deliveredAt == null ? 'Mark delivered' : 'Delivered',
+              subtitle: job.deliveredAt == null
+                  ? 'Customer collected the device'
+                  : 'Already marked as delivered',
+              selected: job.deliveredAt != null,
+              isLoading: _submitting == 'deliver',
+              onTap: busy || job.deliveredAt != null
+                  ? null
+                  : () => _patch({'deliver': true}, 'deliver'),
+            ),
+            const SizedBox(height: 16),
+            _ActionRow(
+              icon: Icons.chat_bubble_outline,
+              iconBg: const Color(0xFFDBF0FB),
+              iconColor: const Color(0xFF0EA5E9),
+              title: 'Create Report & Invoice',
+              subtitle: 'Send report to customer',
+              bordered: true,
+              onTap: busy ? null : _openQuotation,
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 12,
+        letterSpacing: 0.8,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF9CA3AF),
       ),
     );
   }
@@ -168,8 +267,8 @@ class _ActionRow extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
-    this.background = Colors.white,
     this.bordered = false,
+    this.selected = false,
     this.isLoading = false,
     this.onTap,
   });
@@ -179,8 +278,8 @@ class _ActionRow extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String subtitle;
-  final Color background;
   final bool bordered;
+  final bool selected;
   final bool isLoading;
   final VoidCallback? onTap;
 
@@ -188,7 +287,7 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return SoftSurface(
       radius: AppButton.radius,
-      color: background,
+      color: selected ? iconBg : Colors.white,
       shadowColor: iconColor.withValues(alpha: 0.12),
       child: InkWell(
         onTap: onTap,
@@ -198,7 +297,12 @@ class _ActionRow extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFBAE6FD)),
                   borderRadius: BorderRadius.circular(AppButton.radius),
                 )
-              : null,
+              : selected
+                  ? BoxDecoration(
+                      border: Border.all(color: iconColor.withValues(alpha: 0.35)),
+                      borderRadius: BorderRadius.circular(AppButton.radius),
+                    )
+                  : null,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
@@ -237,7 +341,11 @@ class _ActionRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (bordered) const Icon(Icons.chevron_right, color: Color(0xFF38BDF8)),
+              if (bordered || selected)
+                Icon(
+                  selected ? Icons.check_circle : Icons.chevron_right,
+                  color: selected ? iconColor : const Color(0xFF38BDF8),
+                ),
             ],
           ),
         ),

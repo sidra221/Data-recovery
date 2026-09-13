@@ -56,12 +56,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     }
   }
 
-  void _liveChat() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Live chat is coming soon')));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -248,24 +242,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB), height: 1.4),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppButton(
-                          label: 'Live Chat',
-                          icon: Icons.chat_bubble_outline,
-                          onPressed: _liveChat,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AppButton(
-                          label: 'Email Us',
-                          icon: Icons.mail_outline,
-                          onPressed: _emailSupport,
-                        ),
-                      ),
-                    ],
+                  AppButton(
+                    label: 'Email Us',
+                    icon: Icons.mail_outline,
+                    onPressed: _emailSupport,
                   ),
                 ],
               ),

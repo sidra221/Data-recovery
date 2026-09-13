@@ -2,23 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../core/secure_storage.dart';
+import '../models/employee_profile.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthState {
   const AuthState({
     required this.status,
-    this.username,
-    this.userId,
+    this.profile,
     this.error,
   });
 
   final AuthStatus status;
-  final String? username;
-  final int? userId;
+  final EmployeeProfile? profile;
   final String? error;
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
+  String? get username => profile?.username;
 }
 
 final secureStorageProvider = Provider<SecureStorage>((ref) => SecureStorage());
@@ -44,25 +44,37 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _restoreSession() async {
     final token = await ref.read(secureStorageProvider).readToken();
-    if (token != null && token.isNotEmpty) {
-      state = const AuthState(status: AuthStatus.authenticated);
-    } else {
+    if (token == null || token.isEmpty) {
       state = const AuthState(status: AuthStatus.unauthenticated);
+      return;
+    }
+    try {
+      final profile = await ref.read(apiClientProvider).getMe();
+      state = AuthState(status: AuthStatus.authenticated, profile: profile);
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) {
+        await ref.read(secureStorageProvider).clearToken();
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      } else {
+        state = const AuthState(status: AuthStatus.authenticated);
+      }
+    } catch (_) {
+      state = const AuthState(status: AuthStatus.authenticated);
     }
   }
 
   Future<void> login({required String username, required String password}) async {
     try {
-      final result = await ref.read(apiClientProvider).login(
+      final profile = await ref.read(apiClientProvider).login(
             username: username,
             password: password,
           );
-      await ref.read(secureStorageProvider).saveToken(result.token);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        username: result.username,
-        userId: result.userId,
-      );
+      final token = profile.token;
+      if (token == null || token.isEmpty) {
+        throw ApiException('Invalid login credentials');
+      }
+      await ref.read(secureStorageProvider).saveToken(token);
+      state = AuthState(status: AuthStatus.authenticated, profile: profile);
     } on ApiException catch (error) {
       state = AuthState(
         status: AuthStatus.unauthenticated,
@@ -70,6 +82,11 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       rethrow;
     }
+  }
+
+  Future<void> refreshProfile() async {
+    final profile = await ref.read(apiClientProvider).getMe();
+    state = AuthState(status: AuthStatus.authenticated, profile: profile);
   }
 
   Future<void> logout() async {
