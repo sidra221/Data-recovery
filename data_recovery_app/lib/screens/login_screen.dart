@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
+import '../core/constants.dart';
 import '../providers/auth_provider.dart';
 import 'home_screen.dart';
 import 'widgets/app_button.dart';
@@ -288,7 +289,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       isLoading: _isSubmitting,
                       onPressed: _submit,
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 24),
+                    // بصمة البناء — باهتة وصغيرة، بس بتحسم "أي نسخة مثبّتة؟"
+                    Center(
+                      child: Text(
+                        'build ${AppConstants.buildId}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFC5CBD3),
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

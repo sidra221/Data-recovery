@@ -152,11 +152,18 @@ fi
 
 cd "$APP_DIR"
 DART_DEFINE="API_BASE_URL=${API_BASE_URL}"
+# بصمة البناء: أول ٧ حروف من الكوميت + وقت البناء. بتظهر بشاشة الدخول
+# حتى يكون واضح أي نسخة مثبّتة على الجهاز بدون تخمين.
+GIT_SHA="$(git -C "${ROOT_DIR}" rev-parse --short=7 HEAD 2>/dev/null || echo nogit)"
+if [ -n "$(git -C "${ROOT_DIR}" status --porcelain 2>/dev/null)" ]; then
+  GIT_SHA="${GIT_SHA}+"
+fi
+BUILD_DEFINE="BUILD_ID=${GIT_SHA} $(date '+%m-%d %H:%M')"
 
 build_apk() {
   echo
   echo "Building Android APK..."
-  flutter build apk --release --dart-define="${DART_DEFINE}"
+  flutter build apk --release --dart-define="${DART_DEFINE}" --dart-define="${BUILD_DEFINE}"
   echo
   echo "APK: ${APP_DIR}/build/app/outputs/flutter-apk/app-release.apk"
 }
@@ -164,7 +171,7 @@ build_apk() {
 build_web() {
   echo
   echo "Building web..."
-  flutter build web --release --dart-define="${DART_DEFINE}"
+  flutter build web --release --dart-define="${DART_DEFINE}" --dart-define="${BUILD_DEFINE}"
   echo
   echo "Web build: ${APP_DIR}/build/web"
 }
