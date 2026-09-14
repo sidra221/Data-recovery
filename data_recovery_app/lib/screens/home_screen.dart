@@ -398,26 +398,26 @@ class _HeroCard extends StatelessWidget {
                 Container(width: 4, color: accent),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
-                          radius: 16,
+                          radius: 14,
                           backgroundColor: iconBg,
-                          child: Icon(icon, size: 18, color: accent),
+                          child: Icon(icon, size: 16, color: accent),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           value,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 28,
+                            fontSize: 24,
                             height: 1,
                             color: Color(0xFF111827),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Text(
                           label.toUpperCase(),
                           style: const TextStyle(
