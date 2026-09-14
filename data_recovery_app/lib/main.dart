@@ -29,25 +29,35 @@ class DataRecoveryApp extends StatelessWidget {
   }
 }
 
-/// مصدر الحقيقة الوحيد لشاشة البداية.
+/// بيقرر **شاشة البداية فقط**، مرة وحدة عند الإقلاع.
 ///
 /// قبل هيك كان `home: LoginScreen()` ثابت، فحتى لو التوكن محفوظ وشغّال
-/// كان الموظف يضطر يسجّل دخول كل مرة يفتح فيها التطبيق. هلق منستنّى
-/// `_restoreSession()` تخلص، وبننتقل حسب نتيجتها.
-class _AuthGate extends ConsumerWidget {
+/// كان الموظف يضطر يسجّل دخول كل مرة. هلق منستنّى `_restoreSession()`
+/// تخلص وبنقرر على أساسها.
+///
+/// مهم: بعد القرار الأول منوقف نتفاعل مع تغيّر الحالة. السبب إن شريط
+/// التنقل السفلي بيستعمل `pushReplacement`، فبيشيل هالمسار من الشجرة
+/// أول ما تنتقلي لأي تبويب. فالاعتماد عليه بتسجيل الخروج بيفشل —
+/// الخروج بينقّل يدوياً من `setting_screen.dart`.
+class _AuthGate extends ConsumerStatefulWidget {
   const _AuthGate();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends ConsumerState<_AuthGate> {
+  AuthStatus? _decided;
+
+  @override
+  Widget build(BuildContext context) {
     final status = ref.watch(authProvider.select((state) => state.status));
-    switch (status) {
-      case AuthStatus.unknown:
-        return const _SessionSplash();
-      case AuthStatus.authenticated:
-        return const HomeScreen();
-      case AuthStatus.unauthenticated:
-        return const LoginScreen();
-    }
+    _decided ??= status == AuthStatus.unknown ? null : status;
+
+    if (_decided == null) return const _SessionSplash();
+    return _decided == AuthStatus.authenticated
+        ? const HomeScreen()
+        : const LoginScreen();
   }
 }
 

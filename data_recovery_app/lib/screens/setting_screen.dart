@@ -7,6 +7,7 @@ import 'personal_information_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'widgets/app_button.dart';
 import 'widgets/soft_surface.dart';
+import 'login_screen.dart';
 
 class SettingScreen extends ConsumerWidget {
   const SettingScreen({super.key});
@@ -58,8 +59,12 @@ class SettingScreen extends ConsumerWidget {
 
     await ref.read(authProvider.notifier).logout();
     if (!context.mounted) return;
-    // _AuthGate بيرجّع شاشة الدخول لحالو؛ منشيل بس أي شاشات مدفوعة فوقه.
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // لازم تنقّل صريح: شريط التنقل السفلي بيستعمل pushReplacement، فالبوابة
+    // يلي بـ main.dart بتكون انشالت من الشجرة وما بتقدر ترجّعنا لشاشة الدخول.
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
   }
 
   @override

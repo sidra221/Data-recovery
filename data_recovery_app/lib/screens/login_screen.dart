@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
 import '../providers/auth_provider.dart';
+import 'home_screen.dart';
 import 'widgets/app_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -40,8 +41,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             username: _identifierController.text.trim(),
             password: _passwordController.text,
           );
-      // ما منتنقّل من هون: _AuthGate بـ main.dart بيبدّل الشاشة
-      // لما تصير الحالة authenticated. تنقّل يدوي هون بيكدّس HomeScreen مرتين.
+      if (!mounted) return;
+      // تنقّل صريح: البوابة بـ main.dart بتقرر شاشة البداية بس،
+      // وما بتتفاعل مع تغيّر الحالة بعد الإقلاع.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(
