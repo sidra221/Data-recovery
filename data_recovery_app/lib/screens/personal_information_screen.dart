@@ -17,10 +17,53 @@ class PersonalInformationScreen extends ConsumerStatefulWidget {
 class _PersonalInformationScreenState extends ConsumerState<PersonalInformationScreen> {
   bool _uploading = false;
 
+  /// بيخيّر بين الاستديو والكاميرا بدل ما يفتح الكاميرا مباشرة.
+  Future<ImageSource?> _askSource() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: Color(0xFF1E3A5F)),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined,
+                  color: Color(0xFF1E3A5F)),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickPhoto() async {
     if (_uploading) return;
+    final source = await _askSource();
+    if (source == null) return;
     final picked = await ImagePicker().pickImage(
-      source: ImageSource.camera,
+      source: source,
       maxWidth: 1200,
       imageQuality: 85,
     );

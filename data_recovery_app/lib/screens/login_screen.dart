@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,26 +146,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   color: Colors.white,
                   child: SizedBox(width: 220, height: 90),
                 ),
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 210,
-            right: -48,
-            child: IgnorePointer(
-              child: CustomPaint(
-                size: Size(120, 120),
-                painter: _StripedCirclePainter(),
-              ),
-            ),
-          ),
-          const Positioned(
-            right: -30,
-            bottom: -24,
-            child: IgnorePointer(
-              child: CustomPaint(
-                size: Size(240, 140),
-                painter: _BrushStrokePainter(),
               ),
             ),
           ),
@@ -367,66 +346,4 @@ class _SoftWaveClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-class _StripedCirclePainter extends CustomPainter {
-  const _StripedCirclePainter();
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.shortestSide / 2;
-    canvas.save();
-    canvas.clipPath(
-      Path()..addOval(Rect.fromCircle(center: center, radius: radius)),
-    );
-    canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF111827));
-    final stripe = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke;
-    for (var x = 8.0; x < size.width; x += 7) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), stripe);
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BrushStrokePainter extends CustomPainter {
-  const _BrushStrokePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.translate(size.width * 0.15, size.height * 0.55);
-    canvas.rotate(-0.42);
-
-    final paint = Paint()
-      ..color = const Color(0xFF5CCBED)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = Path();
-    path.moveTo(0, 0);
-    for (var x = 0.0; x <= size.width; x += 2) {
-      final y = math.sin((x / size.width) * math.pi * 1.6) * 16;
-      path.lineTo(x, y);
-    }
-    canvas.drawPath(path, paint);
-
-    final inner = Paint()
-      ..color = const Color(0x995CCBED)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
-    canvas.translate(0, 16);
-    canvas.drawPath(path, inner);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

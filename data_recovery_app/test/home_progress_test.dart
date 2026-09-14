@@ -70,7 +70,66 @@ void main() {
 
     expect(greenBox, findsOneWidget,
         reason: 'finished=2 فالشريط لازم يكون أخضر بالكامل');
+    // الارتفاع أهم من العرض: الباگ اللي صار كان شريط بعرض كامل وارتفاع صفر.
+    expect(tester.getSize(greenBox.first).height, greaterThan(0),
+        reason: 'شريط بارتفاع صفر = غير مرئي');
     // ملاحظة: الأزرق والبرتقالي موجودين بالشاشة كشرائط جانبية للكروت
     // الأربعة (_HeroCard)، فما منقدر نمنعهن عالمستوى العام.
+  });
+
+  testWidgets('قياس ارتفاع الكروت الأربعة', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [apiClientProvider.overrideWith((ref) => _StubApi())],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    for (final label in ['WAIT CLIENT', 'REJECTED', 'INSPECTION', 'DELIVERY']) {
+      final f = find.text(label);
+      if (f.evaluate().isEmpty) continue;
+      final card = find.ancestor(of: f, matching: find.byType(Material)).first;
+      // ignore: avoid_print
+      print('  كرت $label: ارتفاع ${tester.getSize(card).height.toStringAsFixed(1)}');
+    }
+  });
+
+  testWidgets('بعرض موبايل حقيقي 411x915: الشريط لازم يخضرّ كمان',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(411 * 3, 915 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [apiClientProvider.overrideWith((ref) => _StubApi())],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final greenBox = find.byWidgetPredicate(
+      (w) => w is ColoredBox && w.color == green,
+    );
+    // ignore: avoid_print
+    print('  بعرض موبايل — لقي أخضر؟ ${greenBox.evaluate().length}');
+    if (greenBox.evaluate().isNotEmpty) {
+      final sz = tester.getSize(greenBox.first);
+      // ignore: avoid_print
+      print('  مقاس الأخضر: ${sz.width} x ${sz.height}');
+    }
+    for (final label in ['WAIT CLIENT', 'DELIVERY']) {
+      final f = find.text(label);
+      if (f.evaluate().isEmpty) continue;
+      final card = find.ancestor(of: f, matching: find.byType(Material)).first;
+      // ignore: avoid_print
+      print('  كرت $label: ${tester.getSize(card).height.toStringAsFixed(1)}');
+    }
+    expect(greenBox, findsOneWidget);
+    expect(tester.getSize(greenBox.first).height, greaterThan(0),
+        reason: 'بعرض الموبايل كان بينهار لارتفاع صفر — هون انكشف الباگ');
   });
 }

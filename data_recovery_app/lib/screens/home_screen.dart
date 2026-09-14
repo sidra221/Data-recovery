@@ -465,6 +465,9 @@ class _WorkStatusBar extends StatelessWidget {
             const ColoredBox(color: Color(0xFFE5E7EB)),
             if (total > 0)
               Row(
+                // لازم stretch: ColoredBox بدون طفل بينهار لارتفاع صفر مع
+                // المحاذاة الافتراضية (center)، فالشريط بيصير غير مرئي.
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (pending > 0)
                     Expanded(

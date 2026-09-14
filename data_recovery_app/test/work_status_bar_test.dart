@@ -28,6 +28,7 @@ class BarUnderTest extends StatelessWidget {
             const ColoredBox(color: Color(0xFFE5E7EB)),
             if (total > 0)
               Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (pending > 0)
                     Expanded(
@@ -88,8 +89,10 @@ void main() {
       (w) => w is ColoredBox && w.color == green,
     );
     expect(greenBox, findsOneWidget);
+    final sz = tester.getSize(greenBox);
     // ignore: avoid_print
-    print('  عرض الأخضر: ${tester.getSize(greenBox).width} من 300');
+    print('  مقاس الأخضر: ${sz.width} x ${sz.height}');
+    expect(sz.height, greaterThan(0), reason: 'ارتفاع صفر = شريط غير مرئي');
   });
 
   testWidgets('كل الحالات صفر: مافي ألوان حالة', (tester) async {
