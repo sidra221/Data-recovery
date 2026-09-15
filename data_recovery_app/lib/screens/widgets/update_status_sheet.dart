@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
@@ -42,6 +44,7 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
   String? _submitting;
 
   Future<void> _patch(Map<String, dynamic> payload, String key) async {
+    final l = L.of(context);
     if (_submitting != null) return;
     setState(() => _submitting = key);
     try {
@@ -55,10 +58,10 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
       widget.onUpdated?.call();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to update status');
+      _showError(error.message.isNotEmpty ? error.message : l.failedToUpdateStatus);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to update status');
+      _showError(l.failedToUpdateStatus);
     } finally {
       if (mounted) setState(() => _submitting = null);
     }
@@ -85,6 +88,7 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final busy = _submitting != null;
     final job = widget.job;
 
@@ -110,9 +114,9 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               children: [
                 const Icon(Icons.sync, color: Color(0xFF1E3A5F)),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Update Status',
+                    l.updateStatus,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -127,14 +131,14 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               ],
             ),
             const Divider(height: 20),
-            const _SectionLabel('WORK STATUS'),
+            _SectionLabel(l.workStatusSection),
             const SizedBox(height: 8),
             _ActionRow(
               icon: Icons.history,
               iconBg: const Color(0xFFFFF4E5),
               iconColor: const Color(0xFFE08A1A),
-              title: 'Pending',
-              subtitle: 'Waiting to start',
+              title: l.workPending,
+              subtitle: l.waitingToStart,
               selected: job.workStatus == 'pending' || job.workStatus.isEmpty,
               isLoading: _submitting == 'pending',
               onTap: busy ? null : () => _patch({'work_status': 'pending'}, 'pending'),
@@ -144,8 +148,8 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.sync,
               iconBg: const Color(0xFFDBEAFE),
               iconColor: const Color(0xFF2563EB),
-              title: 'In Progress',
-              subtitle: 'Technician working on repair',
+              title: l.workInProgress,
+              subtitle: l.technicianWorking,
               selected: job.workStatus == 'in_progress',
               isLoading: _submitting == 'in_progress',
               onTap: busy ? null : () => _patch({'work_status': 'in_progress'}, 'in_progress'),
@@ -155,21 +159,21 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.verified,
               iconBg: const Color(0xFFBBF7D0),
               iconColor: const Color(0xFF16A34A),
-              title: 'Done',
-              subtitle: 'Repair finished',
+              title: l.workDone,
+              subtitle: l.repairFinished,
               selected: job.workStatus == 'finished',
               isLoading: _submitting == 'finished',
               onTap: busy ? null : () => _patch({'work_status': 'finished'}, 'finished'),
             ),
             const SizedBox(height: 16),
-            const _SectionLabel('CLIENT DECISION'),
+            _SectionLabel(l.clientDecisionSection),
             const SizedBox(height: 8),
             _ActionRow(
               icon: Icons.thumb_up_outlined,
               iconBg: const Color(0xFFDCFCE7),
               iconColor: const Color(0xFF16A34A),
-              title: 'Agree',
-              subtitle: 'Customer accepted the price',
+              title: l.clientAgree,
+              subtitle: l.customerAcceptedPrice,
               selected: job.clientReport == 'agree',
               isLoading: _submitting == 'agree',
               onTap: busy ? null : () => _patch({'client_report': 'agree'}, 'agree'),
@@ -179,8 +183,8 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.schedule,
               iconBg: const Color(0xFFF3F4F6),
               iconColor: const Color(0xFF4B5563),
-              title: 'Wait Client',
-              subtitle: 'Waiting for the customer reply',
+              title: l.clientWaitClient,
+              subtitle: l.waitingCustomerReply,
               selected: job.clientReport == 'wait_client',
               isLoading: _submitting == 'wait_client',
               onTap: busy ? null : () => _patch({'client_report': 'wait_client'}, 'wait_client'),
@@ -190,8 +194,8 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.close,
               iconBg: const Color(0xFFFFE4E6),
               iconColor: const Color(0xFFF04D4E),
-              title: 'Rejected',
-              subtitle: 'Customer rejected the offer',
+              title: l.clientRejected,
+              subtitle: l.customerRejectedOffer,
               selected: job.clientReport == 'rejected',
               isLoading: _submitting == 'rejected',
               onTap: busy ? null : () => _patch({'client_report': 'rejected'}, 'rejected'),
@@ -201,23 +205,23 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.local_shipping_outlined,
               iconBg: const Color(0xFFE5F9FD),
               iconColor: const Color(0xFF0EA5E9),
-              title: 'Ready for return',
-              subtitle: 'Finished and ready to collect',
+              title: l.clientReady,
+              subtitle: l.finishedAndReady,
               selected: job.clientReport == 'finished',
               isLoading: _submitting == 'ready',
               onTap: busy ? null : () => _patch({'client_report': 'finished'}, 'ready'),
             ),
             const SizedBox(height: 16),
-            const _SectionLabel('HANDOVER'),
+            _SectionLabel(l.handoverSection),
             const SizedBox(height: 8),
             _ActionRow(
               icon: Icons.task_alt,
               iconBg: const Color(0xFFF5F3FF),
               iconColor: const Color(0xFFA855F7),
-              title: job.deliveredAt == null ? 'Mark delivered' : 'Delivered',
+              title: job.deliveredAt == null ? l.markDelivered : l.labelDelivered,
               subtitle: job.deliveredAt == null
-                  ? 'Customer collected the device'
-                  : 'Already marked as delivered',
+                  ? l.customerCollected
+                  : l.alreadyDelivered,
               selected: job.deliveredAt != null,
               isLoading: _submitting == 'deliver',
               onTap: busy || job.deliveredAt != null
@@ -229,8 +233,8 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
               icon: Icons.chat_bubble_outline,
               iconBg: const Color(0xFFDBF0FB),
               iconColor: const Color(0xFF0EA5E9),
-              title: 'Create Report & Invoice',
-              subtitle: 'Send report to customer',
+              title: l.createReportAndInvoice,
+              subtitle: l.sendReportToCustomer,
               bordered: true,
               onTap: busy ? null : _openQuotation,
             ),

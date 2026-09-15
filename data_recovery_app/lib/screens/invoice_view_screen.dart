@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:signature/signature.dart';
 
 import '../core/api_client.dart';
+import '../l10n/app_localizations.dart';
 import '../models/invoice_view.dart';
 import '../providers/auth_provider.dart';
 import 'widgets/app_button.dart';
@@ -56,27 +57,33 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'Failed to load invoice';
+        _error = error.message.isNotEmpty
+            ? error.message
+            : L.of(context).failedToLoadInvoice;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load invoice';
+        _error = L.of(context).failedToLoadInvoice;
       });
     }
   }
 
   String _formatDateTime(DateTime value) {
-    return DateFormat('yyyy-MM-dd hh:mm:ss a', 'en').format(value.toLocal());
+    return DateFormat(
+      'yyyy-MM-dd hh:mm:ss a',
+      Localizations.localeOf(context).languageCode,
+    ).format(value.toLocal());
   }
 
   String _shareText(InvoiceView invoice) {
+    final l = L.of(context);
     return '${invoice.company.name}\n'
-        'Invoice: ${invoice.invoiceNumber}\n'
-        'Customer: ${invoice.customerName}\n'
-        'Phone: ${invoice.customerPhone}\n'
-        'Total: ${invoice.total.toStringAsFixed(2)}';
+        '${l.labelInvoice}: ${invoice.invoiceNumber}\n'
+        '${l.customer}: ${invoice.customerName}\n'
+        '${l.labelPhone}: ${invoice.customerPhone}\n'
+        '${l.colTotal}: ${invoice.total.toStringAsFixed(2)}';
   }
 
   Future<void> _share() async {
@@ -85,6 +92,9 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
     await SharePlus.instance.share(ShareParams(text: _shareText(invoice)));
   }
 
+  // ملاحظة: نصوص الـ PDF بتضل إنكليزي. خط الـ pdf الافتراضي (Helvetica) ما
+  // فيه محارف عربية، فأي نص عربي بيطلع مربّعات فاضية. لتعريبه لازم ننزّل خط
+  // عربي (مثلاً Noto Naskh Arabic) ونضيفه كـ asset ونعرّفه بـ pw.ThemeData.
   Future<void> _saveAndPrint() async {
     final invoice = _invoice;
     if (invoice == null) return;
@@ -136,11 +146,12 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
       penStrokeWidth: 2.4,
       penColor: const Color(0xFF111827),
     );
+    final l = L.of(context);
     final saved = await showDialog<Uint8List>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(seller ? 'Seller Signature' : 'Receiver Signature'),
+          title: Text(seller ? l.sellerSignature : l.receiverSignature),
           content: SizedBox(
             width: 320,
             height: 180,
@@ -152,8 +163,8 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            TextButton(onPressed: controller.clear, child: const Text('Clear')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+            TextButton(onPressed: controller.clear, child: Text(l.clear)),
             TextButton(
               onPressed: () async {
                 if (controller.isEmpty) {
@@ -163,7 +174,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                 final bytes = await controller.toPngBytes();
                 if (context.mounted) Navigator.pop(context, bytes);
               },
-              child: const Text('Save'),
+              child: Text(l.save),
             ),
           ],
         );
@@ -204,12 +215,12 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _error ?? 'Failed to load invoice',
+                      _error ?? L.of(context).failedToLoadInvoice,
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Color(0xFF6B7280)),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(onPressed: _load, child: const Text('Retry')),
+                    TextButton(onPressed: _load, child: Text(L.of(context).retry)),
                   ],
                 ),
               ),
@@ -257,16 +268,17 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildAppHeader() {
+    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(
         children: [
           const _CircleBackButton(),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Electronic Invoice',
+              l.electronicInvoice,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF111827),
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
@@ -280,6 +292,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildDocHeader(InvoiceView invoice) {
+    final l = L.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -314,11 +327,11 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
             ],
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.only(top: 8),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
           child: Text(
-            'Electronic Invoice',
-            style: TextStyle(
+            l.electronicInvoice,
+            style: const TextStyle(
               color: _accent,
               fontWeight: FontWeight.w800,
               fontSize: 16,
@@ -329,9 +342,9 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'invoice ID',
-                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              Text(
+                l.invoiceIdLabel,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
               ),
               Text(
                 invoice.invoiceNumber,
@@ -349,14 +362,15 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildInfoGrid(InvoiceView invoice) {
-    final payment = invoice.terms.toLowerCase().contains('cash') ? 'Cash' : '—';
+    final l = L.of(context);
+    final payment = invoice.terms.toLowerCase().contains('cash') ? l.cash : '—';
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _MetaCell(label: 'Payment Method', value: payment)),
-            Expanded(child: _MetaCell(label: 'Invoice Type', value: 'Tax Invoice')),
+            Expanded(child: _MetaCell(label: l.paymentMethod, value: payment)),
+            Expanded(child: _MetaCell(label: l.invoiceType, value: l.taxInvoice)),
           ],
         ),
         const SizedBox(height: 10),
@@ -364,19 +378,19 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _MetaCell(label: 'Invoice Time', value: _formatDateTime(invoice.createdAt)),
+              child: _MetaCell(label: l.invoiceTime, value: _formatDateTime(invoice.createdAt)),
             ),
-            Expanded(child: _MetaCell(label: 'Customer / Company', value: invoice.customerName)),
+            Expanded(child: _MetaCell(label: l.customerOrCompany, value: invoice.customerName)),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _MetaCell(label: 'Main Employee', value: '—')),
+            Expanded(child: _MetaCell(label: l.mainEmployee, value: '—')),
             Expanded(
               child: _MetaCell(
-                label: 'National Address',
+                label: l.nationalAddress,
                 value: invoice.company.address.isEmpty ? '—' : invoice.company.address,
               ),
             ),
@@ -388,11 +402,11 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
           children: [
             Expanded(
               child: _MetaCell(
-                label: 'Branch Name',
+                label: l.branchName,
                 value: invoice.company.name.isEmpty ? '—' : invoice.company.name,
               ),
             ),
-            Expanded(child: _MetaCell(label: 'Phone', value: invoice.customerPhone)),
+            Expanded(child: _MetaCell(label: l.labelPhone, value: invoice.customerPhone)),
           ],
         ),
       ],
@@ -400,6 +414,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildItemsTable(InvoiceView invoice) {
+    final l = L.of(context);
     final items = invoice.items;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -408,23 +423,23 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
           Container(
             color: _accent,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: const Row(
+            child: Row(
               children: [
-                _HeadCell('No.', width: 28),
-                _HeadCell('Item', width: 48),
-                _HeadCell('Description', width: 140),
-                _HeadCell('Qty', width: 36),
-                _HeadCell('Price', width: 64),
-                _HeadCell('Disc.', width: 48),
-                _HeadCell('Tax', width: 52),
-                _HeadCell('Total', width: 64, alignEnd: true),
+                _HeadCell(l.colNo, width: 28),
+                _HeadCell(l.colItem, width: 48),
+                _HeadCell(l.colDescription, width: 140),
+                _HeadCell(l.colQty, width: 36),
+                _HeadCell(l.colPrice, width: 64),
+                _HeadCell(l.colDisc, width: 48),
+                _HeadCell(l.colTax, width: 52),
+                _HeadCell(l.colTotal, width: 64, alignEnd: true),
               ],
             ),
           ),
           if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Text('No items', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Text(l.noItems, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
             )
           else
             for (var i = 0; i < items.length; i++)
@@ -462,25 +477,26 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildPaidBoxes(InvoiceView invoice) {
+    final l = L.of(context);
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: _PaidBox(label: 'Paid on (1) Main Fund', value: invoice.total.toStringAsFixed(2)),
+              child: _PaidBox(label: l.paidOnMainFund, value: invoice.total.toStringAsFixed(2)),
             ),
             const SizedBox(width: 8),
-            const Expanded(child: _PaidBox(label: 'Paid on (2)', value: '0')),
+            Expanded(child: _PaidBox(label: l.paidOnTwo, value: '0')),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            const Expanded(child: _PaidBox(label: 'Paid on (3)', value: '0')),
+            Expanded(child: _PaidBox(label: l.paidOnThree, value: '0')),
             const SizedBox(width: 8),
             Expanded(
               child: _PaidBox(
-                label: 'Notes',
+                label: l.labelNotes,
                 value: invoice.terms.trim().isEmpty ? '' : invoice.terms.trim(),
               ),
             ),
@@ -491,6 +507,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildSummary(InvoiceView invoice) {
+    final l = L.of(context);
     final exclTax = invoice.subtotal - invoice.discount;
     return Align(
       alignment: Alignment.centerRight,
@@ -498,16 +515,16 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
         width: 220,
         child: Column(
           children: [
-            _SummaryRow(label: 'Subtotal', value: invoice.subtotal.toStringAsFixed(2)),
+            _SummaryRow(label: l.subtotal, value: invoice.subtotal.toStringAsFixed(2)),
             const SizedBox(height: 6),
-            _SummaryRow(label: 'Discount', value: invoice.discount.toStringAsFixed(2)),
+            _SummaryRow(label: l.discount, value: invoice.discount.toStringAsFixed(2)),
             const SizedBox(height: 6),
-            _SummaryRow(label: 'Total Excl. Tax', value: exclTax.toStringAsFixed(2)),
+            _SummaryRow(label: l.totalExclTax, value: exclTax.toStringAsFixed(2)),
             const SizedBox(height: 6),
-            _SummaryRow(label: 'Tax', value: invoice.taxAmount.toStringAsFixed(2)),
+            _SummaryRow(label: l.colTax, value: invoice.taxAmount.toStringAsFixed(2)),
             const SizedBox(height: 6),
             _SummaryRow(
-              label: 'Total With Tax',
+              label: l.totalWithTax,
               value: invoice.total.toStringAsFixed(2),
               emphasize: true,
             ),
@@ -518,20 +535,21 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildSignatures() {
+    final l = L.of(context);
     final invoice = _invoice;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
           child: _SignatureBlock(
-            label: 'Seller Signature',
+            label: l.sellerSignature,
             imageBytes: _sellerSignature,
             onTap: () => _captureSignature(seller: true),
           ),
         ),
         Expanded(
           child: _SignatureBlock(
-            label: 'Receiver Signature',
+            label: l.receiverSignature,
             imageBytes: _receiverSignature,
             onTap: () => _captureSignature(seller: false),
           ),
@@ -550,7 +568,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                 const Icon(Icons.qr_code_2, size: 44, color: Color(0xFF33BEE9)),
               const SizedBox(height: 4),
               Text(
-                invoice?.invoiceNumber ?? 'Verification Code',
+                invoice?.invoiceNumber ?? l.verificationCode,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 8, color: Color(0xFF6B7280)),
               ),
@@ -562,6 +580,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
   }
 
   Widget _buildBottomBar() {
+    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
@@ -572,9 +591,9 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
         children: [
           TextButton(
             onPressed: _share,
-            child: const Text(
-              'Share',
-              style: TextStyle(
+            child: Text(
+              l.share,
+              style: const TextStyle(
                 color: Color(0xFF33BEE9),
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -583,7 +602,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
           ),
           const Spacer(),
           AppButton(
-            label: 'Save & Print',
+            label: l.saveAndPrint,
             width: 160,
             onPressed: _saveAndPrint,
           ),
@@ -738,9 +757,9 @@ class _SignatureBlock extends StatelessWidget {
             height: 48,
             child: imageBytes != null
                 ? Image.memory(imageBytes!, fit: BoxFit.contain)
-                : const Text(
-                    'Tap to sign',
-                    style: TextStyle(color: Color(0xFF33BEE9), fontSize: 13, fontWeight: FontWeight.w600),
+                : Text(
+                    L.of(context).tapToSign,
+                    style: const TextStyle(color: Color(0xFF33BEE9), fontSize: 13, fontWeight: FontWeight.w600),
                   ),
           ),
           const SizedBox(height: 4),

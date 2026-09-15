@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../l10n/app_localizations.dart';
+
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({
     super.key,
-    this.title = 'Scan barcode',
+    this.title,
   });
 
-  final String title;
+  /// null = استعمل العنوان المترجم الافتراضي (القيم الافتراضية
+  /// بالبارامترات لازم تكون const، فما بتقبل ترجمة).
+  final String? title;
 
   static Future<String?> scan(
     BuildContext context, {
-    String title = 'Scan barcode',
+    String? title,
   }) {
     return Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
@@ -48,16 +52,17 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(widget.title),
+        title: Text(widget.title ?? l.scanBarcode),
         actions: [
           TextButton(
             onPressed: () => setState(() => _showManual = !_showManual),
-            child: const Text('Type', style: TextStyle(color: Colors.white)),
+            child: Text(l.typeManually, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -81,8 +86,8 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                     child: TextField(
                       controller: _manualController,
                       autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter code',
+                      decoration: InputDecoration(
+                        hintText: l.enterCode,
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
@@ -102,7 +107,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                         Navigator.of(context).pop(trimmed);
                       }
                     },
-                    child: const Text('OK'),
+                    child: Text(l.ok),
                   ),
                 ],
               ),

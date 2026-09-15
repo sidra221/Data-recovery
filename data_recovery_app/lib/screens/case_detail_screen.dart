@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -36,6 +38,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
   }
 
   Future<void> _load() async {
+    final l = L.of(context);
     setState(() {
       _loading = true;
       _error = null;
@@ -51,13 +54,13 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.message.isNotEmpty ? error.message : 'Failed to load case';
+        _error = error.message.isNotEmpty ? error.message : l.failedToLoadCase;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Failed to load case';
+        _error = l.failedToLoadCase;
       });
     }
   }
@@ -76,6 +79,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final job = _job;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
@@ -84,7 +88,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
         surfaceTintColor: Colors.white,
         elevation: 0,
         title: Text(
-          job == null ? 'Case' : '#${job.invoiceNumber}',
+          job == null ? l.caseTitle : '#${job.invoiceNumber}',
           style: const TextStyle(
             color: Color(0xFF111827),
             fontWeight: FontWeight.w800,
@@ -98,6 +102,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
   }
 
   Widget _buildBody(Job? job) {
+    final l = L.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
 
     if (_error != null) {
@@ -115,7 +120,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('Retry')),
+              TextButton(onPressed: _load, child: Text(l.retry)),
             ],
           ),
         ),
@@ -133,48 +138,48 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
           _StatusStrip(job: job),
           const SizedBox(height: 16),
           _Section(
-            title: 'CUSTOMER',
+            title: l.sectionCustomer,
             rows: [
-              ('Name', job.customerName),
-              ('Phone', job.customerPhone),
-              if (job.customerEmail.isNotEmpty) ('Email', job.customerEmail),
+              (l.labelName, job.customerName),
+              (l.labelPhone, job.customerPhone),
+              if (job.customerEmail.isNotEmpty) (l.labelEmail, job.customerEmail),
             ],
           ),
           const SizedBox(height: 12),
           _Section(
-            title: 'DEVICE',
+            title: l.sectionDevice,
             rows: [
               (
-                'Type',
+                l.labelType,
                 job.hardDiskTypeLabel.isNotEmpty
                     ? job.hardDiskTypeLabel
                     : job.hardDiskType
               ),
-              if (job.deviceModel.isNotEmpty) ('Model', job.deviceModel),
-              if (job.serialNumber.isNotEmpty) ('Serial', job.serialNumber),
+              if (job.deviceModel.isNotEmpty) (l.labelModel, job.deviceModel),
+              if (job.serialNumber.isNotEmpty) (l.labelSerial, job.serialNumber),
               if (job.attachedEquipment.isNotEmpty)
-                ('Attached', job.attachedEquipment),
-              if (job.problem.isNotEmpty) ('Problem', job.problem),
+                (l.labelAttached, job.attachedEquipment),
+              if (job.problem.isNotEmpty) (l.labelProblem, job.problem),
               if (job.inspectionNotes.isNotEmpty)
-                ('Inspection', job.inspectionNotes),
-              if (job.notes.isNotEmpty) ('Notes', job.notes),
+                (l.labelInspection, job.inspectionNotes),
+              if (job.notes.isNotEmpty) (l.labelNotes, job.notes),
             ],
           ),
           const SizedBox(height: 12),
           _Section(
-            title: 'BILLING',
+            title: l.sectionBilling,
             rows: [
-              ('Invoice', '#${job.invoiceNumber}'),
-              ('Barcode', job.barcode),
-              ('Price', job.price == null ? 'Not set' : _money(job.price!)),
+              (l.labelInvoice, '#${job.invoiceNumber}'),
+              (l.labelBarcode, job.barcode),
+              (l.labelPrice, job.price == null ? l.notSet : _money(job.price!)),
               (
-                'Invoice sent',
+                l.labelInvoiceSent,
                 job.invoiceSentAt == null
-                    ? 'No'
+                    ? l.no
                     : _dateTime(job.invoiceSentAt!)
               ),
               if (job.deliveredAt != null)
-                ('Delivered', _dateTime(job.deliveredAt!)),
+                (l.labelDelivered, _dateTime(job.deliveredAt!)),
             ],
           ),
           const SizedBox(height: 12),
@@ -183,7 +188,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
           _TimelineSection(job: job),
           const SizedBox(height: 22),
           AppButton(
-            label: 'Update Status',
+            label: l.updateStatus,
             onPressed: () => UpdateStatusSheet.show(
               context,
               job: job,
@@ -192,12 +197,12 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
           ),
           const SizedBox(height: 10),
           AppTextButton(
-            label: 'Notify Customer',
+            label: l.notifyCustomer,
             onPressed: () => NotifyCustomerSheet.show(context, jobId: job.id),
           ),
           const SizedBox(height: 10),
           AppTextButton(
-            label: 'Quotation / Invoice',
+            label: l.quotationInvoice,
             onPressed: () => _openQuotation(job),
           ),
         ],
@@ -221,23 +226,24 @@ class _StatusStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final chips = <({String label, String value, Color bg, Color fg})>[
       (
-        label: 'Status',
+        label: l.labelStatus,
         value: job.statusLabel.isNotEmpty ? job.statusLabel : job.status,
         bg: const Color(0xFFE5F9FD),
         fg: const Color(0xFF0E7490),
       ),
       if (job.workStatusLabel.isNotEmpty)
         (
-          label: 'Work',
+          label: l.labelWork,
           value: job.workStatusLabel,
           bg: const Color(0xFFDCFCE7),
           fg: const Color(0xFF16A34A),
         ),
       if (job.clientReportLabel.isNotEmpty)
         (
-          label: 'Client',
+          label: l.labelClient,
           value: job.clientReportLabel,
           bg: const Color(0xFFFFF4E5),
           fg: const Color(0xFFB45309),
@@ -286,13 +292,13 @@ class _StatusStrip extends StatelessWidget {
               color: const Color(0xFFFFE4E6),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.warning_amber_rounded,
                     size: 16, color: Color(0xFFF04D4E)),
                 SizedBox(width: 6),
                 Text(
-                  'Overdue',
+                  l.overdue,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -420,12 +426,13 @@ class _AttachmentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeading(
-            'ATTACHMENTS',
+            l.sectionAttachments,
             trailing: Text(
               '${job.attachments.length}',
               style: const TextStyle(
@@ -437,8 +444,8 @@ class _AttachmentsSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (job.attachments.isEmpty)
-            const Text(
-              'No attachments',
+            Text(
+              l.noAttachments,
               style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
             )
           else
@@ -475,6 +482,7 @@ class _TimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final logs = [...job.statusLogs]
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -482,11 +490,11 @@ class _TimelineSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeading('HISTORY'),
+          _SectionHeading(l.sectionHistory),
           const SizedBox(height: 10),
           if (logs.isEmpty)
-            const Text(
-              'No changes yet',
+            Text(
+              l.noChangesYet,
               style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
             )
           else

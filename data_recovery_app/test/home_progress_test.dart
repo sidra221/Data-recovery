@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'helpers.dart';
+
 import 'package:data_recovery_app/core/api_client.dart';
 import 'package:data_recovery_app/core/secure_storage.dart';
 import 'package:data_recovery_app/models/dashboard_stats.dart';
@@ -47,7 +49,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [apiClientProvider.overrideWith((ref) => _StubApi())],
-        child: const MaterialApp(home: HomeScreen()),
+        child: wrapApp(const HomeScreen()),
       ),
     );
     await tester.pump(); // يشغّل _load
@@ -81,7 +83,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [apiClientProvider.overrideWith((ref) => _StubApi())],
-        child: const MaterialApp(home: HomeScreen()),
+        child: wrapApp(const HomeScreen()),
       ),
     );
     await tester.pump();
@@ -105,7 +107,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [apiClientProvider.overrideWith((ref) => _StubApi())],
-        child: const MaterialApp(home: HomeScreen()),
+        child: wrapApp(const HomeScreen()),
       ),
     );
     await tester.pump();

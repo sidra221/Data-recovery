@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -19,6 +21,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
 
   /// بيخيّر بين الاستديو والكاميرا بدل ما يفتح الكاميرا مباشرة.
   Future<ImageSource?> _askSource() {
+    final l = L.of(context);
     return showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.white,
@@ -42,13 +45,13 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
             ListTile(
               leading: const Icon(Icons.photo_library_outlined,
                   color: Color(0xFF1E3A5F)),
-              title: const Text('Choose from gallery'),
+              title: Text(l.chooseFromGallery),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined,
                   color: Color(0xFF1E3A5F)),
-              title: const Text('Take a photo'),
+              title: Text(l.takePhoto),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             const SizedBox(height: 8),
@@ -59,6 +62,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
   }
 
   Future<void> _pickPhoto() async {
+    final l = L.of(context);
     if (_uploading) return;
     final source = await _askSource();
     if (source == null) return;
@@ -78,7 +82,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Photo updated')));
+        ..showSnackBar(SnackBar(content: Text(l.photoUpdated)));
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -88,7 +92,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Failed to upload photo')));
+        ..showSnackBar(SnackBar(content: Text(l.failedToUploadPhoto)));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -96,6 +100,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final profile = ref.watch(authProvider).profile;
     final email = profile?.email ?? '';
     final phone = profile?.phone ?? '';
@@ -174,19 +179,19 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
                   children: [
                     _InfoTile(
                       icon: Icons.mail_outline,
-                      label: 'EMAIL ADDRESS',
+                      label: l.emailAddressCaps,
                       value: email.isEmpty ? '—' : email,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _InfoTile(
                       icon: Icons.smartphone_outlined,
-                      label: 'PHONE NUMBER',
+                      label: l.phoneNumberCaps,
                       value: phone.isEmpty ? '—' : phone,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _InfoTile(
                       icon: Icons.work_outline,
-                      label: 'ROLE / DEPARTMENT',
+                      label: l.roleDepartment,
                       value: role.isEmpty ? '—' : role,
                     ),
                   ],

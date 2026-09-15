@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,16 +32,17 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
 
   static const _accent = Color(0xFF33BEE9);
 
-  static const _deviceTypes = <(String value, String label)>[
-    ('hdd_35', 'HDD 3.5'),
-    ('hdd_25', 'HDD 2.5'),
-    ('ssd', 'SSD'),
-    ('nvme', 'NVMe'),
-    ('external', 'External HDD'),
-    ('usb', 'USB Flash'),
-    ('memory_card', 'Memory Card'),
-    ('other', 'Other'),
-  ];
+  // القيم مفاتيح API فما تغيّرت؛ التسميات مترجمة فبتنبنى وقت العرض.
+  List<(String value, String label)> _deviceTypes(L l) => [
+        ('hdd_35', l.typeHdd35),
+        ('hdd_25', l.typeHdd25),
+        ('ssd', l.typeSsd),
+        ('nvme', l.typeNvme),
+        ('external', l.typeExternal),
+        ('usb', l.typeUsb),
+        ('memory_card', l.typeMemoryCard),
+        ('other', l.typeOther),
+      ];
 
   String? _deviceType;
   bool _isSubmitting = false;
@@ -67,6 +70,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   }
 
   Future<void> _submit() async {
+    final l = L.of(context);
     if (_isSubmitting || !_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -95,14 +99,14 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Case created successfully')));
+        ..showSnackBar(SnackBar(content: Text(l.caseCreated)));
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to create case');
+      _showError(error.message.isNotEmpty ? error.message : l.failedToCreateCase);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to create case');
+      _showError(l.failedToCreateCase);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -115,7 +119,8 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   }
 
   String? _required(String? value) {
-    if (value == null || value.trim().isEmpty) return 'This field is required';
+    final l = L.of(context);
+    if (value == null || value.trim().isEmpty) return l.fieldRequired;
     return null;
   }
 
@@ -134,6 +139,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
   /// الصور بتنخزّن محلياً بـ _files وبتنرفع بعد ما تنحفظ القضية —
   /// المرفقات بدها id القضية، وهي لسا ما انعملت بهالمرحلة.
   Future<void> _addAttachment() async {
+    final l = L.of(context);
     final source = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -157,19 +163,19 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined,
                   color: Color(0xFF1E3A5F)),
-              title: const Text('Take a photo'),
+              title: Text(l.takePhoto),
               onTap: () => Navigator.of(sheetContext).pop('camera'),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined,
                   color: Color(0xFF1E3A5F)),
-              title: const Text('Choose from gallery'),
+              title: Text(l.chooseFromGallery),
               onTap: () => Navigator.of(sheetContext).pop('gallery'),
             ),
             ListTile(
               leading:
                   const Icon(Icons.attach_file, color: Color(0xFF1E3A5F)),
-              title: const Text('Choose a file (PDF, image)'),
+              title: Text(l.chooseFile),
               onTap: () => Navigator.of(sheetContext).pop('file'),
             ),
             const SizedBox(height: 8),
@@ -206,6 +212,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -220,9 +227,9 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     _CircleBackButton(
                       onPressed: _isSubmitting ? () {} : () => Navigator.of(context).pop(),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Create New Case',
+                        l.createNewCase,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF1F2937),
@@ -239,10 +246,10 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                   children: [
-                    const _SectionTitle('CUSTOMER INFORMATION'),
+                    _SectionTitle(l.customerInformation),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Full Name',
+                      label: l.fullName,
                       wrap: false,
                       child: RawAutocomplete<Customer>(
                         textEditingController: _nameController,
@@ -265,7 +272,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                               textInputAction: TextInputAction.next,
                               validator: _required,
                               decoration: _inputDecoration(
-                                hint: 'Enter Full Name',
+                                hint: l.enterFullName,
                                 suffix: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
                               ),
                             ),
@@ -300,7 +307,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     ),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'phone Number',
+                      label: l.phoneNumber,
                       child: TextFormField(
                         controller: _phoneController,
                         enabled: !_isSubmitting,
@@ -312,7 +319,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     ),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Email Address',
+                      label: l.emailAddress,
                       child: TextFormField(
                         controller: _emailController,
                         enabled: !_isSubmitting,
@@ -322,32 +329,32 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    const _SectionTitle('DEVICE DETAILS'),
+                    _SectionTitle(l.deviceDetails),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Device Type',
+                      label: l.deviceType,
                       child: DropdownButtonFormField<String>(
                         initialValue: _deviceType,
                         isExpanded: true,
-                        hint: const Text(
-                          'Device type',
+                        hint: Text(
+                          l.deviceType,
                           style: TextStyle(color: Color(0xFF9CA3AF)),
                         ),
-                        decoration: _inputDecoration(hint: 'Device type'),
+                        decoration: _inputDecoration(hint: l.deviceType),
                         items: [
-                          for (final item in _deviceTypes)
+                          for (final item in _deviceTypes(l))
                             DropdownMenuItem(value: item.$1, child: Text(item.$2)),
                         ],
                         onChanged: _isSubmitting
                             ? null
                             : (value) => setState(() => _deviceType = value),
                         validator: (value) =>
-                            value == null || value.isEmpty ? 'This field is required' : null,
+                            value == null || value.isEmpty ? l.fieldRequired : null,
                       ),
                     ),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Serial Number',
+                      label: l.serialNumber,
                       child: TextFormField(
                         controller: _serialController,
                         enabled: !_isSubmitting,
@@ -361,7 +368,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                                 : () async {
                                     final code = await BarcodeScannerScreen.scan(
                                       context,
-                                      title: 'Scan serial',
+                                      title: l.scanSerial,
                                     );
                                     if (code == null || !mounted) return;
                                     _serialController.text = code;
@@ -373,19 +380,19 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     ),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Recovery Details',
+                      label: l.recoveryDetails,
                       child: TextFormField(
                         controller: _problemController,
                         enabled: !_isSubmitting,
                         maxLines: 3,
                         textInputAction: TextInputAction.done,
                         decoration: _inputDecoration(
-                          hint: 'What the customer reported',
+                          hint: l.whatCustomerReported,
                         ),
                       ),
                     ),
                     const SizedBox(height: 28),
-                    const _SectionTitle('MEDIA & DOCUMENT'),
+                    _SectionTitle(l.mediaAndDocument),
                     const SizedBox(height: 16),
                     _UploadPlaceholder(
                       files: _files,
@@ -394,15 +401,15 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                       onRemove: (index) => setState(() => _files.removeAt(index)),
                     ),
                     const SizedBox(height: 28),
-                    const _SectionTitle('STATUS'),
+                    _SectionTitle(l.statusSection),
                     const SizedBox(height: 16),
                     _LabeledField(
-                      label: 'Current Status',
+                      label: l.currentStatus,
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: const Text(
-                          'Received',
+                        child: Text(
+                          l.statusReceived,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -413,7 +420,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     ),
                     const SizedBox(height: 28),
                     AppButton(
-                      label: 'Add Case',
+                      label: l.addCase,
                       isLoading: _isSubmitting,
                       onPressed: _submit,
                     ),
@@ -552,6 +559,7 @@ class _UploadPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Column(
       children: [
         CustomPaint(
@@ -559,7 +567,7 @@ class _UploadPlaceholder extends StatelessWidget {
           child: InkWell(
             onTap: enabled ? onAdd : null,
             borderRadius: BorderRadius.circular(16),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(vertical: 28, horizontal: 16),
               child: Column(
                 children: [
@@ -570,7 +578,7 @@ class _UploadPlaceholder extends StatelessWidget {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Add Photos/Documents',
+                    l.addPhotosDocuments,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF111827),
@@ -578,7 +586,7 @@ class _UploadPlaceholder extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Upload JPG, PNG or PDF up to 10MB',
+                    l.uploadHint,
                     style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                   ),
                 ],

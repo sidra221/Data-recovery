@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +29,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _load() async {
+    final l = L.of(context);
     setState(() {
       _isLoading = true;
       _error = null;
@@ -42,27 +45,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'Failed to load alerts';
+        _error = error.message.isNotEmpty ? error.message : l.failedToLoadAlerts;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load alerts';
+        _error = l.failedToLoadAlerts;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Notifications',
+        title: Text(
+          l.notifications,
           style: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
         ),
       ),
@@ -71,6 +75,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Widget _buildBody() {
+    final l = L.of(context);
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -80,15 +85,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_error!, style: const TextStyle(color: Color(0xFF6B7280))),
-            TextButton(onPressed: _load, child: const Text('Retry')),
+            TextButton(onPressed: _load, child: Text(l.retry)),
           ],
         ),
       );
     }
     if (_jobs.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No overdue wait-client cases',
+          l.noOverdueCases,
           style: TextStyle(color: Color(0xFF6B7280)),
         ),
       );

@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
@@ -33,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    final l = L.of(context);
     if (_isSubmitting || !_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -50,11 +53,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(
-        error.message.isNotEmpty ? error.message : 'Invalid login credentials',
+        error.message.isNotEmpty ? error.message : l.invalidCredentials,
       );
     } catch (_) {
       if (!mounted) return;
-      _showError('Invalid login credentials');
+      _showError(l.invalidCredentials);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -117,6 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -185,8 +189,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 36),
-                    const Text(
-                      'Welcome Back',
+                    Text(
+                      l.welcomeBack,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,
@@ -196,8 +200,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Access your dashboard and manage recovery cases',
+                    Text(
+                      l.loginSubtitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -220,12 +224,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         enabled: !_isSubmitting,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'This field is required';
+                            return l.fieldRequired;
                           }
                           return null;
                         },
                         decoration: _fieldDecoration(
-                          hint: 'Username',
+                          hint: l.username,
                           prefix: const Icon(Icons.person_outline, color: Color(0xFF9CA3AF)),
                         ),
                       ),
@@ -241,12 +245,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onFieldSubmitted: (_) => _submit(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'This field is required';
+                            return l.fieldRequired;
                           }
                           return null;
                         },
                         decoration: _fieldDecoration(
-                          hint: 'Password',
+                          hint: l.password,
                           prefix: const Icon(Icons.lock_outline, color: Color(0xFF9CA3AF)),
                           suffix: IconButton(
                             onPressed: () {
@@ -264,7 +268,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     AppButton(
-                      label: 'Sign in',
+                      label: l.signIn,
                       isLoading: _isSubmitting,
                       onPressed: _submit,
                     ),

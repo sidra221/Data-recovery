@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'l10n/app_localizations.dart';
 import 'providers/auth_provider.dart';
+import 'providers/locale_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
@@ -10,19 +12,34 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('en');
-  runApp(const ProviderScope(child: DataRecoveryApp()));
+  await initializeDateFormatting('ar');
+
+  // منقرا اللغة المحفوظة قبل runApp حتى التطبيق يفتح بلغة المستخدم
+  // مباشرة، بدون ما يرمش بالإنكليزي أول ثانية.
+  final saved = await LocaleNotifier.loadSavedLocale();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        localeProvider.overrideWith(() => LocaleNotifier()..seed(saved)),
+      ],
+      child: const DataRecoveryApp(),
+    ),
+  );
 }
 
-class DataRecoveryApp extends StatelessWidget {
+class DataRecoveryApp extends ConsumerWidget {
   const DataRecoveryApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     return MaterialApp(
       title: '01 Data Recovery',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('en'),
-      supportedLocales: const [Locale('en')],
+      locale: locale,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: L.localizationsDelegates,
       theme: AppTheme.light,
       home: const _AuthGate(),
     );

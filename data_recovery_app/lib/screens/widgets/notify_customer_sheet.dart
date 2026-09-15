@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -49,6 +51,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
   }
 
   Future<void> _openWhatsAppPreview() async {
+    final l = L.of(context);
     setState(() => _isLoadingInvoice = true);
     try {
       final invoice = await ref.read(apiClientProvider).getInvoice(widget.jobId);
@@ -61,20 +64,21 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to load invoice text');
+      _showError(error.message.isNotEmpty ? error.message : l.failedToLoadInvoiceText);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to load invoice text');
+      _showError(l.failedToLoadInvoiceText);
     } finally {
       if (mounted) setState(() => _isLoadingInvoice = false);
     }
   }
 
   Future<void> _sendWhatsApp() async {
+    final l = L.of(context);
     if (_isSending) return;
     final rawUrl = _whatsappUrl;
     if (rawUrl == null || rawUrl.isEmpty) {
-      _showError('WhatsApp link is unavailable');
+      _showError(l.whatsappUnavailable);
       return;
     }
 
@@ -92,7 +96,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(content: Text('Sent automatically via server')),
+            SnackBar(content: Text(l.sentAutomatically)),
           );
         Navigator.of(context).pop();
         return;
@@ -107,10 +111,10 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to record send');
+      _showError(error.message.isNotEmpty ? error.message : l.failedToRecordSend);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to open WhatsApp or record send');
+      _showError(l.failedToOpenWhatsapp);
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -130,6 +134,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -161,9 +166,9 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
                   child: Icon(Icons.notifications_active, color: Color(0xFF22C55E)),
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Notify Customer - Device Ready',
+                    l.notifyDeviceReady,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -178,15 +183,15 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
               ],
             ),
             if (_step == _NotifyStep.channel) ...[
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: Text(
-                  'Send pickup notification',
+                  l.sendPickupNotification,
                   style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
                 ),
               ),
               _ChannelCard(
-                label: 'WhatsApp',
+                label: l.whatsapp,
                 background: const Color(0xFFDBF8E5),
                 iconColor: const Color(0xFF22C55E),
                 icon: Icons.chat_bubble_outline,
@@ -230,14 +235,14 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
                     onPressed: _isSending
                         ? null
                         : () => setState(() => _isEditing = true),
-                    child: const Text(
-                      'Edit',
+                    child: Text(
+                      l.edit,
                       style: TextStyle(color: Color(0xFF3B82F6)),
                     ),
                   ),
                   const Spacer(),
                   AppButton(
-                    label: 'Send',
+                    label: l.send,
                     width: 140,
                     isLoading: _isSending,
                     onPressed: _sendWhatsApp,

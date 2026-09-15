@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -60,6 +62,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final state = ref.watch(customersProvider);
 
     return Scaffold(
@@ -81,10 +84,10 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
                     child: Text(
-                      'Customers List',
+                      l.customersList,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -98,7 +101,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
                       controller: _searchController,
                       onChanged: _onSearchChanged,
                       decoration: InputDecoration(
-                        hintText: 'Search Name, Email, phone',
+                        hintText: l.searchCustomersHint,
                         hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                         prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF)),
                         filled: true,
@@ -134,6 +137,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
   }
 
   Widget _buildBody(CustomersState state) {
+    final l = L.of(context);
     if (state.isLoading && !_isRefreshing) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -153,7 +157,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _load,
-                child: const Text('Retry'),
+                child: Text(l.retry),
               ),
             ],
           ),
@@ -166,9 +170,9 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
         onRefresh: _refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
+          children: [
             SizedBox(height: 180),
-            Center(child: Text('No customers found')),
+            Center(child: Text(l.noCustomersFound)),
           ],
         ),
       );
@@ -190,7 +194,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
                     )
                   : TextButton(
                       onPressed: () => ref.read(customersProvider.notifier).loadMore(),
-                      child: const Text('Load more'),
+                      child: Text(l.loadMore),
                     ),
             );
           }
@@ -212,9 +216,10 @@ class _CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final initial = customer.fullName.isNotEmpty ? customer.fullName[0].toUpperCase() : '?';
     final lastVisit = customer.lastVisit == null
-        ? 'Last: -'
+        ? l.lastDash
         : 'Last: ${DateFormat('d MMM yyyy', 'en').format(customer.lastVisit!.toLocal())}';
 
     return Container(

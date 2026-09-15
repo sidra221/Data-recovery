@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:data_recovery_app/core/api_client.dart';
@@ -72,7 +74,7 @@ Future<void> _pump(WidgetTester tester, _SpyApi api) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [apiClientProvider.overrideWith((ref) => api)],
-      child: const MaterialApp(home: ReportsScreen()),
+      child: wrapApp(const ReportsScreen()),
     ),
   );
   await tester.pump();

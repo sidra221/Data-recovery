@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../core/api_client.dart';
+import '../l10n/app_localizations.dart';
 import '../models/quotation.dart';
 import '../providers/quotations_provider.dart';
 import 'invoice_view_screen.dart';
@@ -33,15 +34,27 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _discountController = TextEditingController(text: '0');
   final _taxRateController = TextEditingController(text: '0');
-  final _termsController = TextEditingController(text: 'Payment: 100% CASH');
+  final _termsController = TextEditingController();
 
   final List<_LineItem> _items = [];
   bool _isSubmitting = false;
+  bool _seededTerms = false;
 
   @override
   void initState() {
     super.initState();
     _items.add(_LineItem(onChanged: _onItemChanged));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // الشروط الافتراضية بدها ترجمة، والترجمة ما بتكون جاهزة بـ initState.
+    // منزرعها مرة وحدة بس، حتى ما ندعس على شي كتبه المستخدم.
+    if (!_seededTerms) {
+      _seededTerms = true;
+      _termsController.text = L.of(context).paymentCash;
+    }
   }
 
   @override
@@ -90,7 +103,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
     if (_isSubmitting) return;
 
     if (_items.isEmpty) {
-      _showError('Add at least one item');
+      _showError(L.of(context).addAtLeastOneItem);
       return;
     }
 
@@ -129,10 +142,10 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to send quotation');
+      _showError(error.message.isNotEmpty ? error.message : L.of(context).failedToSendQuotation);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to send quotation');
+      _showError(L.of(context).failedToSendQuotation);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -145,18 +158,19 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   String? _required(String? value) {
-    if (value == null || value.trim().isEmpty) return 'This field is required';
+    if (value == null || value.trim().isEmpty) return L.of(context).fieldRequired;
     return null;
   }
 
   String? _positivePrice(String? value) {
     final parsed = double.tryParse(value?.trim() ?? '');
-    if (parsed == null || parsed <= 0) return 'Enter a price greater than zero';
+    if (parsed == null || parsed <= 0) return L.of(context).enterPriceGreaterThanZero;
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: SafeArea(
@@ -171,11 +185,11 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                     _CircleBackButton(
                       onPressed: _isSubmitting ? () {} : () => Navigator.of(context).pop(),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'QUOTATION',
+                        l.quotation,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFF111827),
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
@@ -202,13 +216,13 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                             const SizedBox(height: 20),
                             _buildPartyGrid(),
                             const SizedBox(height: 22),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(Icons.sell_outlined, color: _accent, size: 20),
-                                SizedBox(width: 8),
+                                const Icon(Icons.sell_outlined, color: _accent, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Financial Offer',
-                                  style: TextStyle(
+                                  l.financialOffer,
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 16,
                                     color: Color(0xFF111827),
@@ -223,9 +237,9 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                               child: TextButton.icon(
                                 onPressed: _isSubmitting ? null : _addItem,
                                 icon: const Icon(Icons.add, color: _accent, size: 20),
-                                label: const Text(
-                                  'Add Item',
-                                  style: TextStyle(
+                                label: Text(
+                                  l.addItem,
+                                  style: const TextStyle(
                                     color: _accent,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -236,7 +250,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                               children: [
                                 Expanded(
                                   child: _LabeledField(
-                                    label: 'Discount',
+                                    label: l.discount,
                                     child: TextFormField(
                                       controller: _discountController,
                                       enabled: !_isSubmitting,
@@ -251,7 +265,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _LabeledField(
-                                    label: 'Tax Rate %',
+                                    label: l.taxRate,
                                     child: TextFormField(
                                       controller: _taxRateController,
                                       enabled: !_isSubmitting,
@@ -266,17 +280,17 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            const Row(
+                            Row(
                               children: [
-                                CircleAvatar(
+                                const CircleAvatar(
                                   radius: 12,
                                   backgroundColor: Color(0xFFD9F3FB),
                                   child: Icon(Icons.edit_note, size: 16, color: _accent),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'TERMS AND CONDITIONS:',
-                                  style: TextStyle(
+                                  l.termsAndConditions,
+                                  style: const TextStyle(
                                     color: _accent,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13,
@@ -290,17 +304,17 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
                               enabled: !_isSubmitting,
                               minLines: 2,
                               maxLines: 5,
-                              decoration: _inputDecoration(hint: 'Payment: 100% CASH'),
+                              decoration: _inputDecoration(hint: l.paymentCash),
                             ),
                             const SizedBox(height: 10),
-                            const _NumberedTerm(
+                            _NumberedTerm(
                               number: '2',
-                              text: 'All prices are in Saudi Riyals.',
+                              text: l.pricesInRiyals,
                             ),
                             const SizedBox(height: 6),
-                            const _NumberedTerm(
+                            _NumberedTerm(
                               number: '3',
-                              text: 'Prices are quoted for quantity mentioned and not applicable if change in quantity.',
+                              text: l.pricesForQuantity,
                             ),
                           ],
                         ),
@@ -318,6 +332,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   Widget _buildQuoteHeader() {
+    final l = L.of(context);
     return Column(
       children: [
         Container(
@@ -349,9 +364,9 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'QUOTATION',
-          style: TextStyle(
+        Text(
+          l.quotation,
+          style: const TextStyle(
             color: _accent,
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -363,7 +378,11 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   Widget _buildPartyGrid() {
-    final dateText = DateFormat('d MMM yyyy', 'en').format(DateTime.now());
+    final l = L.of(context);
+    final dateText = DateFormat(
+      'd MMM yyyy',
+      Localizations.localeOf(context).languageCode,
+    ).format(DateTime.now());
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -374,11 +393,11 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MetaLine(label: 'To :', value: _customerName),
+                  _MetaLine(label: l.toColon, value: _customerName),
                   const SizedBox(height: 10),
-                  _MetaLine(label: 'Person name', value: _customerName),
+                  _MetaLine(label: l.personName, value: _customerName),
                   const SizedBox(height: 10),
-                  const _MetaLine(label: 'Tel', value: '—'),
+                  _MetaLine(label: l.tel, value: '—'),
                 ],
               ),
             ),
@@ -387,11 +406,11 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _MetaLine(label: 'From:', value: _companyName),
+                  _MetaLine(label: l.fromColon, value: _companyName),
                   const SizedBox(height: 10),
-                  _MetaLine(label: 'Mobile', value: _customerPhone),
+                  _MetaLine(label: l.mobile, value: _customerPhone),
                   const SizedBox(height: 10),
-                  _MetaLine(label: 'Date', value: dateText),
+                  _MetaLine(label: l.labelDate, value: dateText),
                 ],
               ),
             ),
@@ -411,6 +430,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   Widget _buildItemsTable() {
+    final l = L.of(context);
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -422,29 +442,29 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
           Container(
             color: _accent,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 22,
                   child: Text('#', style: _headerStyle),
                 ),
                 Expanded(
                   flex: 3,
-                  child: Text('DESCRIPTION', style: _headerStyle),
+                  child: Text(l.description, style: _headerStyle),
                 ),
                 SizedBox(
                   width: 52,
-                  child: Text('QTY', style: _headerStyle),
+                  child: Text(l.qty, style: _headerStyle),
                 ),
                 SizedBox(
                   width: 72,
-                  child: Text('UNIT PRICE', style: _headerStyle),
+                  child: Text(l.unitPrice, style: _headerStyle),
                 ),
                 SizedBox(
                   width: 58,
-                  child: Text('TOTAL', style: _headerStyle, textAlign: TextAlign.end),
+                  child: Text(l.total, style: _headerStyle, textAlign: TextAlign.end),
                 ),
-                SizedBox(width: 28),
+                const SizedBox(width: 28),
               ],
             ),
           ),
@@ -454,10 +474,10 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'TOTAL',
-                    style: TextStyle(
+                    l.total,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
@@ -482,6 +502,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
 
   Widget _buildItemRow(int index) {
     final item = _items[index];
+    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
       decoration: const BoxDecoration(
@@ -509,7 +530,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
               validator: _required,
               textInputAction: TextInputAction.next,
               style: const TextStyle(fontSize: 12),
-              decoration: _compactDecoration(hint: 'Item'),
+              decoration: _compactDecoration(hint: l.item),
             ),
           ),
           const SizedBox(width: 4),
@@ -571,6 +592,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
   }
 
   Widget _buildBottomBar() {
+    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
@@ -581,9 +603,9 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
         children: [
           TextButton(
             onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
+            child: Text(
+              l.cancel,
+              style: const TextStyle(
                 color: Color(0xFF33BEE9),
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -592,7 +614,7 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
           ),
           const Spacer(),
           AppButton(
-            label: 'Send',
+            label: l.send,
             width: 140,
             isLoading: _isSubmitting,
             onPressed: _send,

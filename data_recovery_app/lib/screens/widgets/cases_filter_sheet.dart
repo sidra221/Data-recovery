@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 import 'app_button.dart';
 import 'soft_surface.dart';
 
@@ -45,13 +47,15 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
   DateTime? _customStart;
   DateTime? _customEnd;
 
-  static const _options = <(CasesDateRange, String)>[
-    (CasesDateRange.allTime, 'All Time'),
-    (CasesDateRange.custom, 'Custom'),
-    (CasesDateRange.thisWeek, 'This week'),
-    (CasesDateRange.today, 'Today'),
-    (CasesDateRange.thisMonth, 'This month'),
-  ];
+  /// كانت قائمة const بمستوى الكلاس — والترجمة بتحتاج context،
+  /// فصارت دالة بتنبنى وقت العرض.
+  List<(CasesDateRange, String)> _options(L l) => [
+        (CasesDateRange.allTime, l.allTime),
+        (CasesDateRange.custom, l.custom),
+        (CasesDateRange.thisWeek, l.thisWeek),
+        (CasesDateRange.today, l.today),
+        (CasesDateRange.thisMonth, l.thisMonth),
+      ];
 
   @override
   void initState() {
@@ -61,6 +65,7 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
@@ -83,9 +88,9 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
               children: [
                 const Icon(Icons.tune, color: Color(0xFF111827)),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Filter',
+                    l.filter,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -100,8 +105,8 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Date Range',
+            Text(
+              l.dateRange,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -113,7 +118,7 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
               spacing: 10,
               runSpacing: 10,
               children: [
-                for (final option in _options)
+                for (final option in _options(l))
                   _FilterPill(
                     label: option.$2,
                     selected: _range == option.$1,
@@ -160,8 +165,8 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
                     _customStart = null;
                     _customEnd = null;
                   }),
-                  child: const Text(
-                    'Clear All',
+                  child: Text(
+                    l.clearAll,
                     style: TextStyle(
                       color: Color(0xFF33BEE9),
                       fontWeight: FontWeight.w700,
@@ -170,7 +175,7 @@ class _CasesFilterSheetState extends State<CasesFilterSheet> {
                 ),
                 const Spacer(),
                 AppButton(
-                  label: 'Apply Filter',
+                  label: l.applyFilter,
                   width: 160,
                   onPressed: () => Navigator.of(context).pop(
                     CasesFilterResult(

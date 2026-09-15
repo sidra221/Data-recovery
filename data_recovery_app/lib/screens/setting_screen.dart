@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/locale_provider.dart';
 import 'help_center_screen.dart';
 import 'personal_information_screen.dart';
 import 'widgets/app_bottom_nav.dart';
@@ -12,9 +15,9 @@ import 'login_screen.dart';
 class SettingScreen extends ConsumerWidget {
   const SettingScreen({super.key});
 
-  String _displayName(String? username) {
+  String _displayName(String? username, L l) {
     final raw = (username ?? '').trim();
-    if (raw.isEmpty) return 'Employee';
+    if (raw.isEmpty) return l.employee;
     return raw
         .replaceAll(RegExp(r'[._-]+'), ' ')
         .split(' ')
@@ -24,28 +27,29 @@ class SettingScreen extends ConsumerWidget {
   }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final l = L.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: const Color(0x66000000),
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: Text(l.logOut),
+        content: Text(l.logOutConfirm),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           Row(
             children: [
               Expanded(
                 child: AppTextButton(
-                  label: 'Cancel',
+                  label: l.cancel,
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: AppButton(
-                  label: 'Log out',
+                  label: l.logOut,
                   variant: AppButtonVariant.danger,
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
@@ -69,9 +73,10 @@ class SettingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = L.of(context);
     final username = ref.watch(authProvider).username;
     final profile = ref.watch(authProvider).profile;
-    final name = _displayName(username);
+    final name = _displayName(username, l);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
@@ -94,9 +99,9 @@ class SettingScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Setting',
+                            l.settings,
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
@@ -132,16 +137,16 @@ class SettingScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      profile?.role ?? 'IT Employee',
+                      profile?.role ?? l.itEmployee,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                     ),
                     const SizedBox(height: 28),
-                    const _SectionLabel('ACCOUNT'),
+                    _SectionLabel(l.sectionAccount),
                     const SizedBox(height: 10),
                     _SettingsCard(
                       icon: Icons.person_outline,
-                      label: 'Personal Information',
+                      label: l.personalInformation,
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -151,11 +156,11 @@ class SettingScreen extends ConsumerWidget {
                       },
                     ),
                     const SizedBox(height: 22),
-                    const _SectionLabel('SUPPORT'),
+                    _SectionLabel(l.sectionSupport),
                     const SizedBox(height: 10),
                     _SettingsCard(
                       icon: Icons.help_outline,
-                      label: 'Help Center',
+                      label: l.helpCenter,
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -180,38 +185,49 @@ class SettingScreen extends ConsumerWidget {
   }
 }
 
-class _LanguageChip extends StatelessWidget {
+/// شريحة تبديل اللغة. كانت نص ثابت «English» بدون وظيفة —
+/// هلق بتعرض اللغة **التانية** (يعني الوجهة لو ضغطت) وبتبدّل فعلياً.
+class _LanguageChip extends ConsumerWidget {
   const _LanguageChip();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final isArabic = locale.languageCode == 'ar';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+        onTap: () => ref.read(localeProvider.notifier).toggle(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.language, size: 18, color: Color(0xFF6B7280)),
-          SizedBox(width: 6),
-          Text(
-            'English',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF111827),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.language, size: 18, color: Color(0xFF6B7280)),
+              const SizedBox(width: 6),
+              Text(
+                isArabic ? 'English' : 'العربية',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -293,13 +309,14 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return SoftSurface(
       radius: 16,
       color: const Color(0xFFFFE4E6),
       shadowColor: const Color(0x14EF4444),
       child: InkWell(
         onTap: onTap,
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -307,7 +324,7 @@ class _LogoutButton extends StatelessWidget {
               Icon(Icons.logout, color: Color(0xFFEF4444), size: 20),
               SizedBox(width: 8),
               Text(
-                'Log out',
+                l.logOut,
                 style: TextStyle(
                   color: Color(0xFFEF4444),
                   fontSize: 16,

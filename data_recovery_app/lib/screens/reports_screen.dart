@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -43,9 +45,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       _searchController.text.trim().isNotEmpty || _from != null || _to != null;
 
   Future<void> _search() async {
+    final l = L.of(context);
     if (!_hasCriteria) {
       setState(() {
-        _error = 'Enter a serial, phone, name, invoice — or pick a date range';
+        _error = l.searchNeedsCriteria;
         _results = const [];
         _searched = false;
       });
@@ -75,7 +78,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         _loading = false;
         _searched = true;
         _results = const [];
-        _error = error.message.isNotEmpty ? error.message : 'Search failed';
+        _error = error.message.isNotEmpty ? error.message : l.searchFailed;
       });
     } catch (_) {
       if (!mounted) return;
@@ -83,7 +86,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         _loading = false;
         _searched = true;
         _results = const [];
-        _error = 'Search failed';
+        _error = l.searchFailed;
       });
     }
   }
@@ -123,14 +126,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Reports',
+        title: Text(
+          l.reports,
           style: TextStyle(
             color: Color(0xFF111827),
             fontWeight: FontWeight.w800,
@@ -140,7 +144,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         iconTheme: const IconThemeData(color: Color(0xFF111827)),
         actions: [
           if (_hasCriteria || _searched)
-            TextButton(onPressed: _clear, child: const Text('Clear')),
+            TextButton(onPressed: _clear, child: Text(l.clear)),
         ],
       ),
       body: Column(
@@ -162,6 +166,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   Widget _buildResults() {
+    final l = L.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
 
     if (_error != null) {
@@ -169,16 +174,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
 
     if (!_searched) {
-      return const _Hint(
+      return _Hint(
         icon: Icons.search,
-        text: 'Search by serial, phone, name, invoice number — or a date range',
+        text: l.searchReportsEmptyHint,
       );
     }
 
     if (_results.isEmpty) {
-      return const _Hint(
+      return _Hint(
         icon: Icons.inbox_outlined,
-        text: 'No cases match this search',
+        text: l.noCasesMatch,
       );
     }
 
@@ -228,6 +233,7 @@ class _SearchPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -241,7 +247,7 @@ class _SearchPanel extends StatelessWidget {
             enableSuggestions: false,
             onSubmitted: (_) => onSubmit(),
             decoration: InputDecoration(
-              hintText: 'Serial, phone, name or invoice number',
+              hintText: l.searchReportsHint,
               hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF)),
               filled: true,
@@ -258,16 +264,16 @@ class _SearchPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _DateButton(
-                  label: 'From',
-                  value: from == null ? 'Any' : uiDate.format(from!),
+                  label: l.dateFrom,
+                  value: from == null ? l.dateAny : uiDate.format(from!),
                   onTap: loading ? null : onPickFrom,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _DateButton(
-                  label: 'To',
-                  value: to == null ? 'Any' : uiDate.format(to!),
+                  label: l.dateTo,
+                  value: to == null ? l.dateAny : uiDate.format(to!),
                   onTap: loading ? null : onPickTo,
                 ),
               ),
@@ -285,8 +291,8 @@ class _SearchPanel extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
-                'Search',
+              child: Text(
+                l.search,
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
               ),
             ),

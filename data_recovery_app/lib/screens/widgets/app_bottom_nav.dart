@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 import '../cases_list_screen.dart';
 import '../create_case_screen.dart';
 import '../customers_list_screen.dart';
@@ -78,6 +80,7 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return BottomAppBar(
       color: Colors.white,
       surfaceTintColor: Colors.white,
@@ -98,7 +101,7 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: _NavItem(
                 icon: Icons.home_outlined,
-                label: 'Home',
+                label: l.navHome,
                 selected: currentIndex == 0,
                 onTap: () => _onTap(context, 0),
               ),
@@ -106,7 +109,7 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: _NavItem(
                 icon: Icons.build_outlined,
-                label: 'Cases',
+                label: l.navCases,
                 selected: currentIndex == 1,
                 circled: true,
                 onTap: () => _onTap(context, 1),
@@ -116,7 +119,7 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: _NavItem(
                 icon: Icons.groups_outlined,
-                label: 'Customer',
+                label: l.navCustomer,
                 selected: currentIndex == 2,
                 onTap: () => _onTap(context, 2),
               ),
@@ -124,7 +127,7 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: _NavItem(
                 icon: Icons.settings_outlined,
-                label: 'Setting',
+                label: l.navSetting,
                 selected: currentIndex == 3,
                 onTap: () => _onTap(context, 3),
               ),

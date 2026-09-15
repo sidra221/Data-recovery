@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -32,21 +34,24 @@ class CasesListScreen extends ConsumerStatefulWidget {
 }
 
 class _CasesListScreenState extends ConsumerState<CasesListScreen> {
-  static const _reportTabs = <_FilterTab>[
-    _FilterTab(label: 'All', color: Color(0xFF33BEE9)),
-    _FilterTab(label: 'Agree', color: Color(0xFF22C55E), clientReport: 'agree'),
-    _FilterTab(label: 'Inspection', color: Color(0xFF8B5CF6), workStatus: 'in_progress'),
-    _FilterTab(label: 'Wait Client', color: Color(0xFF6B7280), clientReport: 'wait_client'),
-    _FilterTab(label: 'Ready', color: Color(0xFF22C55E), clientReport: 'finished'),
-    _FilterTab(label: 'Rejected', color: Color(0xFFF04D4E), clientReport: 'rejected'),
-  ];
+  // كانت قوائم const بمستوى الكلاس. التسميات صارت مترجمة والترجمة
+  // بتحتاج context، فصارت دوال بتنبنى وقت العرض. القيم التقنية
+  // (clientReport / workStatus) ما تغيّرت — هي مفاتيح API مو نصوص.
+  List<_FilterTab> _reportTabs(L l) => [
+        _FilterTab(label: l.filterAll, color: const Color(0xFF33BEE9)),
+        _FilterTab(label: l.clientAgree, color: const Color(0xFF22C55E), clientReport: 'agree'),
+        _FilterTab(label: l.filterInspection, color: const Color(0xFF8B5CF6), workStatus: 'in_progress'),
+        _FilterTab(label: l.clientWaitClient, color: const Color(0xFF6B7280), clientReport: 'wait_client'),
+        _FilterTab(label: l.clientReady, color: const Color(0xFF22C55E), clientReport: 'finished'),
+        _FilterTab(label: l.clientRejected, color: const Color(0xFFF04D4E), clientReport: 'rejected'),
+      ];
 
-  static const _progressTabs = <_FilterTab>[
-    _FilterTab(label: 'All', color: Color(0xFF4B5563)),
-    _FilterTab(label: 'Pending', color: Color(0xFFF5B942), workStatus: 'pending'),
-    _FilterTab(label: 'In progress', color: Color(0xFF33BEE9), workStatus: 'in_progress'),
-    _FilterTab(label: 'Done', color: Color(0xFF22C55E), workStatus: 'finished'),
-  ];
+  List<_FilterTab> _progressTabs(L l) => [
+        _FilterTab(label: l.filterAll, color: const Color(0xFF4B5563)),
+        _FilterTab(label: l.workPending, color: const Color(0xFFF5B942), workStatus: 'pending'),
+        _FilterTab(label: l.workInProgress, color: const Color(0xFF33BEE9), workStatus: 'in_progress'),
+        _FilterTab(label: l.workDone, color: const Color(0xFF22C55E), workStatus: 'finished'),
+      ];
 
   int _selectedReport = 0;
   int _selectedProgress = 0;
@@ -65,7 +70,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     super.initState();
     final initialReport = widget.initialClientReport;
     if (initialReport != null) {
-      final index = _reportTabs.indexWhere((tab) => tab.clientReport == initialReport);
+      final index = _reportTabs(L.of(context)).indexWhere((tab) => tab.clientReport == initialReport);
       if (index >= 0) _selectedReport = index;
     }
     final initialSearch = widget.initialSearch?.trim() ?? '';
@@ -85,8 +90,8 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   }
 
   Future<void> _load() async {
-    final report = _reportTabs[_selectedReport];
-    final progress = _progressTabs[_selectedProgress];
+    final report = _reportTabs(L.of(context))[_selectedReport];
+    final progress = _progressTabs(L.of(context))[_selectedProgress];
     try {
       await ref.read(jobsProvider.notifier).fetchJobs(
             search: _searchController.text.trim(),
@@ -109,7 +114,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     if (_selectedReport == index) return;
     setState(() {
       _selectedReport = index;
-      if (_reportTabs[index].workStatus == 'in_progress') {
+      if (_reportTabs(L.of(context))[index].workStatus == 'in_progress') {
         _selectedProgress = 2;
       }
     });
@@ -120,8 +125,8 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
     if (_selectedProgress == index) return;
     setState(() {
       _selectedProgress = index;
-      final reportWork = _reportTabs[_selectedReport].workStatus;
-      final progressWork = _progressTabs[index].workStatus;
+      final reportWork = _reportTabs(L.of(context))[_selectedReport].workStatus;
+      final progressWork = _progressTabs(L.of(context))[index].workStatus;
       if (reportWork != null && reportWork != progressWork) {
         _selectedReport = 0;
       }
@@ -159,6 +164,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   }
 
   Future<void> _scanBarcode() async {
+    final l = L.of(context);
     final barcode = await BarcodeScannerScreen.scan(context);
     if (barcode == null || barcode.isEmpty || !mounted) return;
 
@@ -173,13 +179,13 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(error.message.isNotEmpty ? error.message : 'Barcode not found')),
+          SnackBar(content: Text(error.message.isNotEmpty ? error.message : l.barcodeNotFound)),
         );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Barcode not found')));
+        ..showSnackBar(SnackBar(content: Text(l.barcodeNotFound)));
     } finally {
       if (mounted) setState(() => _isScanning = false);
     }
@@ -210,6 +216,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final jobsState = ref.watch(jobsProvider);
 
     return Scaffold(
@@ -247,9 +254,9 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'Cases',
+                                l.navCases,
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
@@ -273,7 +280,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             child: _FilterRow(
-                              tabs: _reportTabs,
+                              tabs: _reportTabs(l),
                               selectedIndex: _selectedReport,
                               onSelected: _selectReport,
                               allCount: jobsState.count,
@@ -284,7 +291,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                       ),
                       const SizedBox(height: 8),
                       _FilterRow(
-                        tabs: _progressTabs,
+                        tabs: _progressTabs(l),
                         selectedIndex: _selectedProgress,
                         onSelected: _selectProgress,
                       ),
@@ -305,6 +312,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
   }
 
   Widget _buildBody(JobsState jobsState) {
+    final l = L.of(context);
     if (jobsState.isLoading && !_isRefreshing) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -322,7 +330,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              AppTextButton(label: 'Retry', onPressed: _load),
+              AppTextButton(label: l.retry, onPressed: _load),
             ],
           ),
         ),
@@ -361,7 +369,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                         child: CircularProgressIndicator(),
                       )
                     : AppTextButton(
-                        label: 'Load more',
+                        label: l.loadMore,
                         onPressed: () => ref.read(jobsProvider.notifier).loadMore(),
                       ),
               ),
@@ -609,6 +617,7 @@ class _EmptyRepairs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Column(
       children: [
         Container(
@@ -621,8 +630,8 @@ class _EmptyRepairs extends StatelessWidget {
           child: const Icon(Icons.build, size: 52, color: Colors.white),
         ),
         const SizedBox(height: 18),
-        const Text(
-          'No Repairs',
+        Text(
+          l.noRepairs,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -630,8 +639,8 @@ class _EmptyRepairs extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'You have no repairs currently',
+        Text(
+          l.noRepairsHint,
           style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
       ],
@@ -654,35 +663,35 @@ class _CaseLook {
   final Color badgeBg;
   final Color accent;
 
-  static const _rejected = _CaseLook(
-    label: 'Rejected',
+  static _CaseLook _rejected(L l) => _CaseLook(
+    label: l.clientRejected,
     icon: Icons.close,
     stripe: Color(0xFFF04D4E),
     badgeBg: Color(0xFFFFE4E6),
     accent: Color(0xFFF04D4E),
   );
 
-  static const _done = _CaseLook(
-    label: 'Done',
+  static _CaseLook _done(L l) => _CaseLook(
+    label: l.workDone,
     icon: Icons.check_circle,
     stripe: Color(0xFF22C55E),
     badgeBg: Color(0xFFDCFCE7),
     accent: Color(0xFF16A34A),
   );
 
-  static const _pending = _CaseLook(
-    label: 'Pending',
+  static _CaseLook _pending(L l) => _CaseLook(
+    label: l.workPending,
     icon: Icons.history,
     stripe: Color(0xFFF5B942),
     badgeBg: Color(0xFFFFF4E5),
     accent: Color(0xFFE08A1A),
   );
 
-  static _CaseLook of(Job job, {bool inspectionStyle = false}) {
-    if (job.clientReport == 'rejected') return _rejected;
+  static _CaseLook of(Job job, L l, {bool inspectionStyle = false}) {
+    if (job.clientReport == 'rejected') return _rejected(l);
     if (job.clientReport == 'wait_client') {
-      return const _CaseLook(
-        label: 'Wait Client',
+      return _CaseLook(
+        label: l.clientWaitClient,
         icon: Icons.timelapse,
         stripe: Color(0xFF6B7280),
         badgeBg: Color(0xFFF3F4F6),
@@ -691,16 +700,16 @@ class _CaseLook {
     }
     if (job.workStatus == 'in_progress') {
       if (inspectionStyle) {
-        return const _CaseLook(
-          label: 'Inspection',
+        return _CaseLook(
+          label: l.filterInspection,
           icon: Icons.sync,
           stripe: Color(0xFF8B5CF6),
           badgeBg: Color(0xFFF3E8FF),
           accent: Color(0xFF7C3AED),
         );
       }
-      return const _CaseLook(
-        label: 'In Progress',
+      return _CaseLook(
+        label: l.workInProgress,
         icon: Icons.sync,
         stripe: Color(0xFF33BEE9),
         badgeBg: Color(0xFFE5F9FD),
@@ -708,16 +717,16 @@ class _CaseLook {
       );
     }
     if (job.workStatus == 'finished' || job.clientReport == 'finished') {
-      return _done;
+      return _done(l);
     }
-    if (job.workStatus == 'pending') return _pending;
+    if (job.workStatus == 'pending') return _pending(l);
     switch (job.status) {
       case 'has_problems':
-        return _rejected;
+        return _rejected(l);
       case 'completed':
-        return _done;
+        return _done(l);
       default:
-        return _pending;
+        return _pending(l);
     }
   }
 }
@@ -741,24 +750,24 @@ class _CaseCard extends StatelessWidget {
   final Future<void> Function() onStatusUpdated;
   final bool inspectionStyle;
 
-  String get _diskLabel {
+  String _diskLabel(L l) {
     switch (job.hardDiskType) {
       case 'hdd_35':
-        return 'HDD 3.5';
+        return l.typeHdd35;
       case 'hdd_25':
-        return 'HDD 2.5';
+        return l.typeHdd25;
       case 'ssd':
-        return 'SSD';
+        return l.typeSsd;
       case 'nvme':
-        return 'NVMe';
+        return l.typeNvme;
       case 'external':
-        return 'External HDD';
+        return l.typeExternal;
       case 'usb':
-        return 'USB Flash';
+        return l.typeUsb;
       case 'memory_card':
-        return 'Memory Card';
+        return l.typeMemoryCard;
       default:
-        return 'Other';
+        return l.typeOther;
     }
   }
 
@@ -785,7 +794,8 @@ class _CaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final look = _CaseLook.of(job, inspectionStyle: inspectionStyle);
+    final l = L.of(context);
+    final look = _CaseLook.of(job, l, inspectionStyle: inspectionStyle);
     final dateText = DateFormat('d MMM yyyy', 'en').format(job.createdAt.toLocal());
 
     return SoftSurface(
@@ -883,7 +893,7 @@ class _CaseCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              _diskLabel,
+                              _diskLabel(l),
                               style: TextStyle(
                                 color: look.accent,
                                 fontWeight: FontWeight.w700,
@@ -904,7 +914,7 @@ class _CaseCard extends StatelessWidget {
                         Expanded(
                           child: _InfoRow(icon: Icons.phone_outlined, text: job.customerPhone),
                         ),
-                        if (look.label == 'Done') ...[
+                        if (look.label == l.workDone) ...[
                           _NotifyBellButton(
                             onTap: () => NotifyCustomerSheet.show(context, jobId: job.id),
                           ),

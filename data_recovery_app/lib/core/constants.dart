@@ -6,6 +6,7 @@ class AppConstants {
     defaultValue: ApiConfig.apiBaseUrl,
   );
   static const String tokenKey = 'auth_token';
+  static const String localeKey = 'app_locale';
 
   /// بصمة البناء — بيحطها build_app.sh وقت البناء.
   /// موجودة حتى نعرف بثانية أي نسخة مثبّتة على أي جهاز.

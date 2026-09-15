@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
@@ -81,6 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
@@ -118,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: Colors.white,
                     shape: const CircleBorder(),
                     child: IconButton(
-                      tooltip: 'Reports',
+                      tooltip: l.reports,
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -137,7 +140,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: Colors.white,
                     shape: const CircleBorder(),
                     child: IconButton(
-                      tooltip: 'Notifications',
+                      tooltip: l.notifications,
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -165,6 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBody() {
+    final l = L.of(context);
     if (_isLoading && !_isRefreshing) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -181,7 +185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('Retry')),
+              TextButton(onPressed: _load, child: Text(l.retry)),
             ],
           ),
         ),
@@ -205,7 +209,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _HeroCard(
-                  label: 'Wait Client',
+                  label: l.clientWaitClient,
                   value: '${_count(stats.clientReportCounts, 'wait_client')}',
                   icon: Icons.schedule,
                   iconBg: const Color(0xFFFFF7ED),
@@ -215,7 +219,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _HeroCard(
-                  label: 'Rejected',
+                  label: l.clientRejected,
                   value: '${_count(stats.clientReportCounts, 'rejected')}',
                   icon: Icons.cancel_outlined,
                   iconBg: const Color(0xFFFFF5F3),
@@ -229,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _HeroCard(
-                  label: 'Inspection',
+                  label: l.filterInspection,
                   value: '$inProgress',
                   icon: Icons.science_outlined,
                   iconBg: const Color(0xFFE5F9FD),
@@ -239,7 +243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _HeroCard(
-                  label: 'Delivery',
+                  label: l.labelDelivered,
                   value: '${stats.totalDelivered}',
                   icon: Icons.local_shipping_outlined,
                   iconBg: const Color(0xFFF5F3FF),
@@ -251,9 +255,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 28),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Recovery Progress',
+                  l.recoveryProgress,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -283,21 +287,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _WorkStat(
-                  label: 'Pending',
+                  label: l.workPending,
                   value: pending,
                   color: const Color(0xFFFFC562),
                 ),
               ),
               Expanded(
                 child: _WorkStat(
-                  label: 'In Progress',
+                  label: l.workInProgress,
                   value: inProgress,
                   color: const Color(0xFF33BEE9),
                 ),
               ),
               Expanded(
                 child: _WorkStat(
-                  label: 'Finished',
+                  label: l.workDone,
                   value: finishedWork,
                   color: const Color(0xFF1AC86C),
                 ),
@@ -316,8 +320,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onViewCases: _openCases,
           ),
           const SizedBox(height: 28),
-          const Text(
-            "Today's Activity",
+          Text(
+            l.todaysActivity,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -329,7 +333,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _ActivityCard(
-                  label: 'New Cases',
+                  label: l.newCases,
                   value: '${stats.jobsCreatedToday}',
                   icon: Icons.description_outlined,
                   iconBg: const Color(0xFFE5F9FD),
@@ -339,7 +343,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _ActivityCard(
-                  label: 'Updates',
+                  label: l.updates,
                   value: '${stats.statusChangesToday}',
                   icon: Icons.my_location,
                   iconBg: const Color(0xFFE7FFED),
@@ -353,7 +357,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Expanded(
                 child: _ActivityCard(
-                  label: 'Agree',
+                  label: l.clientAgree,
                   value: '$agree',
                   icon: Icons.thumb_up_outlined,
                   iconBg: const Color(0xFFE7FFED),
@@ -363,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _ActivityCard(
-                  label: 'Delivered',
+                  label: l.labelDelivered,
                   value: '${stats.totalDelivered}',
                   icon: Icons.send_outlined,
                   iconBg: const Color(0xFFFFF7ED),
@@ -566,6 +570,7 @@ class _ReadyBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
@@ -585,12 +590,12 @@ class _ReadyBanner extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.local_shipping_outlined, color: Colors.white, size: 18),
               SizedBox(width: 8),
               Text(
-                'READY FOR RETURN',
+                l.readyForReturn,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -618,8 +623,8 @@ class _ReadyBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Finished / ready to collect',
+                    Text(
+                      l.finishedReadyToCollect,
                       style: TextStyle(
                         color: Color(0xE6FFFFFF),
                         fontSize: 13,
@@ -634,10 +639,10 @@ class _ReadyBanner extends StatelessWidget {
                 child: InkWell(
                   onTap: onViewCases,
                   borderRadius: BorderRadius.circular(999),
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     child: Text(
-                      'View Cases →',
+                      l.viewCases,
                       style: TextStyle(
                         color: Color(0xFF2EABD2),
                         fontWeight: FontWeight.w700,

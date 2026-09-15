@@ -16,4 +16,13 @@ class SecureStorage {
   Future<void> clearToken() {
     return _storage.delete(key: AppConstants.tokenKey);
   }
+
+  // اللغة مو سرّ، بس منستعمل نفس التخزين بدل ما نضيف حزمة تانية.
+  Future<void> saveLocale(String code) {
+    return _storage.write(key: AppConstants.localeKey, value: code);
+  }
+
+  Future<String?> readLocale() {
+    return _storage.read(key: AppConstants.localeKey);
+  }
 }

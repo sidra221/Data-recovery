@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'helpers.dart';
+
 import 'package:data_recovery_app/core/api_client.dart';
 import 'package:data_recovery_app/core/secure_storage.dart';
 import 'package:data_recovery_app/models/job.dart';
@@ -55,7 +57,7 @@ Future<void> _pump(WidgetTester tester, Map<String, dynamic> json) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [apiClientProvider.overrideWith((ref) => _StubApi(json))],
-      child: const MaterialApp(home: CaseDetailScreen(jobId: 7)),
+      child: wrapApp(const CaseDetailScreen(jobId: 7)),
     ),
   );
   await tester.pump();

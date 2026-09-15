@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -71,6 +73,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   }
 
   Future<void> _load() async {
+    final l = L.of(context);
     setState(() {
       _isLoading = true;
       _error = null;
@@ -84,13 +87,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'Failed to load customer';
+        _error = error.message.isNotEmpty ? error.message : l.failedToLoadCustomer;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load customer';
+        _error = l.failedToLoadCustomer;
       });
     }
   }
@@ -112,6 +115,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   }
 
   Future<void> _update() async {
+    final l = L.of(context);
     if (_isSaving || !_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
@@ -127,19 +131,20 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       _applyCustomer(updated);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Updated successfully')));
+        ..showSnackBar(SnackBar(content: Text(l.updatedSuccessfully)));
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : 'Failed to update');
+      _showError(error.message.isNotEmpty ? error.message : l.failedToUpdate);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to update');
+      _showError(l.failedToUpdate);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   Future<void> _confirmDelete() async {
+    final l = L.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: const Color(0x66000000),
@@ -157,7 +162,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       _showError(error.message);
     } catch (_) {
       if (!mounted) return;
-      _showError('Failed to delete customer');
+      _showError(l.failedToDeleteCustomer);
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -171,6 +176,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -181,8 +187,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Customer Details',
+        title: Text(
+          l.customerDetails,
           style: TextStyle(
             color: Color(0xFF111827),
             fontWeight: FontWeight.w600,
@@ -206,23 +212,23 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
                 child: Row(
                   children: [
                     Icon(Icons.edit_outlined, color: Color(0xFF111827), size: 20),
                     SizedBox(width: 10),
-                    Text('Edit'),
+                    Text(l.edit),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
                     Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 20),
                     SizedBox(width: 10),
-                    Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+                    Text(l.delete, style: TextStyle(color: Color(0xFFEF4444))),
                   ],
                 ),
               ),
@@ -235,6 +241,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   }
 
   Widget _buildBody() {
+    final l = L.of(context);
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -246,12 +253,12 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _error ?? 'Failed to load customer',
+                _error ?? l.failedToLoadCustomer,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _load, child: const Text('Retry')),
+              TextButton(onPressed: _load, child: Text(l.retry)),
             ],
           ),
         ),
@@ -265,8 +272,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
-            const Text(
-              'Customer state',
+            Text(
+              l.customerState,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -278,7 +285,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               children: [
                 Expanded(
                   child: _StatCard(
-                    label: 'Total Repairs',
+                    label: l.totalRepairs,
                     value: '${customer.totalRepairs}',
                     icon: Icons.build_outlined,
                     iconBg: const Color(0xFFE5F9FD),
@@ -288,7 +295,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatCard(
-                    label: 'Total Spent',
+                    label: l.totalSpent,
                     value: '${customer.totalSpent} \$',
                     icon: Icons.payments_outlined,
                     iconBg: const Color(0xFFE7FFED),
@@ -302,7 +309,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               children: [
                 Expanded(
                   child: _StatCard(
-                    label: 'First visit',
+                    label: l.firstVisit,
                     value: _formatDate(customer.firstVisit),
                     icon: Icons.event_available_outlined,
                     iconBg: const Color(0xFFE7FFED),
@@ -312,7 +319,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatCard(
-                    label: 'Last visit',
+                    label: l.lastVisit,
                     value: _formatDate(customer.lastVisit),
                     icon: Icons.event_outlined,
                     iconBg: const Color(0xFFFFF7ED),
@@ -324,7 +331,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             const SizedBox(height: 28),
             Row(
               children: [
-                const Expanded(child: _SectionTitle('DEVICES')),
+                Expanded(child: _SectionTitle(l.devices)),
                 if (!_jobsLoading)
                   Text(
                     '${_jobs.length}',
@@ -351,13 +358,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                       const Icon(Icons.inbox_outlined,
                           color: Color(0xFF9CA3AF), size: 20),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'No devices for this customer yet',
+                          l.noDevicesYet,
                           style: TextStyle(color: Color(0xFF6B7280)),
                         ),
                       ),
-                      TextButton(onPressed: _loadJobs, child: const Text('Retry')),
+                      TextButton(onPressed: _loadJobs, child: Text(l.retry)),
                     ],
                   ),
                 ),
@@ -368,38 +375,38 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 const SizedBox(height: 10),
               ],
             const SizedBox(height: 28),
-            const _SectionTitle('CUSTOMER INFORMATION'),
+            _SectionTitle(l.customerInformation),
             const SizedBox(height: 16),
             _LabeledField(
-              label: 'Full Name',
+              label: l.fullName,
               child: _SoftSurface(
                 child: TextFormField(
                   controller: _nameController,
                   focusNode: _nameFocus,
                   enabled: !_isSaving,
                   validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'This field is required' : null,
-                  decoration: _inputDecoration(hint: 'Enter Full Name'),
+                      value == null || value.trim().isEmpty ? l.fieldRequired : null,
+                  decoration: _inputDecoration(hint: l.enterFullName),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             _LabeledField(
-              label: 'Phone Number',
+              label: l.phoneNumber,
               child: _SoftSurface(
                 child: TextFormField(
                   controller: _phoneController,
                   enabled: !_isSaving,
                   keyboardType: TextInputType.phone,
                   validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'This field is required' : null,
+                      value == null || value.trim().isEmpty ? l.fieldRequired : null,
                   decoration: _inputDecoration(hint: '+96433416...'),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             _LabeledField(
-              label: 'Email Address',
+              label: l.emailAddress,
               child: _SoftSurface(
                 child: TextFormField(
                   controller: _emailController,
@@ -411,7 +418,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             ),
             const SizedBox(height: 28),
             AppButton(
-              label: 'Update',
+              label: l.update,
               isLoading: _isSaving,
               onPressed: _update,
             ),
@@ -463,6 +470,7 @@ class _DeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final c = _statusColors;
     return _SoftSurface(
       child: Padding(
@@ -514,7 +522,7 @@ class _DeviceCard extends StatelessWidget {
             const SizedBox(height: 10),
             _DeviceRow(
               icon: Icons.storage_outlined,
-              label: 'Type',
+              label: l.labelType,
               value: job.hardDiskTypeLabel.isNotEmpty
                   ? job.hardDiskTypeLabel
                   : job.hardDiskType,
@@ -522,19 +530,19 @@ class _DeviceCard extends StatelessWidget {
             if (job.deviceModel.isNotEmpty)
               _DeviceRow(
                 icon: Icons.memory_outlined,
-                label: 'Model',
+                label: l.labelModel,
                 value: job.deviceModel,
               ),
             if (job.serialNumber.isNotEmpty)
               _DeviceRow(
                 icon: Icons.qr_code_2_outlined,
-                label: 'Serial',
+                label: l.labelSerial,
                 value: job.serialNumber,
               ),
             if (job.problem.isNotEmpty)
               _DeviceRow(
                 icon: Icons.report_problem_outlined,
-                label: 'Problem',
+                label: l.labelProblem,
                 value: job.problem,
               ),
           ],
@@ -681,6 +689,7 @@ class _DeleteCustomerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Dialog(
       backgroundColor: Colors.white,
       elevation: 8,
@@ -701,8 +710,8 @@ class _DeleteCustomerDialog extends StatelessWidget {
               child: const Icon(Icons.warning_rounded, color: Colors.white, size: 32),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Delete Customer',
+            Text(
+              l.deleteCustomer,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -710,8 +719,8 @@ class _DeleteCustomerDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Are you sure you want to delete this Customer?',
+            Text(
+              l.deleteCustomerConfirm,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: Color(0xFF6B7280), height: 1.4),
             ),
@@ -720,14 +729,14 @@ class _DeleteCustomerDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: AppTextButton(
-                    label: 'Cancel',
+                    label: l.cancel,
                     onPressed: () => Navigator.of(context).pop(false),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: AppButton(
-                    label: 'Delete',
+                    label: l.delete,
                     variant: AppButtonVariant.danger,
                     onPressed: () => Navigator.of(context).pop(true),
                   ),

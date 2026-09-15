@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'widgets/app_button.dart';
@@ -12,52 +14,43 @@ class HelpCenterScreen extends StatefulWidget {
 }
 
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
-  static const _articles = [
-    _HelpArticle(
-      title: 'How to recover deleted photos',
-      steps: [
-        'Create a new case and choose the device that stored the photos.',
-        'Keep the drive powered on and avoid writing new files to it.',
-        'Wait until inspection finishes, then review recovered files with the customer.',
-      ],
-    ),
-    _HelpArticle(
-      title: 'Connecting an external SSD',
-      steps: [
-        'Power off the workstation before attaching the drive.',
-        'Connect the SSD with a compatible cable or dock.',
-        'Open a new case and select SSD as the disk type.',
-        'Start inspection and follow the case status updates.',
-      ],
-    ),
-    _HelpArticle(
-      title: 'Subscription & Billing FAQs',
-      steps: [
-        'Add the agreed price on the case after the customer approves the quotation.',
-        'Send the invoice to the customer from the case details screen.',
-        'Mark the job as delivered after payment and handover are complete.',
-      ],
-    ),
-  ];
+  // المقالات صارت تنبني من الترجمة، فما بقيت const — بتتبدّل مع اللغة.
+  static List<_HelpArticle> _articlesFor(L l) => [
+        _HelpArticle(
+          title: l.helpPhotosTitle,
+          steps: [l.helpPhotosStep1, l.helpPhotosStep2, l.helpPhotosStep3],
+        ),
+        _HelpArticle(
+          title: l.helpSsdTitle,
+          steps: [l.helpSsdStep1, l.helpSsdStep2, l.helpSsdStep3, l.helpSsdStep4],
+        ),
+        _HelpArticle(
+          title: l.helpBillingTitle,
+          steps: [l.helpBillingStep1, l.helpBillingStep2, l.helpBillingStep3],
+        ),
+      ];
 
   final Set<int> _expanded = {1};
 
   Future<void> _emailSupport() async {
+    final l = L.of(context);
     final uri = Uri(
       scheme: 'mailto',
       path: 'support@datarecovery.io',
-      queryParameters: {'subject': 'Help Center support request'},
+      queryParameters: {'subject': l.supportRequest},
     );
     final opened = await launchUrl(uri);
     if (!opened && mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Could not open email app')));
+        ..showSnackBar(SnackBar(content: Text(l.couldNotOpenEmail)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final articles = _articlesFor(l);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -67,9 +60,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             Row(
               children: [
                 _CircleBackButton(onPressed: () => Navigator.of(context).pop()),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Help Center',
+                    l.helpCenter,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
@@ -89,10 +82,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Column(
+              child: Column(
                 children: [
                   Text(
-                    'How can we help?',
+                    l.howCanWeHelp,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -101,7 +94,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Search our knowledge base or browse categories below',
+                    l.searchKnowledgeBase,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4),
                   ),
@@ -111,10 +104,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             const SizedBox(height: 24),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'POPULAR ARTICLES',
-                    style: TextStyle(
+                    l.popularArticles,
+                    style: const TextStyle(
                       fontSize: 12,
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600,
@@ -126,11 +119,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   onTap: () => setState(() {
                     _expanded
                       ..clear()
-                      ..addAll(List.generate(_articles.length, (index) => index));
+                      ..addAll(List.generate(articles.length, (index) => index));
                   }),
-                  child: const Text(
-                    'View All',
-                    style: TextStyle(
+                  child: Text(
+                    l.viewAll,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF33BEE9),
@@ -140,8 +133,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ...List.generate(_articles.length, (index) {
-              final article = _articles[index];
+            ...List.generate(articles.length, (index) {
+              final article = articles[index];
               final isOpen = _expanded.contains(index);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -227,23 +220,23 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ),
               child: Column(
                 children: [
-                  const Text(
-                    'Still need help?',
-                    style: TextStyle(
+                  Text(
+                    l.stillNeedHelp,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Our support team is available 24/7 to assist you with any questions.',
+                  Text(
+                    l.supportAvailable247,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB), height: 1.4),
                   ),
                   const SizedBox(height: 16),
                   AppButton(
-                    label: 'Email Us',
+                    label: l.emailUs,
                     icon: Icons.mail_outline,
                     onPressed: _emailSupport,
                   ),
