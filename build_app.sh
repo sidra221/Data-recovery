@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$ROOT_DIR/data_recovery_app"
 NGROK_URL_FILE="$ROOT_DIR/.ngrok_url"
 LOCAL_API_URL="http://127.0.0.1:8000/api/"
-SERVER_API_URL="http://2.24.131.249/api/"
+SERVER_API_URL="https://api.datarecovery-sa.com/api/"
 
 cd "$ROOT_DIR"
 

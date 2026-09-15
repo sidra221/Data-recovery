@@ -70,6 +70,12 @@ if DEBUG:
         ]
     )
 
+# nginx بينهي الـ TLS وبيمرّر الطلب لجانغو على http. بدون هالسطرين جانغو
+# بيضل يفكر إنه الطلب cleartext، فبيبني روابط الميديا (صورة الموظف،
+# المرفقات) بـ http:// وهي الصفحة https — المتصفح بيحجبها كـ mixed content.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 if NGROK_HOST and NGROK_HOST not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(NGROK_HOST)
 if NGROK_PUBLIC_URL:

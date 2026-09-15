@@ -1,5 +1,6 @@
 class ApiConfig {
-  // Production server. Overwritten by start_ngrok.sh when a public tunnel is running.
-  static const String publicUrl = 'http://2.24.131.249';
-  static const String apiBaseUrl = 'http://2.24.131.249/api/';
+  // Production server behind api.datarecovery-sa.com (nginx + Let's Encrypt).
+  // Overwritten by start_ngrok.sh when a public tunnel is running.
+  static const String publicUrl = 'https://api.datarecovery-sa.com';
+  static const String apiBaseUrl = 'https://api.datarecovery-sa.com/api/';
 }
