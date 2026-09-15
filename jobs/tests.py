@@ -318,6 +318,42 @@ class JobApiTests(APITestCase):
         response = self.client.get("/api/dashboard/stats/")
         self.assertEqual(response.data["total_delivered"], 1)
 
+    def test_filter_jobs_by_date_range(self):
+        """created_from / created_to بيفلترا بتاريخ الإنشاء، شاملة للطرفين."""
+        from datetime import timedelta
+
+        from jobs.models import Job
+
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertEqual(created.status_code, 201)
+        job = Job.objects.get(pk=created.data["id"])
+        day = job.created_at.date()
+
+        def count(params):
+            response = self.client.get("/api/jobs/", params)
+            self.assertEqual(response.status_code, 200)
+            return response.data["count"]
+
+        # نفس اليوم — لازم يلاقيها (الطرفين شاملين)
+        self.assertEqual(count({"created_from": day.isoformat()}), 1)
+        self.assertEqual(count({"created_to": day.isoformat()}), 1)
+        self.assertEqual(
+            count({"created_from": day.isoformat(), "created_to": day.isoformat()}), 1
+        )
+
+        # نطاق قبل اليوم — لازم يرجّع فاضي
+        before = (day - timedelta(days=2)).isoformat()
+        yesterday = (day - timedelta(days=1)).isoformat()
+        self.assertEqual(count({"created_from": before, "created_to": yesterday}), 0)
+
+        # نطاق بعد اليوم — فاضي كمان
+        tomorrow = (day + timedelta(days=1)).isoformat()
+        self.assertEqual(count({"created_from": tomorrow}), 0)
+
+        # تاريخ غير صالح بينتجاهل، ما بينهار
+        self.assertEqual(count({"created_from": "خربوطة"}), 1)
+        self.assertEqual(count({"created_to": "2026-99-99"}), 1)
+
     def test_filter_jobs_by_customer(self):
         """?customer=<id> بيرجّع قضايا هالعميل فقط."""
         from jobs.models import Customer, Job

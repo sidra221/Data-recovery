@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
@@ -126,6 +127,81 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       return customer.fullName.toLowerCase().contains(query) ||
           customer.phone.contains(query);
     }).take(8);
+  }
+
+  /// بيخيّر بين الكاميرا والاستديو والملفات.
+  ///
+  /// الصور بتنخزّن محلياً بـ _files وبتنرفع بعد ما تنحفظ القضية —
+  /// المرفقات بدها id القضية، وهي لسا ما انعملت بهالمرحلة.
+  Future<void> _addAttachment() async {
+    final source = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined,
+                  color: Color(0xFF1E3A5F)),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(sheetContext).pop('camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: Color(0xFF1E3A5F)),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.of(sheetContext).pop('gallery'),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.attach_file, color: Color(0xFF1E3A5F)),
+              title: const Text('Choose a file (PDF, image)'),
+              onTap: () => Navigator.of(sheetContext).pop('file'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    if (source == 'file') {
+      final picked = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
+      );
+      if (!mounted) return;
+      setState(() {
+        for (final file in picked) {
+          final path = file.path;
+          if (path == null || path.isEmpty) continue;
+          _files.add((path: path, name: file.name));
+        }
+      });
+      return;
+    }
+
+    final shot = await ImagePicker().pickImage(
+      source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
+    if (shot == null || !mounted) return;
+    setState(() => _files.add((path: shot.path, name: shot.name)));
   }
 
   @override
@@ -314,19 +390,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
                     _UploadPlaceholder(
                       files: _files,
                       enabled: !_isSubmitting,
-                      onAdd: () async {
-                        final picked = await FilePicker.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
-                        );
-                        setState(() {
-                          for (final file in picked) {
-                            final path = file.path;
-                            if (path == null || path.isEmpty) continue;
-                            _files.add((path: path, name: file.name));
-                          }
-                        });
-                      },
+                      onAdd: _addAttachment,
                       onRemove: (index) => setState(() => _files.removeAt(index)),
                     ),
                     const SizedBox(height: 28),

@@ -6,6 +6,7 @@ import '../models/dashboard_stats.dart';
 import '../providers/auth_provider.dart';
 import 'cases_list_screen.dart';
 import 'notifications_screen.dart';
+import 'reports_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -111,10 +112,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   ),
+                  // البحث عن فاتورة بيصير على الكاونتر باستمرار، فمحلّه
+                  // بالرأس جنب الجرس مو مدفون جوّا الإعدادات.
                   Material(
                     color: Colors.white,
                     shape: const CircleBorder(),
                     child: IconButton(
+                      tooltip: 'Reports',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ReportsScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Material(
+                    color: Colors.white,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Notifications',
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(

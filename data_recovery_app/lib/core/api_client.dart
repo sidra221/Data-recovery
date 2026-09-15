@@ -104,6 +104,8 @@ class ApiClient {
     String? clientReport,
     String? workStatus,
     int? customerId,
+    String? createdFrom,
+    String? createdTo,
     bool overdue = false,
     int page = 1,
   }) async {
@@ -115,6 +117,8 @@ class ApiClient {
         if (clientReport != null && clientReport.isNotEmpty) 'client_report': clientReport,
         if (workStatus != null && workStatus.isNotEmpty) 'work_status': workStatus,
         'customer': ?customerId,
+        if (createdFrom != null && createdFrom.isNotEmpty) 'created_from': createdFrom,
+        if (createdTo != null && createdTo.isNotEmpty) 'created_to': createdTo,
         if (overdue) 'overdue': 'true',
         if (page > 1) 'page': page,
       },

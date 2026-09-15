@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -86,6 +87,8 @@ class JobViewSet(viewsets.ModelViewSet):
         client_report_filter = self.request.query_params.get("client_report")
         work_status_filter = self.request.query_params.get("work_status")
         customer_filter = self.request.query_params.get("customer")
+        created_from = self.request.query_params.get("created_from")
+        created_to = self.request.query_params.get("created_to")
         search = self.request.query_params.get("search")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
@@ -100,6 +103,19 @@ class JobViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(customer_id=int(customer_filter))
             else:
                 queryset = queryset.none()
+        # فلترة بتاريخ الإنشاء — YYYY-MM-DD، شاملة للطرفين.
+        # تاريخ غير صالح بينتجاهل بدل ما يرجّع 500.
+        for value, lookup in ((created_from, "gte"), (created_to, "lte")):
+            if not value:
+                continue
+            try:
+                parsed = parse_date(value)
+            except ValueError:
+                # صيغة سليمة بقيمة مستحيلة مثل 2026-99-99 — parse_date
+                # بترفع ValueError مو بترجّع None.
+                parsed = None
+            if parsed is not None:
+                queryset = queryset.filter(**{f"created_at__date__{lookup}": parsed})
         if search:
             queryset = queryset.filter(
                 Q(customer_name__icontains=search)
