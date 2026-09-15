@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../core/api_client.dart';
 import '../models/customer.dart';
+import '../models/job.dart';
 import '../providers/auth_provider.dart';
 import '../providers/customers_provider.dart';
 import 'widgets/app_button.dart';
@@ -25,6 +26,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   final _nameFocus = FocusNode();
 
   Customer? _customer;
+  List<Job> _jobs = const [];
+  bool _jobsLoading = true;
   String? _error;
   bool _isLoading = true;
   bool _isSaving = false;
@@ -45,6 +48,28 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     super.dispose();
   }
 
+  /// أجهزة العميل. فشل هالنداء ما بيكسر الشاشة — بيعرض القسم فاضي مع
+  /// إمكانية إعادة المحاولة، لأن معلومات العميل نفسها أهم.
+  Future<void> _loadJobs() async {
+    setState(() => _jobsLoading = true);
+    try {
+      final page = await ref
+          .read(apiClientProvider)
+          .listJobs(customerId: widget.customerId);
+      if (!mounted) return;
+      setState(() {
+        _jobs = page.results;
+        _jobsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _jobs = const [];
+        _jobsLoading = false;
+      });
+    }
+  }
+
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
@@ -54,6 +79,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       final customer = await ref.read(apiClientProvider).getCustomer(widget.customerId);
       if (!mounted) return;
       _applyCustomer(customer);
+      _loadJobs();
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -296,6 +322,52 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               ],
             ),
             const SizedBox(height: 28),
+            Row(
+              children: [
+                const Expanded(child: _SectionTitle('DEVICES')),
+                if (!_jobsLoading)
+                  Text(
+                    '${_jobs.length}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_jobsLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_jobs.isEmpty)
+              _SoftSurface(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.inbox_outlined,
+                          color: Color(0xFF9CA3AF), size: 20),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'No devices for this customer yet',
+                          style: TextStyle(color: Color(0xFF6B7280)),
+                        ),
+                      ),
+                      TextButton(onPressed: _loadJobs, child: const Text('Retry')),
+                    ],
+                  ),
+                ),
+              )
+            else
+              for (final job in _jobs) ...[
+                _DeviceCard(job: job),
+                const SizedBox(height: 10),
+              ],
+            const SizedBox(height: 28),
             const _SectionTitle('CUSTOMER INFORMATION'),
             const SizedBox(height: 16),
             _LabeledField(
@@ -359,6 +431,160 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       border: InputBorder.none,
       enabledBorder: InputBorder.none,
       focusedBorder: InputBorder.none,
+    );
+  }
+}
+
+/// كرت جهاز واحد للعميل: رقم الفاتورة والحالة، ونوع الهاردسك والموديل
+/// والسيريال ووصف المشكلة — الحقول اللي طلبها العميل.
+class _DeviceCard extends StatelessWidget {
+  const _DeviceCard({required this.job});
+
+  final Job job;
+
+  /// لون الحالة بيطابق شارات شاشة القضايا حتى يكون العُرف واحد.
+  ({Color bg, Color fg}) get _statusColors {
+    if (job.workStatus == 'finished' ||
+        job.clientReport == 'finished' ||
+        job.status == 'completed') {
+      return (bg: const Color(0xFFDCFCE7), fg: const Color(0xFF16A34A));
+    }
+    if (job.status == 'has_problems' || job.clientReport == 'rejected') {
+      return (bg: const Color(0xFFFFE4E6), fg: const Color(0xFFF04D4E));
+    }
+    return (bg: const Color(0xFFFFF4E5), fg: const Color(0xFFE08A1A));
+  }
+
+  String get _statusText {
+    if (job.workStatusLabel.isNotEmpty) return job.workStatusLabel;
+    if (job.clientReportLabel.isNotEmpty) return job.clientReportLabel;
+    return job.statusLabel;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _statusColors;
+    return _SoftSurface(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '#${job.invoiceNumber}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                if (job.price != null) ...[
+                  Text(
+                    _formatDevicePrice(job.price!),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: c.bg,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _statusText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: c.fg,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _DeviceRow(
+              icon: Icons.storage_outlined,
+              label: 'Type',
+              value: job.hardDiskTypeLabel.isNotEmpty
+                  ? job.hardDiskTypeLabel
+                  : job.hardDiskType,
+            ),
+            if (job.deviceModel.isNotEmpty)
+              _DeviceRow(
+                icon: Icons.memory_outlined,
+                label: 'Model',
+                value: job.deviceModel,
+              ),
+            if (job.serialNumber.isNotEmpty)
+              _DeviceRow(
+                icon: Icons.qr_code_2_outlined,
+                label: 'Serial',
+                value: job.serialNumber,
+              ),
+            if (job.problem.isNotEmpty)
+              _DeviceRow(
+                icon: Icons.report_problem_outlined,
+                label: 'Problem',
+                value: job.problem,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatDevicePrice(double value) => value == value.roundToDouble()
+    ? value.toStringAsFixed(0)
+    : value.toStringAsFixed(2);
+
+/// سطر «تسمية: قيمة». القيمة بتلتف على أكتر من سطر بدل ما تنقص —
+/// وصف المشكلة بيكون طويل عادةً.
+class _DeviceRow extends StatelessWidget {
+  const _DeviceRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFF9CA3AF)),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 58,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF374151)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

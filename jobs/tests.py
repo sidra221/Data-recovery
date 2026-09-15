@@ -318,6 +318,32 @@ class JobApiTests(APITestCase):
         response = self.client.get("/api/dashboard/stats/")
         self.assertEqual(response.data["total_delivered"], 1)
 
+    def test_filter_jobs_by_customer(self):
+        """?customer=<id> بيرجّع قضايا هالعميل فقط."""
+        from jobs.models import Customer, Job
+
+        created = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertEqual(created.status_code, 201)
+        job = Job.objects.get(pk=created.data["id"])
+
+        other = Customer.objects.create(full_name="عميل تاني", phone="0799999999")
+        mine = job.customer
+        self.assertIsNotNone(mine, "إنشاء القضية لازم يربطها بعميل")
+
+        response = self.client.get("/api/jobs/", {"customer": mine.id})
+        self.assertEqual(response.status_code, 200)
+        ids = {row["id"] for row in response.data["results"]}
+        self.assertIn(job.id, ids)
+
+        response = self.client.get("/api/jobs/", {"customer": other.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 0)
+
+        # قيمة غير رقمية ما بتنهار، بترجّع فاضي
+        response = self.client.get("/api/jobs/", {"customer": "abc"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 0)
+
 
 class CustomerApiTests(APITestCase):
     def setUp(self):

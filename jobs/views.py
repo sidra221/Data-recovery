@@ -85,6 +85,7 @@ class JobViewSet(viewsets.ModelViewSet):
         status_filter = self.request.query_params.get("status")
         client_report_filter = self.request.query_params.get("client_report")
         work_status_filter = self.request.query_params.get("work_status")
+        customer_filter = self.request.query_params.get("customer")
         search = self.request.query_params.get("search")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
@@ -92,6 +93,13 @@ class JobViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(client_report=client_report_filter)
         if work_status_filter:
             queryset = queryset.filter(work_status=work_status_filter)
+        if customer_filter:
+            # فلترة بمعرّف العميل — أدقّ من البحث بالهاتف يلي ممكن
+            # يطابق أرقام عملاء تانيين. قيمة غير رقمية بترجّع فاضي.
+            if customer_filter.isdigit():
+                queryset = queryset.filter(customer_id=int(customer_filter))
+            else:
+                queryset = queryset.none()
         if search:
             queryset = queryset.filter(
                 Q(customer_name__icontains=search)

@@ -29,6 +29,7 @@ class Job {
   Job({
     required this.id,
     required this.invoiceNumber,
+    this.price,
     required this.barcode,
     required this.customerName,
     required this.customerPhone,
@@ -61,6 +62,10 @@ class Job {
 
   final int id;
   final String invoiceNumber;
+
+  /// السعر الإجمالي. DRF بيرجّع DecimalField كنص، وبيكون null
+  /// لحد ما ينحدّد سعر — فمنتعامل مع الحالتين.
+  final double? price;
   final String barcode;
   final String customerName;
   final String customerPhone;
@@ -90,10 +95,18 @@ class Job {
   final bool waitClientOverdue;
   final List<JobAttachment> attachments;
 
+  /// السعر ممكن يوصل كنص ("150.00") أو رقم أو null.
+  static double? _parsePrice(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
   factory Job.fromJson(Map<String, dynamic> json) {
     return Job(
       id: json['id'] as int,
       invoiceNumber: json['invoice_number'] as String,
+      price: _parsePrice(json['price']),
       barcode: json['barcode'] as String,
       customerName: json['customer_name'] as String,
       customerPhone: json['customer_phone'] as String,
@@ -135,6 +148,7 @@ class Job {
     return {
       'id': id,
       'invoice_number': invoiceNumber,
+      'price': price,
       'barcode': barcode,
       'customer_name': customerName,
       'customer_phone': customerPhone,

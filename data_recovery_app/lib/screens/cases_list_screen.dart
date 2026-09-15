@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../models/job.dart';
 import '../providers/jobs_provider.dart';
+import 'case_detail_screen.dart';
 import 'quotation_screen.dart';
 import 'barcode_scanner_screen.dart';
 import 'widgets/app_bottom_nav.dart';
@@ -721,6 +722,14 @@ class _CaseLook {
   }
 }
 
+/// تنسيق السعر بنفس عُرف باقي التطبيق: رقمين عشريين بدون رمز عملة.
+/// الأرقام الصحيحة بتنعرض بدون كسور (150 مو 150.00).
+String _formatPrice(double value) {
+  return value == value.roundToDouble()
+      ? value.toStringAsFixed(0)
+      : value.toStringAsFixed(2);
+}
+
 class _CaseCard extends StatelessWidget {
   const _CaseCard({
     required this.job,
@@ -753,6 +762,15 @@ class _CaseCard extends StatelessWidget {
     }
   }
 
+  Future<void> _openDetails(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CaseDetailScreen(jobId: job.id),
+      ),
+    );
+    await onStatusUpdated();
+  }
+
   Future<void> _openQuotation(BuildContext context) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -773,6 +791,10 @@ class _CaseCard extends StatelessWidget {
     return SoftSurface(
       radius: 24,
       child: GestureDetector(
+        // الضغط بيفتح التفاصيل (كان ما بيعمل شي)، والضغط الطويل بيضل
+        // اختصار للعرض المالي. بعد الرجوع منحدّث القائمة لأن شاشة
+        // التفاصيل تقدر تغيّر الحالة.
+        onTap: () => _openDetails(context),
         onLongPress: () => _openQuotation(context),
         child: IntrinsicHeight(
         child: Row(
@@ -812,9 +834,27 @@ class _CaseCard extends StatelessWidget {
                           ),
                         Padding(
                           padding: const EdgeInsets.only(top: 8, right: 10),
-                          child: Text(
-                            '#${job.invoiceNumber}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '#${job.invoiceNumber}',
+                                style: const TextStyle(
+                                    fontSize: 12, color: Color(0xFF6B7280)),
+                              ),
+                              // السعر بيظهر بس لما ينحدّد — القضايا الجديدة بدون سعر
+                              if (job.price != null) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  _formatPrice(job.price!),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
