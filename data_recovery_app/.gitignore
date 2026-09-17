@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ملفات جلسات مترجم Kotlin — بتتولّد مع كل بناء APK
+.kotlin/
