@@ -11,6 +11,8 @@ import 'notifications_screen.dart';
 import 'reports_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'widgets/offline_banner.dart';
+import 'widgets/pending_sync_banner.dart';
+import '../providers/sync_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -50,6 +52,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _isLoading = false;
         _error = null;
       });
+      // نجاح الطلب من الشبكة (مو من الكاش) هو أوضح إشارة إنه السيرفر رجع.
+      // منستغلها حتى نرفع يلي انعمل أوفلاين ومنحجز مدى أرقام لو ما عندنا.
+      if (!fresh.isFromCache) {
+        await ref.read(syncProvider.notifier).ensureNumberBlock();
+        if (ref.read(syncProvider).hasPending) {
+          await ref.read(syncProvider.notifier).flush();
+        }
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -165,6 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             if (_cachedAt != null) OfflineBanner(cachedAt: _cachedAt!),
+            const PendingSyncBanner(),
             Expanded(child: _buildBody()),
           ],
         ),

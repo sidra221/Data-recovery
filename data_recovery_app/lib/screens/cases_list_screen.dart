@@ -17,6 +17,7 @@ import 'widgets/app_button.dart';
 import 'widgets/cases_filter_sheet.dart';
 import 'widgets/notify_customer_sheet.dart';
 import 'widgets/offline_banner.dart';
+import 'widgets/pending_sync_banner.dart';
 import 'widgets/soft_surface.dart';
 import 'widgets/update_status_sheet.dart';
 
@@ -300,6 +301,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                     ],
                     if (jobsState.cachedAt != null)
                       OfflineBanner(cachedAt: jobsState.cachedAt!),
+                    const PendingSyncBanner(),
                     Expanded(child: _buildBody(jobsState)),
                   ],
                 ),
@@ -774,7 +776,18 @@ class _CaseCard extends StatelessWidget {
     }
   }
 
+  /// العمليات المحفوظة محلياً (id سالب) ما إلها صفحة على السيرفر، فأي
+  /// شاشة بتجيب بالـ id رح تفشل. منعرض سبب واضح بدل خطأ غامض.
+  bool _warnIfPending(BuildContext context) {
+    if (job.id >= 0) return false;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(L.of(context).savedOfflineWillSync)));
+    return true;
+  }
+
   Future<void> _openDetails(BuildContext context) async {
+    if (_warnIfPending(context)) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CaseDetailScreen(jobId: job.id),
@@ -784,6 +797,7 @@ class _CaseCard extends StatelessWidget {
   }
 
   Future<void> _openQuotation(BuildContext context) {
+    if (_warnIfPending(context)) return Future.value();
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => QuotationScreen(
@@ -800,6 +814,7 @@ class _CaseCard extends StatelessWidget {
     final l = L.of(context);
     final look = _CaseLook.of(job, l, inspectionStyle: inspectionStyle);
     final dateText = DateFormat('d MMM yyyy', 'en').format(job.createdAt.toLocal());
+    final isPending = job.id < 0;
 
     return SoftSurface(
       radius: 24,
@@ -820,6 +835,29 @@ class _CaseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (isPending)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 13,
+                              color: Color(0xFF1E40AF),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              l.pendingUpload,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E40AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

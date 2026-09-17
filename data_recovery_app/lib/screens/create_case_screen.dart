@@ -6,12 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
+import '../core/invoice_number_minter.dart';
 import '../models/customer.dart';
 import '../providers/auth_provider.dart';
 import '../providers/customers_provider.dart';
 import '../providers/jobs_provider.dart';
 import 'barcode_scanner_screen.dart';
 import 'widgets/app_button.dart';
+import 'widgets/print_documents_sheet.dart';
 import 'widgets/soft_surface.dart';
 
 class CreateCaseScreen extends ConsumerStatefulWidget {
@@ -90,17 +92,41 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       };
 
       final job = await ref.read(jobsProvider.notifier).createJob(payload);
-      if (_files.isNotEmpty) {
+
+      // id سالب = انحفظت على الجهاز وما وصلت السيرفر بعد، فما في id حقيقي
+      // نرفع عليه مرفقات.
+      final savedOffline = job.id < 0;
+      if (_files.isNotEmpty && !savedOffline) {
         await ref.read(apiClientProvider).uploadJobAttachments(
               jobId: job.id,
               files: _files,
             );
       }
       if (!mounted) return;
+
+      final message = savedOffline
+          ? (_files.isEmpty
+              ? l.savedOfflineWillSync
+              : '${l.savedOfflineWillSync} ${l.attachmentsNeedServer}')
+          : l.caseCreated;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.caseCreated)));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: savedOffline
+                ? const Duration(seconds: 6)
+                : const Duration(seconds: 4),
+          ),
+        );
+      // المسار المعتمد: بعد الحفظ بتطلع المطبوعتين فوراً — ستيكر بينلزق على
+      // القطعة، وسند بياخده العميل. بتشتغل حتى لو السيرفر مطفّى.
+      await PrintDocumentsSheet.show(context, job: job);
+      if (!mounted) return;
       Navigator.of(context).pop();
+    } on OfflineNumbersExhausted {
+      if (!mounted) return;
+      _showError(l.noOfflineNumbersLeft);
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(error.message.isNotEmpty ? error.message : l.failedToCreateCase);

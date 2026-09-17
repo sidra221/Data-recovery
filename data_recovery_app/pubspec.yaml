@@ -48,6 +48,9 @@ dependencies:
   share_plus: ^13.0.0
   printing: ^5.14.2
   pdf: ^3.11.3
+  # مستعمل مباشرة لباركود الستيكر. جاي أصلاً مع pdf، بس التصريح
+  # الصريح بيمنع كسره لو pdf غيّر اعتمادياته.
+  barcode: ^2.2.9
   qr_flutter: ^4.1.0
   signature: ^5.5.0
 
@@ -78,6 +81,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

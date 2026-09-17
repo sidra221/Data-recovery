@@ -2,6 +2,13 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// خلص المدى المحجوز لهاليوم، أو ما في مدى أصلاً.
+///
+/// نوع مستقل حتى الشاشة تعرض رسالة مترجمة ومفهومة بدل نص إنكليزي جاهز.
+class OfflineNumbersExhausted implements Exception {
+  const OfflineNumbersExhausted();
+}
+
 /// مدى أرقام محجوز لهالجهاز، جاي من السيرفر.
 class NumberBlock {
   const NumberBlock({

@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api_client.dart';
+import '../core/invoice_number_minter.dart';
+import '../core/pending_queue.dart';
 import '../models/job.dart';
 import 'auth_provider.dart';
+import 'sync_provider.dart';
 
 class JobsState {
   const JobsState({
@@ -126,9 +129,49 @@ class JobsNotifier extends Notifier<JobsState> {
   Future<void> loadMore() => fetchJobs(append: true);
 
   Future<Job> createJob(Map<String, dynamic> payload) async {
-    final job = await _client.createJob(payload);
+    try {
+      final job = await _client.createJob(payload);
+      state = state.copyWith(jobs: [job, ...state.jobs], count: state.count + 1);
+      return job;
+    } on ApiException catch (error) {
+      if (!error.isNetworkError) rethrow;
+      // السيرفر مطفّى والعميل واقف عالكاونتر — منسجّل محلياً برقم من المدى
+      // المحجوز، حتى يقدر يطبع الستيكر والسند فوراً.
+      return _createOffline(payload);
+    }
+  }
+
+  Future<Job> _createOffline(Map<String, dynamic> payload) async {
+    final number = await ref.read(invoiceMinterProvider).mint();
+    if (number == null) throw const OfflineNumbersExhausted();
+
+    final queued = {...payload, 'invoice_number': number};
+    await ref.read(pendingQueueProvider).add(
+          kind: PendingKind.createJob,
+          payload: queued,
+        );
+    await ref.read(syncProvider.notifier).refresh();
+
+    final job = _localJob(queued);
     state = state.copyWith(jobs: [job, ...state.jobs], count: state.count + 1);
     return job;
+  }
+
+  /// عملية موجودة على الجهاز بس وما وصلت السيرفر بعد.
+  ///
+  /// الـ id سالب عن قصد: السيرفر ما بيعطي أرقام سالبة، فأي شي سالب معناه
+  /// «لسا ما انرفع». الشاشات بتعتمد على هالشي حتى ما تحاول ترفع مرفقات
+  /// لعملية ما إلها id حقيقي.
+  Job _localJob(Map<String, dynamic> payload) {
+    final now = DateTime.now();
+    return Job.fromJson({
+      ...payload,
+      'id': -now.millisecondsSinceEpoch,
+      'barcode': payload['invoice_number'],
+      'status': payload['status'] ?? 'received',
+      'created_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    });
   }
 
   Future<Job> getJob(int id) {

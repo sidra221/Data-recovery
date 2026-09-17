@@ -11,6 +11,7 @@ import 'quotation_screen.dart';
 import 'widgets/app_button.dart';
 import 'widgets/notify_customer_sheet.dart';
 import 'widgets/update_status_sheet.dart';
+import 'widgets/print_documents_sheet.dart';
 
 /// تفاصيل قضية واحدة: بيانات العميل والجهاز، الحالات، السعر، المرفقات،
 /// وسجل التغييرات — مع أزرار العمل.
@@ -204,6 +205,13 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
           AppTextButton(
             label: l.quotationInvoice,
             onPressed: () => _openQuotation(job),
+          ),
+          const SizedBox(height: 10),
+          // إعادة الطباعة لازمة عملياً: الستيكر بينقلع عن القطعة، والعميل
+          // بيضيّع السند.
+          AppTextButton(
+            label: l.printDocuments,
+            onPressed: () => PrintDocumentsSheet.show(context, job: job),
           ),
         ],
       ),

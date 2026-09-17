@@ -928,4 +928,73 @@ class LAr extends L {
 
   @override
   String get noArticlesMatch => 'ما في مقالات بتطابق البحث';
+
+  @override
+  String get savedOfflineWillSync =>
+      'انحفظت على الجهاز. رح تنبعت أول ما يرجع السيرفر.';
+
+  @override
+  String get noOfflineNumbersLeft =>
+      'خلصت أرقام الفواتير المحجوزة لليوم. لازم توصل بالسيرفر أول.';
+
+  @override
+  String get attachmentsNeedServer =>
+      'المرفقات ما انرفعت. ضيفها كمان مرة لما يرجع السيرفر.';
+
+  @override
+  String pendingSyncCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تعديلات مستنية الرفع',
+      one: 'تعديل واحد مستني الرفع',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rejectedSyncCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تعديلات انرفضت',
+      one: 'تعديل واحد انرفض',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncNow => 'ارفع هلق';
+
+  @override
+  String syncedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'انبعتوا $count تعديلات',
+      one: 'انبعت تعديل واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingUpload => 'لسا ما انرفعت';
+
+  @override
+  String get printDocuments => 'طباعة المستندات';
+
+  @override
+  String get printSticker => 'ستيكر القطعة';
+
+  @override
+  String get printStickerHint => 'بينلزق على القطعة المستلمة';
+
+  @override
+  String get printReceipt => 'سند الاستلام';
+
+  @override
+  String get printReceiptHint => 'بينعطى للعميل';
+
+  @override
+  String get printFailed => 'تعذّر فتح نافذة الطباعة';
 }

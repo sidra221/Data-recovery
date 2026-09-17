@@ -1824,6 +1824,90 @@ abstract class L {
   /// In en, this message translates to:
   /// **'No articles match this search'**
   String get noArticlesMatch;
+
+  /// No description provided for @savedOfflineWillSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device. It will be sent when the server is back.'**
+  String get savedOfflineWillSync;
+
+  /// No description provided for @noOfflineNumbersLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'No offline invoice numbers left for today. Connect to the server first.'**
+  String get noOfflineNumbersLeft;
+
+  /// No description provided for @attachmentsNeedServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments were not uploaded. Add them again once the server is back.'**
+  String get attachmentsNeedServer;
+
+  /// No description provided for @pendingSyncCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change waiting to sync} other{{count} changes waiting to sync}}'**
+  String pendingSyncCount(int count);
+
+  /// No description provided for @rejectedSyncCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change was rejected} other{{count} changes were rejected}}'**
+  String rejectedSyncCount(int count);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change sent} other{{count} changes sent}}'**
+  String syncedCount(int count);
+
+  /// No description provided for @pendingUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent yet'**
+  String get pendingUpload;
+
+  /// No description provided for @printDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Print documents'**
+  String get printDocuments;
+
+  /// No description provided for @printSticker.
+  ///
+  /// In en, this message translates to:
+  /// **'Device sticker'**
+  String get printSticker;
+
+  /// No description provided for @printStickerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stick it on the received device'**
+  String get printStickerHint;
+
+  /// No description provided for @printReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving receipt'**
+  String get printReceipt;
+
+  /// No description provided for @printReceiptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand it to the customer'**
+  String get printReceiptHint;
+
+  /// No description provided for @printFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the print dialog'**
+  String get printFailed;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

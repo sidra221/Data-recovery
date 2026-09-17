@@ -346,5 +346,40 @@
   "serverUnreachable": "ما قدرنا نوصل للسيرفر",
   "noSavedData": "ما في بيانات محفوظة للعرض",
   "searchHelpHint": "ابحث بالمقالات",
-  "noArticlesMatch": "ما في مقالات بتطابق البحث"
+  "noArticlesMatch": "ما في مقالات بتطابق البحث",
+  "savedOfflineWillSync": "انحفظت على الجهاز. رح تنبعت أول ما يرجع السيرفر.",
+  "noOfflineNumbersLeft": "خلصت أرقام الفواتير المحجوزة لليوم. لازم توصل بالسيرفر أول.",
+  "attachmentsNeedServer": "المرفقات ما انرفعت. ضيفها كمان مرة لما يرجع السيرفر.",
+  "pendingSyncCount": "{count, plural, =1{تعديل واحد مستني الرفع} other{{count} تعديلات مستنية الرفع}}",
+  "@pendingSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rejectedSyncCount": "{count, plural, =1{تعديل واحد انرفض} other{{count} تعديلات انرفضت}}",
+  "@rejectedSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNow": "ارفع هلق",
+  "syncedCount": "{count, plural, =1{انبعت تعديل واحد} other{انبعتوا {count} تعديلات}}",
+  "@syncedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUpload": "لسا ما انرفعت",
+  "printDocuments": "طباعة المستندات",
+  "printSticker": "ستيكر القطعة",
+  "printStickerHint": "بينلزق على القطعة المستلمة",
+  "printReceipt": "سند الاستلام",
+  "printReceiptHint": "بينعطى للعميل",
+  "printFailed": "تعذّر فتح نافذة الطباعة"
 }

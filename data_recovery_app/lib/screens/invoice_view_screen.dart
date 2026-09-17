@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:signature/signature.dart';
 
 import '../core/api_client.dart';
+import '../core/pdf_theme.dart';
 import '../l10n/app_localizations.dart';
 import '../models/invoice_view.dart';
 import '../providers/auth_provider.dart';
@@ -92,25 +93,27 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
     await SharePlus.instance.share(ShareParams(text: _shareText(invoice)));
   }
 
-  // ملاحظة: نصوص الـ PDF بتضل إنكليزي. خط الـ pdf الافتراضي (Helvetica) ما
-  // فيه محارف عربية، فأي نص عربي بيطلع مربّعات فاضية. لتعريبه لازم ننزّل خط
-  // عربي (مثلاً Noto Naskh Arabic) ونضيفه كـ asset ونعرّفه بـ pw.ThemeData.
   Future<void> _saveAndPrint() async {
     final invoice = _invoice;
     if (invoice == null) return;
-    final doc = pw.Document();
+    final l = L.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final theme = await PdfTheme.load();
+    final doc = pw.Document(theme: theme);
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
+        theme: theme,
+        textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
         build: (context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(invoice.company.name, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 8),
-              pw.Text('Invoice: ${invoice.invoiceNumber}'),
-              pw.Text('Customer: ${invoice.customerName}'),
-              pw.Text('Phone: ${invoice.customerPhone}'),
+              pw.Text('${l.labelInvoice}: ${invoice.invoiceNumber}'),
+              pw.Text('${l.customer}: ${invoice.customerName}'),
+              pw.Text('${l.labelPhone}: ${invoice.customerPhone}'),
               pw.SizedBox(height: 16),
               ...[
                 for (final item in invoice.items)
@@ -126,15 +129,15 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
               pw.Align(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Text(
-                  'Total: ${invoice.total.toStringAsFixed(2)}',
+                  '${l.colTotal}: ${invoice.total.toStringAsFixed(2)}',
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
               ),
               pw.SizedBox(height: 24),
-              pw.Text('Verification: ${invoice.invoiceNumber}'),
+              pw.Text('${l.verificationCode}: ${invoice.invoiceNumber}'),
               if (invoice.terms.isNotEmpty) pw.Text(invoice.terms),
               pw.Spacer(),
-              _signatureRow(),
+              _signatureRow(l),
             ],
           );
         },
@@ -145,7 +148,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
 
   /// خانتَي التوقيع بأسفل الـ PDF. لو التوقيع مو مرسوم بعد، بينطبع سطر
   /// فاضي حتى ينوقّع باليد على الورقة.
-  pw.Widget _signatureRow() {
+  pw.Widget _signatureRow(L l) {
     pw.Widget box(String label, Uint8List? bytes) {
       return pw.Expanded(
         child: pw.Column(
@@ -171,9 +174,9 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.end,
       children: [
-        box('Seller Signature', _sellerSignature),
+        box(l.sellerSignature, _sellerSignature),
         pw.SizedBox(width: 40),
-        box('Receiver Signature', _receiverSignature),
+        box(l.receiverSignature, _receiverSignature),
       ],
     );
   }

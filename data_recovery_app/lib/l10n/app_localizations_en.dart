@@ -930,4 +930,73 @@ class LEn extends L {
 
   @override
   String get noArticlesMatch => 'No articles match this search';
+
+  @override
+  String get savedOfflineWillSync =>
+      'Saved on this device. It will be sent when the server is back.';
+
+  @override
+  String get noOfflineNumbersLeft =>
+      'No offline invoice numbers left for today. Connect to the server first.';
+
+  @override
+  String get attachmentsNeedServer =>
+      'Attachments were not uploaded. Add them again once the server is back.';
+
+  @override
+  String pendingSyncCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes waiting to sync',
+      one: '1 change waiting to sync',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rejectedSyncCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes were rejected',
+      one: '1 change was rejected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String syncedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes sent',
+      one: '1 change sent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingUpload => 'Not sent yet';
+
+  @override
+  String get printDocuments => 'Print documents';
+
+  @override
+  String get printSticker => 'Device sticker';
+
+  @override
+  String get printStickerHint => 'Stick it on the received device';
+
+  @override
+  String get printReceipt => 'Receiving receipt';
+
+  @override
+  String get printReceiptHint => 'Hand it to the customer';
+
+  @override
+  String get printFailed => 'Could not open the print dialog';
 }

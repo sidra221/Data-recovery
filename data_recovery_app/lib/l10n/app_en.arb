@@ -346,5 +346,40 @@
   "serverUnreachable": "Cannot reach the server",
   "noSavedData": "No saved data to show",
   "searchHelpHint": "Search articles",
-  "noArticlesMatch": "No articles match this search"
+  "noArticlesMatch": "No articles match this search",
+  "savedOfflineWillSync": "Saved on this device. It will be sent when the server is back.",
+  "noOfflineNumbersLeft": "No offline invoice numbers left for today. Connect to the server first.",
+  "attachmentsNeedServer": "Attachments were not uploaded. Add them again once the server is back.",
+  "pendingSyncCount": "{count, plural, =1{1 change waiting to sync} other{{count} changes waiting to sync}}",
+  "@pendingSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rejectedSyncCount": "{count, plural, =1{1 change was rejected} other{{count} changes were rejected}}",
+  "@rejectedSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNow": "Sync now",
+  "syncedCount": "{count, plural, =1{1 change sent} other{{count} changes sent}}",
+  "@syncedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingUpload": "Not sent yet",
+  "printDocuments": "Print documents",
+  "printSticker": "Device sticker",
+  "printStickerHint": "Stick it on the received device",
+  "printReceipt": "Receiving receipt",
+  "printReceiptHint": "Hand it to the customer",
+  "printFailed": "Could not open the print dialog"
 }
