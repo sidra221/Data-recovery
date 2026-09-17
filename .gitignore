@@ -12,3 +12,6 @@ media/
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# تقارير بنية السيرفر — بتضل محلية، الريبو عام.
+docs/internal/
