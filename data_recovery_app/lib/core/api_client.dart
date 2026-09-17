@@ -7,6 +7,7 @@ import '../models/invoice_view.dart';
 import '../models/job.dart';
 import '../models/quotation.dart';
 import 'constants.dart';
+import 'invoice_number_minter.dart';
 import 'offline_cache.dart';
 import 'secure_storage.dart';
 
@@ -205,6 +206,13 @@ class ApiClient {
     return PaginatedJobs.fromJson(data as Map<String, dynamic>);
   }
 
+  /// بيحجز مدى أرقام لهالجهاز حتى يقدر يولّد أرقام فواتير وهو أوفلاين.
+  /// idempotent — نفس الجهاز بياخد نفس المدى كل مرة.
+  Future<NumberBlock> reserveNumberBlock(String deviceId) async {
+    final data = await _post('jobs/device-block/', {'device_id': deviceId});
+    return NumberBlock.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<Job> createJob(Map<String, dynamic> payload) async {
     final data = await _post('jobs/', payload);
     return Job.fromJson(data as Map<String, dynamic>);
@@ -361,7 +369,20 @@ class ApiClient {
       if (data['non_field_errors'] is List && (data['non_field_errors'] as List).isNotEmpty) {
         return (data['non_field_errors'] as List).first.toString();
       }
+      // أخطاء الحقول من DRF بتجي `{"customer_phone": ["..."]}`. بدون
+      // هالجزء كانت بتطلع للموظف «خطأ اتصال» وهو السيرفر رادّ فعلاً —
+      // تضليل بيخلّيه يجرّب كمان مرة بدل ما يصلّح الحقل.
+      for (final entry in data.entries) {
+        final value = entry.value;
+        if (value is List && value.isNotEmpty) {
+          return '${entry.key}: ${value.first}';
+        }
+        if (value is String && value.isNotEmpty) {
+          return '${entry.key}: $value';
+        }
+      }
     }
+    // وصلنا لهون يعني ما في رد مفهوم — غالباً السيرفر ما ردّ أصلاً.
     return error.message ?? 'A connection error occurred.';
   }
 }
