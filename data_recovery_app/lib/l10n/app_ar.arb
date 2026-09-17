@@ -1,20 +1,16 @@
 {
   "@@locale": "ar",
-
   "appTitle": "استعادة البيانات",
-
   "welcomeBack": "أهلاً بعودتك",
   "loginSubtitle": "ادخل على لوحتك وتابع قضايا استعادة البيانات",
   "username": "اسم المستخدم",
   "password": "كلمة السر",
   "signIn": "تسجيل الدخول",
   "invalidCredentials": "بيانات الدخول غير صحيحة",
-
   "navHome": "الرئيسية",
   "navCases": "القضايا",
   "navCustomer": "العملاء",
   "navSetting": "الإعدادات",
-
   "fieldRequired": "هذا الحقل مطلوب",
   "retry": "إعادة المحاولة",
   "clear": "تصفير",
@@ -30,10 +26,8 @@
   "notSet": "غير محدّد",
   "yes": "نعم",
   "no": "لا",
-
   "reports": "التقارير",
   "notifications": "الإشعارات",
-
   "typeHdd35": "هارد 3.5",
   "typeHdd25": "هارد 2.5",
   "typeSsd": "SSD",
@@ -42,42 +36,47 @@
   "typeUsb": "فلاش USB",
   "typeMemoryCard": "كرت ذاكرة",
   "typeOther": "أخرى",
-
   "statusReceived": "تم الاستلام",
   "statusCompleted": "مكتملة",
   "statusHasProblems": "فيها مشاكل",
-
   "workPending": "قيد الانتظار",
   "workInProgress": "قيد التنفيذ",
   "workDone": "انتهى الإصلاح",
-
   "clientAgree": "موافق على السعر",
   "clientWaitClient": "بانتظار رد العميل",
   "clientReady": "جاهز للاستلام",
   "clientRejected": "مرفوض من العميل",
-
   "flagNone": "بدون",
   "flagNoSpareParts": "لا يوجد قطع غيار",
   "flagSendToChina": "يُرسل للصين",
-
   "recoveryProgress": "سير الاستعادة",
   "readyForReturn": "جاهز للاستلام",
   "finishedReadyToCollect": "انتهى / جاهز للاستلام",
   "viewCases": "عرض القضايا",
   "casesCount": "{count, plural, =1{قضية واحدة} =2{قضيتان} other{{count} قضية}}",
-  "@casesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@casesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "todaysActivity": "نشاط اليوم",
   "newCases": "قضايا جديدة",
   "updates": "تحديثات",
   "agreeChip": "موافق {count}",
-  "@agreeChip": { "placeholders": { "count": { "type": "int" } } },
-
+  "@agreeChip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "filterAll": "الكل",
   "filterInspection": "فحص",
   "noRepairs": "لا يوجد إصلاحات",
   "noRepairsHint": "ما عندك إصلاحات حالياً",
   "barcodeNotFound": "الباركود غير موجود",
-
   "caseTitle": "قضية",
   "sectionCustomer": "العميل",
   "sectionDevice": "الجهاز",
@@ -109,7 +108,6 @@
   "updateStatus": "تحديث الحالة",
   "notifyCustomer": "إشعار العميل",
   "quotationInvoice": "عرض السعر / الفاتورة",
-
   "createNewCase": "إنشاء قضية جديدة",
   "addCase": "إضافة القضية",
   "customerInformation": "معلومات العميل",
@@ -133,7 +131,6 @@
   "chooseFile": "اختيار ملف (PDF أو صورة)",
   "caseCreated": "تم إنشاء القضية",
   "failedToCreateCase": "تعذّر إنشاء القضية",
-
   "customerDetails": "تفاصيل العميل",
   "customerState": "حالة العميل",
   "devices": "الأجهزة",
@@ -148,12 +145,10 @@
   "failedToUpdate": "تعذّر التحديث",
   "failedToLoadCustomer": "تعذّر تحميل بيانات العميل",
   "failedToDeleteCustomer": "تعذّر حذف العميل",
-
   "customersList": "قائمة العملاء",
   "searchCustomersHint": "ابحث بالاسم أو الإيميل أو الهاتف",
   "noCustomersFound": "ما في عملاء",
   "lastDash": "الأخيرة: -",
-
   "searchReportsHint": "سيريال أو هاتف أو اسم أو رقم فاتورة",
   "searchReportsEmptyHint": "ابحث بالسيريال أو الهاتف أو الاسم أو رقم الفاتورة — أو بنطاق تاريخ",
   "searchNeedsCriteria": "اكتب سيريال أو هاتف أو اسم أو رقم فاتورة — أو اختر نطاق تاريخ",
@@ -163,10 +158,24 @@
   "dateTo": "إلى",
   "dateAny": "الكل",
   "resultsCount": "{count, plural, =1{نتيجة واحدة} =2{نتيجتان} other{{count} نتيجة}}",
-  "@resultsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "showingOf": "معروض {shown} من {total} — ضيّق البحث أكثر",
-  "@showingOf": { "placeholders": { "shown": { "type": "int" }, "total": { "type": "int" } } },
-
+  "@showingOf": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "settings": "الإعدادات",
   "sectionAccount": "الحساب",
   "sectionSupport": "الدعم",
@@ -176,24 +185,19 @@
   "logOutConfirm": "متأكد إنك بدك تسجّل خروج؟",
   "employee": "موظف",
   "itEmployee": "موظف تقني",
-
   "roleDepartment": "الوظيفة / القسم",
   "phoneNumberCaps": "رقم الهاتف",
   "emailAddressCaps": "الإيميل",
   "photoUpdated": "تم تحديث الصورة",
   "failedToUploadPhoto": "تعذّر رفع الصورة",
-
   "howCanWeHelp": "كيف نقدر نساعدك؟",
   "emailUs": "راسلنا بالإيميل",
   "couldNotOpenEmail": "تعذّر فتح تطبيق الإيميل",
   "supportRequest": "طلب دعم من مركز المساعدة",
-
   "noOverdueCases": "ما في قضايا متأخرة بانتظار العميل",
   "failedToLoadAlerts": "تعذّر تحميل التنبيهات",
-
   "scanBarcode": "مسح الباركود",
   "enterCode": "اكتب الرمز",
-
   "financialOffer": "عرض السعر",
   "quotation": "عرض السعر",
   "addItem": "إضافة بند",
@@ -227,7 +231,6 @@
   "share": "مشاركة",
   "saveAndPrint": "حفظ وطباعة",
   "price": "السعر",
-
   "whatsapp": "واتساب",
   "sendPickupNotification": "إرسال إشعار الاستلام",
   "sentAutomatically": "بينبعت تلقائياً من السيرفر",
@@ -236,7 +239,6 @@
   "failedToOpenWhatsapp": "تعذّر فتح واتساب أو تسجيل الإرسال",
   "failedToRecordSend": "تعذّر تسجيل الإرسال",
   "whatsappUnavailable": "رابط واتساب غير متاح",
-
   "workStatusSection": "حالة الشغل",
   "clientDecisionSection": "قرار العميل",
   "handoverSection": "التسليم",
@@ -253,7 +255,6 @@
   "createReportAndInvoice": "إنشاء تقرير وفاتورة",
   "sendReportToCustomer": "إرسال التقرير للعميل",
   "failedToUpdateStatus": "تعذّر تحديث الحالة",
-
   "filter": "تصفية",
   "dateRange": "نطاق التاريخ",
   "allTime": "كل الفترات",
@@ -263,9 +264,7 @@
   "custom": "مخصّص",
   "applyFilter": "تطبيق التصفية",
   "clearAll": "مسح الكل",
-
   "typeManually": "كتابة",
-
   "searchKnowledgeBase": "ابحث في قاعدة المعرفة أو تصفّح الأقسام أدناه",
   "popularArticles": "المقالات الشائعة",
   "viewAll": "عرض الكل",
@@ -284,10 +283,8 @@
   "helpBillingStep1": "أضف السعر المتفق عليه على القضية بعد موافقة العميل على عرض السعر.",
   "helpBillingStep2": "أرسل الفاتورة للعميل من شاشة تفاصيل القضية.",
   "helpBillingStep3": "علّم العمل كمُسلَّم بعد اكتمال الدفع والتسليم.",
-
   "tel": "هاتف",
   "pricesForQuantity": "الأسعار محسوبة للكمية المذكورة ولا تنطبق عند تغيير الكمية.",
-
   "electronicInvoice": "فاتورة إلكترونية",
   "invoiceIdLabel": "رقم الفاتورة",
   "failedToLoadInvoice": "تعذّر تحميل الفاتورة",
@@ -311,5 +308,42 @@
   "noItems": "لا توجد بنود",
   "paidOnMainFund": "مدفوع على (1) الصندوق الرئيسي",
   "paidOnTwo": "مدفوع على (2)",
-  "paidOnThree": "مدفوع على (3)"
+  "paidOnThree": "مدفوع على (3)",
+  "offline": "غير متصل",
+  "showingSavedData": "عم نعرض بيانات محفوظة {when}",
+  "@showingSavedData": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "justNow": "هلق",
+  "minutesAgo": "{count, plural, =1{من دقيقة} other{من {count} دقائق}}",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{count, plural, =1{من ساعة} other{من {count} ساعات}}",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{count, plural, =1{من يوم} other{من {count} أيام}}",
+  "@daysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToLoadStats": "تعذّر تحميل الإحصائيات",
+  "serverUnreachable": "ما قدرنا نوصل للسيرفر",
+  "noSavedData": "ما في بيانات محفوظة للعرض"
 }

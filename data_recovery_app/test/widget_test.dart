@@ -25,7 +25,7 @@ class _OfflineApi extends ApiClient {
   _OfflineApi() : super(storage: SecureStorage());
 
   @override
-  Future<DashboardStats> getDashboardStats() async =>
+  Future<Fresh<DashboardStats>> getDashboardStatsCached() async =>
       throw ApiException('offline in tests');
 }
 

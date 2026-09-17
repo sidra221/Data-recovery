@@ -16,6 +16,7 @@ import 'widgets/app_bottom_nav.dart';
 import 'widgets/app_button.dart';
 import 'widgets/cases_filter_sheet.dart';
 import 'widgets/notify_customer_sheet.dart';
+import 'widgets/offline_banner.dart';
 import 'widgets/soft_surface.dart';
 import 'widgets/update_status_sheet.dart';
 
@@ -297,6 +298,8 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
                       ),
                       const SizedBox(height: 12),
                     ],
+                    if (jobsState.cachedAt != null)
+                      OfflineBanner(cachedAt: jobsState.cachedAt!),
                     Expanded(child: _buildBody(jobsState)),
                   ],
                 ),

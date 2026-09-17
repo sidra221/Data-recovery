@@ -7,23 +7,48 @@ import '../models/invoice_view.dart';
 import '../models/job.dart';
 import '../models/quotation.dart';
 import 'constants.dart';
+import 'offline_cache.dart';
 import 'secure_storage.dart';
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode, this.data});
+  ApiException(
+    this.message, {
+    this.statusCode,
+    this.data,
+    this.isNetworkError = false,
+  });
 
   final String message;
   final int? statusCode;
   final dynamic data;
 
+  /// ما وصلنا للسيرفر أصلاً (مطفّى، مافي نت، انتهت المهلة).
+  ///
+  /// بيفرق عن خطأ جاي **من** السيرفر (400/403/500): هداك جوابه وصل ومعناه
+  /// إن الطلب غلط، فما بينفع نرجع لكاش قديم بدالو.
+  final bool isNetworkError;
+
   @override
   String toString() => message;
+}
+
+/// نتيجة إمّا طازة من الشبكة أو محفوظة من آخر مرة نجح فيها الطلب.
+class Fresh<T> {
+  const Fresh(this.value, this.cachedAt);
+
+  final T value;
+
+  /// وقت حفظ النسخة المعروضة. `null` يعني إنها جاية من الشبكة هلق.
+  final DateTime? cachedAt;
+
+  bool get isFromCache => cachedAt != null;
 }
 
 class ApiClient {
   ApiClient({
     required this.storage,
     this.onUnauthorized,
+    this.cache,
     Dio? dio,
   }) : _dio = dio ??
            Dio(
@@ -58,8 +83,62 @@ class ApiClient {
   }
 
   final Dio _dio;
+  final OfflineCache? cache;
   final SecureStorage storage;
   final void Function()? onUnauthorized;
+
+  /// بيجيب من الشبكة وبيحفظ نسخة. إذا السيرفر ما ردّ، بيرجع آخر نسخة محفوظة.
+  ///
+  /// بيرجع للكاش **بس** لما يكون الفشل شبكة. خطأ جاي من السيرفر (403 مثلاً)
+  /// معناه الطلب نفسه غلط، وعرض بيانات قديمة بداله بيخبّي المشكلة.
+  Future<Fresh<T>> _cachedGet<T>({
+    required String cacheKey,
+    required Future<dynamic> Function() fetch,
+    required T Function(dynamic json) parse,
+  }) async {
+    try {
+      final data = await fetch();
+      await cache?.write(cacheKey, data);
+      return Fresh(parse(data), null);
+    } on ApiException catch (error) {
+      final store = cache;
+      if (!error.isNetworkError || store == null) rethrow;
+      final cached = await store.read(cacheKey);
+      if (cached == null) rethrow;
+      try {
+        return Fresh(parse(cached.data), cached.savedAt);
+      } catch (_) {
+        // المحفوظ ما عاد ينفكّ (تغيّر شكل الـ API) — منرجع خطأ الشبكة الأصلي.
+        throw error;
+      }
+    }
+  }
+
+  Future<Fresh<DashboardStats>> getDashboardStatsCached() {
+    return _cachedGet(
+      cacheKey: OfflineCache.keyDashboardStats,
+      fetch: () => _get('dashboard/stats/'),
+      parse: (json) => DashboardStats.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// الصفحة الأولى بدون بحث ولا فلاتر — هي الوحيدة يلي منكاشها، لأن كاش
+  /// نتيجة مفلترة ما بينفع نعرضه لفلتر تاني.
+  Future<Fresh<PaginatedJobs>> listJobsCached() {
+    return _cachedGet(
+      cacheKey: OfflineCache.keyJobs,
+      fetch: () => _get('jobs/'),
+      parse: (json) => PaginatedJobs.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<Fresh<PaginatedCustomers>> listCustomersCached() {
+    return _cachedGet(
+      cacheKey: OfflineCache.keyCustomers,
+      fetch: () => _get('customers/'),
+      parse: (json) => PaginatedCustomers.fromJson(json as Map<String, dynamic>),
+    );
+  }
 
   bool _isLoginRequest(RequestOptions options) {
     return options.path.contains('auth/login');
@@ -199,11 +278,6 @@ class ApiClient {
     return data as Map<String, dynamic>;
   }
 
-  Future<DashboardStats> getDashboardStats() async {
-    final data = await _get('dashboard/stats/');
-    return DashboardStats.fromJson(data as Map<String, dynamic>);
-  }
-
   Future<PaginatedCustomers> listCustomers({String? search, int page = 1}) async {
     final data = await _get(
       'customers/',
@@ -274,6 +348,8 @@ class ApiClient {
         _messageFrom(error),
         statusCode: error.response?.statusCode,
         data: error.response?.data,
+        // مافي response = ما وصل جواب من السيرفر بالمرة.
+        isNetworkError: error.response == null && error.type != DioExceptionType.cancel,
       );
     }
   }

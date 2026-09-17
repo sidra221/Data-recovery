@@ -6,6 +6,9 @@ APP_DIR="$ROOT_DIR/data_recovery_app"
 NGROK_URL_FILE="$ROOT_DIR/.ngrok_url"
 LOCAL_API_URL="http://127.0.0.1:8000/api/"
 SERVER_API_URL="https://api.datarecovery-sa.com/api/"
+# احتياطي: الدومين لسا ما تزبّط على السيرفر، فهاد الطريق الوحيد الشغّال.
+# لما يخلص certbot ويرد الدومين 200، فينا نشيل هالخيار.
+SERVER_IP_API_URL="http://2.24.131.249/api/"
 
 cd "$ROOT_DIR"
 
@@ -16,11 +19,12 @@ echo "Which API should this build use?"
 echo "  1) localhost   (http://127.0.0.1:8000/api/)"
 echo "  2) ngrok       (public HTTPS URL for external testers)"
 echo "  3) server      (${SERVER_API_URL})"
+echo "  4) server-ip   (${SERVER_IP_API_URL})  <- استعمله لحد ما يجهز الدومين"
 echo
 
 API_CHOICE=""
 while [[ -z "${API_CHOICE}" ]]; do
-  read -r -p "Enter 1, 2, or 3: " REPLY
+  read -r -p "Enter 1, 2, 3, or 4: " REPLY
   case "${REPLY}" in
     1)
       API_CHOICE="localhost"
@@ -31,8 +35,11 @@ while [[ -z "${API_CHOICE}" ]]; do
     3)
       API_CHOICE="server"
       ;;
+    4)
+      API_CHOICE="server-ip"
+      ;;
     *)
-      echo "Please enter 1, 2, or 3."
+      echo "Please enter 1, 2, 3, or 4."
       ;;
   esac
 done
@@ -78,6 +85,10 @@ elif [[ "${API_CHOICE}" == "server" ]]; then
   API_BASE_URL="${SERVER_API_URL}"
   echo
   echo "Using production server API: ${API_BASE_URL}"
+elif [[ "${API_CHOICE}" == "server-ip" ]]; then
+  API_BASE_URL="${SERVER_IP_API_URL}"
+  echo
+  echo "Using the server IP directly: ${API_BASE_URL}"
   echo "Note: this is plain HTTP - traffic is not encrypted."
 else
   NGROK_HTTPS="$(fetch_ngrok_https_url 2>/dev/null || true)"
@@ -117,6 +128,24 @@ PY
   API_BASE_URL="$(normalize_api_url "${NGROK_HTTPS}")"
   echo
   echo "Using ngrok API: ${API_BASE_URL}"
+fi
+
+# فحص سريع قبل البناء. صار معنا إننا بنينا نسخة على عنوان لسا ما تزبّط،
+# وما انكشفت الغلطة إلا على الجهاز. أحسن نعرف هون.
+echo
+printf 'Checking %s ... ' "${API_BASE_URL}health/"
+HEALTH_CODE="$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "${API_BASE_URL}health/" 2>/dev/null || echo 000)"
+if [[ "${HEALTH_CODE}" == "200" ]]; then
+  echo "OK"
+else
+  echo "FAILED (HTTP ${HEALTH_CODE})"
+  echo
+  echo "This API is not answering. A build against it will not connect."
+  read -r -p "Continue anyway? [y/N] " CONFIRM
+  if [[ "${CONFIRM}" != "y" && "${CONFIRM}" != "Y" ]]; then
+    echo "Aborted."
+    exit 1
+  fi
 fi
 
 echo

@@ -31,4 +31,18 @@ class EmployeeProfile {
       token: json['token'] as String?,
     );
   }
+
+  /// للكاش المحلي فقط. **بدون التوكن عن قصد** — التوكن سرّ ومحلّه
+  /// [SecureStorage]، مو التخزين العادي يلي منحفظ فيه الكاش.
+  Map<String, dynamic> toJson() {
+    return {
+      'username': username,
+      'email': email,
+      'phone': phone,
+      'role': role,
+      'department': department,
+      'photo_url': photoUrl,
+      'user_id': userId,
+    };
+  }
 }

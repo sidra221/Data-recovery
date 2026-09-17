@@ -1,20 +1,16 @@
 {
   "@@locale": "en",
-
   "appTitle": "Data Recovery",
-
   "welcomeBack": "Welcome Back",
   "loginSubtitle": "Access your dashboard and manage recovery cases",
   "username": "Username",
   "password": "Password",
   "signIn": "Sign in",
   "invalidCredentials": "Invalid login credentials",
-
   "navHome": "Home",
   "navCases": "Cases",
   "navCustomer": "Customer",
   "navSetting": "Setting",
-
   "fieldRequired": "This field is required",
   "retry": "Retry",
   "clear": "Clear",
@@ -30,10 +26,8 @@
   "notSet": "Not set",
   "yes": "Yes",
   "no": "No",
-
   "reports": "Reports",
   "notifications": "Notifications",
-
   "typeHdd35": "HDD 3.5",
   "typeHdd25": "HDD 2.5",
   "typeSsd": "SSD",
@@ -42,42 +36,47 @@
   "typeUsb": "USB Flash",
   "typeMemoryCard": "Memory Card",
   "typeOther": "Other",
-
   "statusReceived": "Received",
   "statusCompleted": "Completed",
   "statusHasProblems": "Has problems",
-
   "workPending": "Pending",
   "workInProgress": "In progress",
   "workDone": "Done",
-
   "clientAgree": "Agree",
   "clientWaitClient": "Wait client",
   "clientReady": "Ready",
   "clientRejected": "Rejected",
-
   "flagNone": "None",
   "flagNoSpareParts": "No spare parts",
   "flagSendToChina": "Send to China",
-
   "recoveryProgress": "Recovery Progress",
   "readyForReturn": "READY FOR RETURN",
   "finishedReadyToCollect": "Finished / ready to collect",
   "viewCases": "View Cases",
   "casesCount": "{count, plural, =1{1 Case} other{{count} Cases}}",
-  "@casesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@casesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "todaysActivity": "Today's Activity",
   "newCases": "New Cases",
   "updates": "Updates",
   "agreeChip": "Agree {count}",
-  "@agreeChip": { "placeholders": { "count": { "type": "int" } } },
-
+  "@agreeChip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "filterAll": "All",
   "filterInspection": "Inspection",
   "noRepairs": "No Repairs",
   "noRepairsHint": "You have no repairs currently",
   "barcodeNotFound": "Barcode not found",
-
   "caseTitle": "Case",
   "sectionCustomer": "CUSTOMER",
   "sectionDevice": "DEVICE",
@@ -109,7 +108,6 @@
   "updateStatus": "Update Status",
   "notifyCustomer": "Notify Customer",
   "quotationInvoice": "Quotation / Invoice",
-
   "createNewCase": "Create New Case",
   "addCase": "Add Case",
   "customerInformation": "CUSTOMER INFORMATION",
@@ -133,7 +131,6 @@
   "chooseFile": "Choose a file (PDF, image)",
   "caseCreated": "Case created successfully",
   "failedToCreateCase": "Failed to create case",
-
   "customerDetails": "Customer Details",
   "customerState": "Customer state",
   "devices": "DEVICES",
@@ -148,12 +145,10 @@
   "failedToUpdate": "Failed to update",
   "failedToLoadCustomer": "Failed to load customer",
   "failedToDeleteCustomer": "Failed to delete customer",
-
   "customersList": "Customers List",
   "searchCustomersHint": "Search Name, Email, phone",
   "noCustomersFound": "No customers found",
   "lastDash": "Last: -",
-
   "searchReportsHint": "Serial, phone, name or invoice number",
   "searchReportsEmptyHint": "Search by serial, phone, name, invoice number — or a date range",
   "searchNeedsCriteria": "Enter a serial, phone, name, invoice — or pick a date range",
@@ -163,10 +158,24 @@
   "dateTo": "To",
   "dateAny": "Any",
   "resultsCount": "{count, plural, =1{1 result} other{{count} results}}",
-  "@resultsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "showingOf": "Showing {shown} of {total} — refine the search to narrow it",
-  "@showingOf": { "placeholders": { "shown": { "type": "int" }, "total": { "type": "int" } } },
-
+  "@showingOf": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "settings": "Setting",
   "sectionAccount": "ACCOUNT",
   "sectionSupport": "SUPPORT",
@@ -176,24 +185,19 @@
   "logOutConfirm": "Are you sure you want to log out?",
   "employee": "Employee",
   "itEmployee": "IT Employee",
-
   "roleDepartment": "ROLE / DEPARTMENT",
   "phoneNumberCaps": "PHONE NUMBER",
   "emailAddressCaps": "EMAIL ADDRESS",
   "photoUpdated": "Photo updated",
   "failedToUploadPhoto": "Failed to upload photo",
-
   "howCanWeHelp": "How can we help?",
   "emailUs": "Email Us",
   "couldNotOpenEmail": "Could not open email app",
   "supportRequest": "Help Center support request",
-
   "noOverdueCases": "No overdue wait-client cases",
   "failedToLoadAlerts": "Failed to load alerts",
-
   "scanBarcode": "Scan barcode",
   "enterCode": "Enter code",
-
   "financialOffer": "Financial Offer",
   "quotation": "QUOTATION",
   "addItem": "Add Item",
@@ -227,7 +231,6 @@
   "share": "Share",
   "saveAndPrint": "Save & Print",
   "price": "Price",
-
   "whatsapp": "WhatsApp",
   "sendPickupNotification": "Send pickup notification",
   "sentAutomatically": "Sent automatically via server",
@@ -236,7 +239,6 @@
   "failedToOpenWhatsapp": "Failed to open WhatsApp or record send",
   "failedToRecordSend": "Failed to record send",
   "whatsappUnavailable": "WhatsApp link is unavailable",
-
   "workStatusSection": "WORK STATUS",
   "clientDecisionSection": "CLIENT DECISION",
   "handoverSection": "HANDOVER",
@@ -253,7 +255,6 @@
   "createReportAndInvoice": "Create Report & Invoice",
   "sendReportToCustomer": "Send report to customer",
   "failedToUpdateStatus": "Failed to update status",
-
   "filter": "Filter",
   "dateRange": "Date Range",
   "allTime": "All Time",
@@ -263,9 +264,7 @@
   "custom": "Custom",
   "applyFilter": "Apply Filter",
   "clearAll": "Clear All",
-
   "typeManually": "Type",
-
   "searchKnowledgeBase": "Search our knowledge base or browse categories below",
   "popularArticles": "POPULAR ARTICLES",
   "viewAll": "View All",
@@ -284,10 +283,8 @@
   "helpBillingStep1": "Add the agreed price on the case after the customer approves the quotation.",
   "helpBillingStep2": "Send the invoice to the customer from the case details screen.",
   "helpBillingStep3": "Mark the job as delivered after payment and handover are complete.",
-
   "tel": "Tel",
   "pricesForQuantity": "Prices are quoted for quantity mentioned and not applicable if change in quantity.",
-
   "electronicInvoice": "Electronic Invoice",
   "invoiceIdLabel": "invoice ID",
   "failedToLoadInvoice": "Failed to load invoice",
@@ -311,5 +308,42 @@
   "noItems": "No items",
   "paidOnMainFund": "Paid on (1) Main Fund",
   "paidOnTwo": "Paid on (2)",
-  "paidOnThree": "Paid on (3)"
+  "paidOnThree": "Paid on (3)",
+  "offline": "Offline",
+  "showingSavedData": "Showing data saved {when}",
+  "@showingSavedData": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "justNow": "just now",
+  "minutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@daysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToLoadStats": "Failed to load statistics",
+  "serverUnreachable": "Cannot reach the server",
+  "noSavedData": "No saved data to show"
 }

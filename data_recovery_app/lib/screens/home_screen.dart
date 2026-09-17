@@ -10,6 +10,7 @@ import 'cases_list_screen.dart';
 import 'notifications_screen.dart';
 import 'reports_screen.dart';
 import 'widgets/app_bottom_nav.dart';
+import 'widgets/offline_banner.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   static const _accent = Color(0xFF33BEE9);
 
   DashboardStats? _stats;
+  DateTime? _cachedAt;
   String? _error;
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -40,10 +42,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
     try {
-      final stats = await ref.read(apiClientProvider).getDashboardStats();
+      final fresh = await ref.read(apiClientProvider).getDashboardStatsCached();
       if (!mounted) return;
       setState(() {
-        _stats = stats;
+        _stats = fresh.value;
+        _cachedAt = fresh.cachedAt;
         _isLoading = false;
         _error = null;
       });
@@ -51,13 +54,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : 'Failed to load statistics';
+        _error = error.isNetworkError
+            ? L.of(context).serverUnreachable
+            : (error.message.isNotEmpty
+                ? error.message
+                : L.of(context).failedToLoadStats);
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load statistics';
+        _error = L.of(context).failedToLoadStats;
       });
     }
   }
@@ -157,6 +164,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
+            if (_cachedAt != null) OfflineBanner(cachedAt: _cachedAt!),
             Expanded(child: _buildBody()),
           ],
         ),
@@ -183,6 +191,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _error!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l.noSavedData,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
               ),
               const SizedBox(height: 12),
               TextButton(onPressed: _load, child: Text(l.retry)),

@@ -873,4 +873,57 @@ class LAr extends L {
 
   @override
   String get paidOnThree => 'مدفوع على (3)';
+
+  @override
+  String get offline => 'غير متصل';
+
+  @override
+  String showingSavedData(String when) {
+    return 'عم نعرض بيانات محفوظة $when';
+  }
+
+  @override
+  String get justNow => 'هلق';
+
+  @override
+  String minutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'من $count دقائق',
+      one: 'من دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'من $count ساعات',
+      one: 'من ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'من $count أيام',
+      one: 'من يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get failedToLoadStats => 'تعذّر تحميل الإحصائيات';
+
+  @override
+  String get serverUnreachable => 'ما قدرنا نوصل للسيرفر';
+
+  @override
+  String get noSavedData => 'ما في بيانات محفوظة للعرض';
 }

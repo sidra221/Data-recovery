@@ -10,6 +10,7 @@ import '../models/customer.dart';
 import '../providers/customers_provider.dart';
 import 'customer_detail_screen.dart';
 import 'widgets/app_bottom_nav.dart';
+import 'widgets/offline_banner.dart';
 
 class CustomersListScreen extends ConsumerStatefulWidget {
   const CustomersListScreen({super.key});
@@ -127,6 +128,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
               ),
             ),
           ),
+          if (state.cachedAt != null) OfflineBanner(cachedAt: state.cachedAt!),
           Expanded(child: _buildBody(state)),
         ],
       ),

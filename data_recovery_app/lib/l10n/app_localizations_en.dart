@@ -875,4 +875,57 @@ class LEn extends L {
 
   @override
   String get paidOnThree => 'Paid on (3)';
+
+  @override
+  String get offline => 'Offline';
+
+  @override
+  String showingSavedData(String when) {
+    return 'Showing data saved $when';
+  }
+
+  @override
+  String get justNow => 'just now';
+
+  @override
+  String minutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get failedToLoadStats => 'Failed to load statistics';
+
+  @override
+  String get serverUnreachable => 'Cannot reach the server';
+
+  @override
+  String get noSavedData => 'No saved data to show';
 }

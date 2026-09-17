@@ -37,8 +37,8 @@ class _StubApi extends ApiClient {
   _StubApi() : super(storage: SecureStorage());
 
   @override
-  Future<DashboardStats> getDashboardStats() async =>
-      DashboardStats.fromJson(_realServerJson);
+  Future<Fresh<DashboardStats>> getDashboardStatsCached() async =>
+      Fresh(DashboardStats.fromJson(_realServerJson), null);
 }
 
 const green = Color(0xFF1AC86C);

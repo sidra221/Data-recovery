@@ -11,6 +11,7 @@ class CustomersState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.error,
+    this.cachedAt,
   });
 
   final List<Customer> customers;
@@ -18,6 +19,11 @@ class CustomersState {
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
+
+  /// وقت حفظ النسخة المعروضة. مو `null` يعني بيانات محفوظة، مو من الشبكة.
+  final DateTime? cachedAt;
+
+  bool get isFromCache => cachedAt != null;
 
   bool get hasMore => customers.length < count;
 
@@ -28,6 +34,8 @@ class CustomersState {
     bool? isLoadingMore,
     String? error,
     bool clearError = false,
+    DateTime? cachedAt,
+    bool clearCachedAt = false,
   }) {
     return CustomersState(
       customers: customers ?? this.customers,
@@ -35,6 +43,7 @@ class CustomersState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: clearError ? null : error ?? this.error,
+      cachedAt: clearCachedAt ? null : cachedAt ?? this.cachedAt,
     );
   }
 }
@@ -58,6 +67,18 @@ class CustomersNotifier extends Notifier<CustomersState> {
       state = state.copyWith(isLoadingMore: true, clearError: true);
     }
     try {
+      if (!append && (_search == null || _search!.isEmpty)) {
+        final fresh = await _client.listCustomersCached();
+        state = state.copyWith(
+          customers: fresh.value.results,
+          count: fresh.value.count,
+          isLoading: false,
+          isLoadingMore: false,
+          cachedAt: fresh.cachedAt,
+          clearCachedAt: !fresh.isFromCache,
+        );
+        return;
+      }
       final page = await _client.listCustomers(
         search: _search,
         page: append ? (state.customers.length ~/ 20) + 1 : 1,
@@ -67,6 +88,7 @@ class CustomersNotifier extends Notifier<CustomersState> {
         count: page.count,
         isLoading: false,
         isLoadingMore: false,
+        clearCachedAt: true,
       );
     } on ApiException catch (error) {
       state = state.copyWith(

@@ -11,6 +11,7 @@ class JobsState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.error,
+    this.cachedAt,
   });
 
   final List<Job> jobs;
@@ -18,6 +19,11 @@ class JobsState {
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
+
+  /// وقت حفظ النسخة المعروضة. مو `null` يعني السيرفر ما ردّ وهاي بيانات محفوظة.
+  final DateTime? cachedAt;
+
+  bool get isFromCache => cachedAt != null;
 
   bool get hasMore => jobs.length < count;
 
@@ -28,6 +34,8 @@ class JobsState {
     bool? isLoadingMore,
     String? error,
     bool clearError = false,
+    DateTime? cachedAt,
+    bool clearCachedAt = false,
   }) {
     return JobsState(
       jobs: jobs ?? this.jobs,
@@ -35,6 +43,7 @@ class JobsState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: clearError ? null : error ?? this.error,
+      cachedAt: clearCachedAt ? null : cachedAt ?? this.cachedAt,
     );
   }
 }
@@ -51,6 +60,14 @@ class JobsNotifier extends Notifier<JobsState> {
   String? _status;
   String? _clientReport;
   String? _workStatus;
+
+  /// الكاش بيخدم الصفحة الأولى بدون بحث ولا فلتر بس. أي فلتر مختار معناه
+  /// إن المحفوظ (وهو قائمة كاملة غير مفلترة) ما بيمثّل يلي المستخدم طالبه.
+  bool get _isPlainFirstPage =>
+      (_search == null || _search!.isEmpty) &&
+      (_status == null || _status!.isEmpty) &&
+      (_clientReport == null || _clientReport!.isEmpty) &&
+      (_workStatus == null || _workStatus!.isEmpty);
 
   Future<void> fetchJobs({
     String? search,
@@ -70,6 +87,18 @@ class JobsNotifier extends Notifier<JobsState> {
       state = state.copyWith(isLoadingMore: true, clearError: true);
     }
     try {
+      if (!append && _isPlainFirstPage) {
+        final fresh = await _client.listJobsCached();
+        state = state.copyWith(
+          jobs: fresh.value.results,
+          count: fresh.value.count,
+          isLoading: false,
+          isLoadingMore: false,
+          cachedAt: fresh.cachedAt,
+          clearCachedAt: !fresh.isFromCache,
+        );
+        return;
+      }
       final page = await _client.listJobs(
         search: _search,
         status: _status,
@@ -82,6 +111,7 @@ class JobsNotifier extends Notifier<JobsState> {
         count: page.count,
         isLoading: false,
         isLoadingMore: false,
+        clearCachedAt: true,
       );
     } on ApiException catch (error) {
       state = state.copyWith(

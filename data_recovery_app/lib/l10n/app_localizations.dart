@@ -1764,6 +1764,60 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Paid on (3)'**
   String get paidOnThree;
+
+  /// No description provided for @offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offline;
+
+  /// No description provided for @showingSavedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing data saved {when}'**
+  String showingSavedData(String when);
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute ago} other{{count} minutes ago}}'**
+  String minutesAgo(int count);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour ago} other{{count} hours ago}}'**
+  String hoursAgo(int count);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String daysAgo(int count);
+
+  /// No description provided for @failedToLoadStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load statistics'**
+  String get failedToLoadStats;
+
+  /// No description provided for @serverUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the server'**
+  String get serverUnreachable;
+
+  /// No description provided for @noSavedData.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved data to show'**
+  String get noSavedData;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
