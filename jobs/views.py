@@ -11,7 +11,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Customer, EmployeeProfile, Job, JobAttachment, Quotation, StatusLog
+from django.conf import settings as django_settings
+
+from .models import (
+    Customer,
+    DeviceNumberBlock,
+    EmployeeProfile,
+    Job,
+    JobAttachment,
+    Quotation,
+    StatusLog,
+)
 from .services.whatsapp import send_whatsapp_message
 from .serializers import (
     CustomerSerializer,
@@ -221,6 +231,36 @@ class JobViewSet(viewsets.ModelViewSet):
         invoice = InvoiceSerializer(job).data
         invoice["auto_send"] = send_whatsapp_message(job)
         return Response(invoice)
+
+    @action(detail=False, methods=["post"], url_path="device-block")
+    def device_block(self, request):
+        """بيحجز مدى أرقام للجهاز حتى يقدر يولّد أرقام فواتير وهو أوفلاين.
+
+        idempotent: نفس `device_id` بيرجّع نفس المدى دايماً، فالأب بيقدر
+        ينادي كل مرة يفوت بدون ما يستهلك مدايات جديدة.
+        """
+        device_id = str(request.data.get("device_id") or "").strip()
+        if not device_id:
+            return Response(
+                {"detail": "device_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(device_id) > 64:
+            return Response(
+                {"detail": "device_id is too long"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        block = DeviceNumberBlock.for_device(device_id, user=request.user)
+        return Response(
+            {
+                "device_id": block.device_id,
+                "prefix": django_settings.INVOICE_PREFIX,
+                "block_start": block.block_start,
+                "block_end": block.block_end,
+                "block_size": block.block_size,
+            }
+        )
 
     @action(detail=True, methods=["get", "post"], url_path="attachments")
     def attachments(self, request, pk=None):

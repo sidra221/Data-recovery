@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import AppSettings, Customer, Job, StatusLog
+from .models import AppSettings, Customer, DeviceNumberBlock, Job, StatusLog
 from .services.whatsapp import to_international, wa_me_number
 
 
@@ -628,3 +628,100 @@ class ProfileAndAttachmentApiTests(APITestCase):
         sent_job = mock_send.call_args[0][0]
         self.assertEqual(sent_job.pk, created.data["id"])
         self.assertEqual(sent_job.customer_phone, "0791234567")
+
+
+class OfflineNumberBlockTests(APITestCase):
+    """أرقام الفواتير يلي بيولّدها الجهاز وهو أوفلاين."""
+
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(username="emp", password="pass12345")
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.payload = {
+            "customer_name": "سامر",
+            "customer_phone": "0791234567",
+            "hard_disk_type": "hdd_25",
+        }
+
+    def _block(self, device_id="device-a"):
+        return self.client.post(
+            "/api/jobs/device-block/", {"device_id": device_id}, format="json"
+        )
+
+    def test_reserves_a_block(self):
+        response = self._block()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["block_start"], DeviceNumberBlock.OFFLINE_FLOOR)
+        self.assertEqual(response.data["block_size"], DeviceNumberBlock.BLOCK_SIZE)
+        self.assertEqual(response.data["prefix"], settings.INVOICE_PREFIX)
+
+    def test_same_device_keeps_its_block(self):
+        first = self._block()
+        second = self._block()
+        self.assertEqual(first.data["block_start"], second.data["block_start"])
+        self.assertEqual(DeviceNumberBlock.objects.count(), 1)
+
+    def test_two_devices_do_not_overlap(self):
+        a = self._block("device-a").data
+        b = self._block("device-b").data
+        self.assertGreater(b["block_start"], a["block_end"])
+
+    def test_device_id_is_required(self):
+        response = self.client.post("/api/jobs/device-block/", {}, format="json")
+        self.assertEqual(response.status_code, 400)
+
+    def test_accepts_a_number_from_the_reserved_block(self):
+        block = self._block().data
+        today = timezone.localdate()
+        number = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+
+        response = self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["invoice_number"], number)
+        self.assertEqual(response.data["barcode"], number)
+
+    def test_rejects_a_number_the_server_could_hand_out(self):
+        today = timezone.localdate()
+        number = f"{settings.INVOICE_PREFIX}-{today:%Y%m%d}-0001"
+
+        response = self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
+        )
+        self.assertEqual(response.status_code, 400, response.data)
+
+    def test_rejects_a_duplicate_number(self):
+        block = self._block().data
+        today = timezone.localdate()
+        number = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+        self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
+        )
+
+        again = self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
+        )
+        self.assertEqual(again.status_code, 400)
+
+    def test_rejects_a_malformed_number(self):
+        response = self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": "not-a-number"}, format="json"
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_server_numbering_still_works_alongside_offline_ones(self):
+        block = self._block().data
+        today = timezone.localdate()
+        offline = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+        self.client.post(
+            "/api/jobs/", {**self.payload, "invoice_number": offline}, format="json"
+        )
+
+        # الرقم المحجوز أعلى بكتير، بس السيرفر لازم يضل يبلّش من ٠٠٠١
+        # مو يكمّل من بعده.
+        response = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        sequence = int(response.data["invoice_number"].rsplit("-", 1)[-1])
+        self.assertLess(sequence, DeviceNumberBlock.OFFLINE_FLOOR)

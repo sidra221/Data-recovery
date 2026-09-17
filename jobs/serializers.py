@@ -5,6 +5,7 @@ from django.db.models import Sum
 
 from .models import (
     Customer,
+    DeviceNumberBlock,
     EmployeeProfile,
     Job,
     JobAttachment,
@@ -190,12 +191,48 @@ class JobSerializer(serializers.ModelSerializer):
 
 
 class JobCreateSerializer(JobSerializer):
+    """الإنشاء العادي + حالة الأوفلاين.
+
+    `invoice_number` عادة بيولّده السيرفر. بس لما الجهاز ينشئ عملية وهو
+    أوفلاين بيولّد رقم من المدى المحجوز إله ويطبع الستيكر فوراً، وبعدين
+    بيبعت نفس الرقم وقت المزامنة — فلازم نقبله لو إجا.
+    """
+
+    invoice_number = serializers.CharField(required=False, allow_blank=True)
+
     class Meta(JobSerializer.Meta):
         extra_kwargs = {
             "customer_name": {"required": True},
             "customer_phone": {"required": True},
             "hard_disk_type": {"required": True},
         }
+
+    def validate_invoice_number(self, value):
+        value = (value or "").strip()
+        if not value:
+            return value
+        sequence = _offline_sequence(value)
+        if sequence is None:
+            raise serializers.ValidationError(
+                "invoice_number must look like PREFIX-YYYYMMDD-NNNN"
+            )
+        if sequence < DeviceNumberBlock.OFFLINE_FLOOR:
+            # أرقام تحت الحد بيوزّعها السيرفر. لو قبلناها من الأب منفتح
+            # باب تصادم مع رقم السيرفر رح يوزّعه بعدين.
+            raise serializers.ValidationError(
+                "only numbers inside a reserved device block may be supplied"
+            )
+        if Job.objects.filter(invoice_number=value).exists():
+            raise serializers.ValidationError("invoice_number already exists")
+        return value
+
+
+def _offline_sequence(invoice_number):
+    """بيرجّع التسلسل من `PREFIX-YYYYMMDD-NNNN`، أو None لو الشكل غلط."""
+    parts = invoice_number.rsplit("-", 1)
+    if len(parts) != 2 or not parts[1].isdigit():
+        return None
+    return int(parts[1])
 
 
 class StatusUpdateSerializer(serializers.Serializer):

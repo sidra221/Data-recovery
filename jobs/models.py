@@ -6,6 +6,66 @@ from django.db import models, transaction
 from django.utils import timezone
 
 
+class DeviceNumberBlock(models.Model):
+    """مدى أرقام فواتير محجوز لجهاز واحد، حتى يقدر يولّد أرقام وهو أوفلاين.
+
+    الفكرة: كل جهاز بياخد مدى ثابت بالتسلسل اليومي (مثلاً 9000-9049)،
+    والسيرفر ما بيوزّع أي رقم جوّا المدايات المحجوزة. هيك الجهاز بيقدر
+    يطبع ستيكر وسند استلام فوراً حتى لو السيرفر مطفّى، وبدون ما يتصادم
+    رقمه مع رقم صادر من السيرفر ولا من جهاز تاني.
+
+    المدى مستقل عن التاريخ عن قصد: الجهاز بيستعمل نفس المدى كل يوم، فلو
+    ضل أوفلاين لبكرا بيضل يقدر يولّد أرقام.
+    """
+
+    OFFLINE_FLOOR = 9000
+    BLOCK_SIZE = 50
+
+    device_id = models.CharField("معرّف الجهاز", max_length=64, unique=True)
+    block_start = models.PositiveIntegerField("بداية المدى")
+    block_size = models.PositiveIntegerField("حجم المدى", default=BLOCK_SIZE)
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="number_blocks",
+        verbose_name="الموظف",
+    )
+    created_at = models.DateTimeField("تاريخ الحجز", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "مدى أرقام جهاز"
+        verbose_name_plural = "مدايات أرقام الأجهزة"
+        ordering = ["block_start"]
+
+    def __str__(self):
+        return f"{self.device_id}: {self.block_start}-{self.block_end}"
+
+    @property
+    def block_end(self):
+        return self.block_start + self.block_size - 1
+
+    @classmethod
+    def for_device(cls, device_id, user=None):
+        """بيرجّع مدى الجهاز، وبينشئ واحد إذا أول مرة. عملية idempotent."""
+        device_id = (device_id or "").strip()
+        if not device_id:
+            raise ValueError("device_id is required")
+        with transaction.atomic():
+            existing = cls.objects.select_for_update().filter(device_id=device_id).first()
+            if existing:
+                return existing
+            last = cls.objects.select_for_update().order_by("-block_start").first()
+            start = last.block_end + 1 if last else cls.OFFLINE_FLOOR
+            return cls.objects.create(
+                device_id=device_id,
+                block_start=start,
+                block_size=cls.BLOCK_SIZE,
+                assigned_to=user,
+            )
+
+
 class EmployeeProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -182,14 +242,28 @@ class Job(models.Model):
     def _next_invoice_number(cls):
         today = timezone.localdate()
         prefix = f"{settings.INVOICE_PREFIX}-{today:%Y%m%d}-"
+        floor = DeviceNumberBlock.OFFLINE_FLOOR
         with transaction.atomic():
-            last = (
+            # الأرقام من OFFLINE_FLOOR وفوق بيولّدها الجهاز وهو أوفلاين من
+            # المدى المحجوز إله. لازم نتجاهلها وقت الحساب، وإلا أول عملية
+            # أوفلاين بتقفز التسلسل اليومي جوّا المدى المحجوز وبتتصادم.
+            used = (
                 cls.objects.select_for_update()
                 .filter(invoice_number__startswith=prefix)
-                .order_by("-invoice_number")
-                .first()
+                .values_list("invoice_number", flat=True)
             )
-            sequence = int(last.invoice_number.rsplit("-", 1)[-1]) + 1 if last else 1
+            server_sequences = [
+                int(number.rsplit("-", 1)[-1])
+                for number in used
+                if number.rsplit("-", 1)[-1].isdigit()
+                and int(number.rsplit("-", 1)[-1]) < floor
+            ]
+            sequence = max(server_sequences) + 1 if server_sequences else 1
+            if sequence >= floor:
+                raise RuntimeError(
+                    "daily invoice sequence reached the offline-reserved range "
+                    f"({floor}); raise DeviceNumberBlock.OFFLINE_FLOOR"
+                )
         return f"{prefix}{sequence:04d}"
 
     def mark_invoice_sent(self):
