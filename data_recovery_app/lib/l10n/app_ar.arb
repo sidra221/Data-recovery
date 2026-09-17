@@ -226,7 +226,7 @@
   "sellerSignature": "توقيع البائع",
   "receiverSignature": "توقيع المستلم",
   "tapToSign": "اضغط للتوقيع",
-  "verificationCode": "رمز التحقق",
+  "caseCode": "رمز القضية",
   "paymentMethod": "طريقة الدفع",
   "share": "مشاركة",
   "saveAndPrint": "حفظ وطباعة",

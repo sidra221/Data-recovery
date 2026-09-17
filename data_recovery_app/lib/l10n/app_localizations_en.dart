@@ -617,7 +617,7 @@ class LEn extends L {
   String get tapToSign => 'Tap to sign';
 
   @override
-  String get verificationCode => 'Verification Code';
+  String get caseCode => 'Case Code';
 
   @override
   String get paymentMethod => 'Payment Method';

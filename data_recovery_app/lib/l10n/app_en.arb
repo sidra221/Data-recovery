@@ -226,7 +226,7 @@
   "sellerSignature": "Seller Signature",
   "receiverSignature": "Receiver Signature",
   "tapToSign": "Tap to sign",
-  "verificationCode": "Verification Code",
+  "caseCode": "Case Code",
   "paymentMethod": "Payment Method",
   "share": "Share",
   "saveAndPrint": "Save & Print",

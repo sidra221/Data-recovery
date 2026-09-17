@@ -134,7 +134,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                 ),
               ),
               pw.SizedBox(height: 24),
-              pw.Text('${l.verificationCode}: ${invoice.invoiceNumber}'),
+              pw.Text('${l.caseCode}: ${invoice.invoiceNumber}'),
               if (invoice.terms.isNotEmpty) pw.Text(invoice.terms),
               pw.Spacer(),
               _signatureRow(l),
@@ -608,7 +608,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                 const Icon(Icons.qr_code_2, size: 44, color: Color(0xFF33BEE9)),
               const SizedBox(height: 4),
               Text(
-                invoice?.invoiceNumber ?? l.verificationCode,
+                invoice?.invoiceNumber ?? l.caseCode,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 8, color: Color(0xFF6B7280)),
               ),

@@ -1267,11 +1267,11 @@ abstract class L {
   /// **'Tap to sign'**
   String get tapToSign;
 
-  /// No description provided for @verificationCode.
+  /// No description provided for @caseCode.
   ///
   /// In en, this message translates to:
-  /// **'Verification Code'**
-  String get verificationCode;
+  /// **'Case Code'**
+  String get caseCode;
 
   /// No description provided for @paymentMethod.
   ///

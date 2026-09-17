@@ -620,7 +620,7 @@ class LAr extends L {
   String get tapToSign => 'اضغط للتوقيع';
 
   @override
-  String get verificationCode => 'رمز التحقق';
+  String get caseCode => 'رمز القضية';
 
   @override
   String get paymentMethod => 'طريقة الدفع';
