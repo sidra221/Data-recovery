@@ -297,7 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'Agree $agree',
+                  l.agreeChip(agree),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -639,7 +639,7 @@ class _ReadyBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$count Cases',
+                      l.casesCount(count),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,

@@ -422,6 +422,7 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return SizedBox(
       height: 40,
       child: ListView.separated(
@@ -431,7 +432,8 @@ class _FilterRow extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final tab = tabs[index];
-          final label = index == 0 && allCount != null ? '$allCount All' : tab.label;
+          final label =
+              index == 0 && allCount != null ? l.allWithCount(allCount!) : tab.label;
           return _StatusTabChip(
             label: label,
             color: tab.color,

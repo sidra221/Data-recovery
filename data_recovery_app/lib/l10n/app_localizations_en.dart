@@ -999,4 +999,25 @@ class LEn extends L {
 
   @override
   String get printFailed => 'Could not open the print dialog';
+
+  @override
+  String repairsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count repairs',
+      one: '1 repair',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastVisitOn(String date) {
+    return 'Last: $date';
+  }
+
+  @override
+  String allWithCount(int count) {
+    return 'All $count';
+  }
 }

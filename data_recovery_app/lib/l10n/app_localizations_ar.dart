@@ -12,16 +12,16 @@ class LAr extends L {
   String get appTitle => 'استعادة البيانات';
 
   @override
-  String get welcomeBack => 'أهلاً بعودتك';
+  String get welcomeBack => 'مرحباً بعودتك';
 
   @override
-  String get loginSubtitle => 'ادخل على لوحتك وتابع قضايا استعادة البيانات';
+  String get loginSubtitle => 'ادخل إلى لوحتك وتابع قضايا استعادة البيانات';
 
   @override
   String get username => 'اسم المستخدم';
 
   @override
-  String get password => 'كلمة السر';
+  String get password => 'كلمة المرور';
 
   @override
   String get signIn => 'تسجيل الدخول';
@@ -48,7 +48,7 @@ class LAr extends L {
   String get retry => 'إعادة المحاولة';
 
   @override
-  String get clear => 'تصفير';
+  String get clear => 'مسح';
 
   @override
   String get cancel => 'إلغاء';
@@ -93,25 +93,25 @@ class LAr extends L {
   String get notifications => 'الإشعارات';
 
   @override
-  String get typeHdd35 => 'هارد 3.5';
+  String get typeHdd35 => 'قرص صلب 3.5';
 
   @override
-  String get typeHdd25 => 'هارد 2.5';
+  String get typeHdd25 => 'قرص صلب 2.5';
 
   @override
-  String get typeSsd => 'SSD';
+  String get typeSsd => 'قرص SSD';
 
   @override
-  String get typeNvme => 'NVMe';
+  String get typeNvme => 'قرص NVMe';
 
   @override
-  String get typeExternal => 'هارد خارجي';
+  String get typeExternal => 'قرص صلب خارجي';
 
   @override
-  String get typeUsb => 'فلاش USB';
+  String get typeUsb => 'ذاكرة USB';
 
   @override
-  String get typeMemoryCard => 'كرت ذاكرة';
+  String get typeMemoryCard => 'بطاقة ذاكرة';
 
   @override
   String get typeOther => 'أخرى';
@@ -123,7 +123,7 @@ class LAr extends L {
   String get statusCompleted => 'مكتملة';
 
   @override
-  String get statusHasProblems => 'فيها مشاكل';
+  String get statusHasProblems => 'بها مشكلات';
 
   @override
   String get workPending => 'قيد الانتظار';
@@ -132,7 +132,7 @@ class LAr extends L {
   String get workInProgress => 'قيد التنفيذ';
 
   @override
-  String get workDone => 'انتهى الإصلاح';
+  String get workDone => 'اكتمل الإصلاح';
 
   @override
   String get clientAgree => 'موافق على السعر';
@@ -147,22 +147,22 @@ class LAr extends L {
   String get clientRejected => 'مرفوض من العميل';
 
   @override
-  String get flagNone => 'بدون';
+  String get flagNone => 'لا شيء';
 
   @override
-  String get flagNoSpareParts => 'لا يوجد قطع غيار';
+  String get flagNoSpareParts => 'لا تتوفر قطع غيار';
 
   @override
-  String get flagSendToChina => 'يُرسل للصين';
+  String get flagSendToChina => 'يُرسل إلى الصين';
 
   @override
-  String get recoveryProgress => 'سير الاستعادة';
+  String get recoveryProgress => 'سير العمل';
 
   @override
   String get readyForReturn => 'جاهز للاستلام';
 
   @override
-  String get finishedReadyToCollect => 'انتهى / جاهز للاستلام';
+  String get finishedReadyToCollect => 'مكتمل / جاهز للاستلام';
 
   @override
   String get viewCases => 'عرض القضايا';
@@ -200,10 +200,10 @@ class LAr extends L {
   String get filterInspection => 'فحص';
 
   @override
-  String get noRepairs => 'لا يوجد إصلاحات';
+  String get noRepairs => 'لا توجد إصلاحات';
 
   @override
-  String get noRepairsHint => 'ما عندك إصلاحات حالياً';
+  String get noRepairsHint => 'لا توجد لديك إصلاحات حالياً';
 
   @override
   String get barcodeNotFound => 'الباركود غير موجود';
@@ -233,7 +233,7 @@ class LAr extends L {
   String get labelPhone => 'الهاتف';
 
   @override
-  String get labelEmail => 'الإيميل';
+  String get labelEmail => 'البريد الإلكتروني';
 
   @override
   String get labelType => 'النوع';
@@ -242,7 +242,7 @@ class LAr extends L {
   String get labelModel => 'الموديل';
 
   @override
-  String get labelSerial => 'السيريال';
+  String get labelSerial => 'الرقم التسلسلي';
 
   @override
   String get labelAttached => 'الملحقات';
@@ -275,7 +275,7 @@ class LAr extends L {
   String get labelStatus => 'الحالة';
 
   @override
-  String get labelWork => 'الشغل';
+  String get labelWork => 'العمل';
 
   @override
   String get labelClient => 'العميل';
@@ -284,10 +284,10 @@ class LAr extends L {
   String get overdue => 'متأخرة';
 
   @override
-  String get noAttachments => 'لا يوجد مرفقات';
+  String get noAttachments => 'لا توجد مرفقات';
 
   @override
-  String get noChangesYet => 'لا يوجد تغييرات بعد';
+  String get noChangesYet => 'لا توجد تغييرات بعد';
 
   @override
   String get failedToLoadCase => 'تعذّر تحميل القضية';
@@ -323,13 +323,13 @@ class LAr extends L {
   String get fullName => 'الاسم الكامل';
 
   @override
-  String get enterFullName => 'اكتب الاسم الكامل';
+  String get enterFullName => 'أدخل الاسم الكامل';
 
   @override
   String get phoneNumber => 'رقم الهاتف';
 
   @override
-  String get emailAddress => 'الإيميل';
+  String get emailAddress => 'البريد الإلكتروني';
 
   @override
   String get deviceType => 'نوع الجهاز';
@@ -338,13 +338,13 @@ class LAr extends L {
   String get serialNumber => 'الرقم التسلسلي';
 
   @override
-  String get scanSerial => 'مسح السيريال';
+  String get scanSerial => 'مسح الرقم التسلسلي';
 
   @override
   String get recoveryDetails => 'تفاصيل الاستعادة';
 
   @override
-  String get whatCustomerReported => 'شو اشتكى منه العميل';
+  String get whatCustomerReported => 'ما أبلغ عنه العميل';
 
   @override
   String get currentStatus => 'الحالة الحالية';
@@ -353,13 +353,13 @@ class LAr extends L {
   String get addPhotosDocuments => 'إضافة صور أو مستندات';
 
   @override
-  String get uploadHint => 'JPG أو PNG أو PDF بحد أقصى 10 ميجا';
+  String get uploadHint => 'JPG أو PNG أو PDF بحد أقصى 10 ميغابايت';
 
   @override
-  String get takePhoto => 'تصوير بالكاميرا';
+  String get takePhoto => 'التقاط صورة';
 
   @override
-  String get chooseFromGallery => 'اختيار من الاستديو';
+  String get chooseFromGallery => 'الاختيار من معرض الصور';
 
   @override
   String get chooseFile => 'اختيار ملف (PDF أو صورة)';
@@ -392,13 +392,13 @@ class LAr extends L {
   String get lastVisit => 'آخر زيارة';
 
   @override
-  String get noDevicesYet => 'ما في أجهزة لهذا العميل بعد';
+  String get noDevicesYet => 'لا توجد أجهزة لهذا العميل بعد';
 
   @override
   String get deleteCustomer => 'حذف العميل';
 
   @override
-  String get deleteCustomerConfirm => 'متأكد إنك بدك تحذف هذا العميل؟';
+  String get deleteCustomerConfirm => 'هل أنت متأكد من حذف هذا العميل؟';
 
   @override
   String get updatedSuccessfully => 'تم التحديث';
@@ -416,27 +416,29 @@ class LAr extends L {
   String get customersList => 'قائمة العملاء';
 
   @override
-  String get searchCustomersHint => 'ابحث بالاسم أو الإيميل أو الهاتف';
+  String get searchCustomersHint =>
+      'ابحث بالاسم أو البريد الإلكتروني أو الهاتف';
 
   @override
-  String get noCustomersFound => 'ما في عملاء';
+  String get noCustomersFound => 'لا يوجد عملاء';
 
   @override
-  String get lastDash => 'الأخيرة: -';
+  String get lastDash => 'آخر زيارة: -';
 
   @override
-  String get searchReportsHint => 'سيريال أو هاتف أو اسم أو رقم فاتورة';
+  String get searchReportsHint =>
+      'الرقم التسلسلي أو الهاتف أو الاسم أو رقم الفاتورة';
 
   @override
   String get searchReportsEmptyHint =>
-      'ابحث بالسيريال أو الهاتف أو الاسم أو رقم الفاتورة — أو بنطاق تاريخ';
+      'ابحث بالرقم التسلسلي أو الهاتف أو الاسم أو رقم الفاتورة — أو بنطاق تاريخ';
 
   @override
   String get searchNeedsCriteria =>
-      'اكتب سيريال أو هاتف أو اسم أو رقم فاتورة — أو اختر نطاق تاريخ';
+      'أدخل الرقم التسلسلي أو الهاتف أو الاسم أو رقم الفاتورة — أو اختر نطاق تاريخ';
 
   @override
-  String get noCasesMatch => 'ما في قضايا تطابق هذا البحث';
+  String get noCasesMatch => 'لا توجد قضايا تطابق هذا البحث';
 
   @override
   String get searchFailed => 'تعذّر البحث';
@@ -464,7 +466,7 @@ class LAr extends L {
 
   @override
   String showingOf(int shown, int total) {
-    return 'معروض $shown من $total — ضيّق البحث أكثر';
+    return 'عرض $shown من $total — حدِّد البحث أكثر';
   }
 
   @override
@@ -486,7 +488,7 @@ class LAr extends L {
   String get logOut => 'تسجيل الخروج';
 
   @override
-  String get logOutConfirm => 'متأكد إنك بدك تسجّل خروج؟';
+  String get logOutConfirm => 'هل أنت متأكد من تسجيل الخروج؟';
 
   @override
   String get employee => 'موظف';
@@ -501,7 +503,7 @@ class LAr extends L {
   String get phoneNumberCaps => 'رقم الهاتف';
 
   @override
-  String get emailAddressCaps => 'الإيميل';
+  String get emailAddressCaps => 'البريد الإلكتروني';
 
   @override
   String get photoUpdated => 'تم تحديث الصورة';
@@ -510,19 +512,19 @@ class LAr extends L {
   String get failedToUploadPhoto => 'تعذّر رفع الصورة';
 
   @override
-  String get howCanWeHelp => 'كيف نقدر نساعدك؟';
+  String get howCanWeHelp => 'كيف يمكننا مساعدتك؟';
 
   @override
-  String get emailUs => 'راسلنا بالإيميل';
+  String get emailUs => 'راسلنا عبر البريد الإلكتروني';
 
   @override
-  String get couldNotOpenEmail => 'تعذّر فتح تطبيق الإيميل';
+  String get couldNotOpenEmail => 'تعذّر فتح تطبيق البريد';
 
   @override
   String get supportRequest => 'طلب دعم من مركز المساعدة';
 
   @override
-  String get noOverdueCases => 'ما في قضايا متأخرة بانتظار العميل';
+  String get noOverdueCases => 'لا توجد قضايا متأخرة بانتظار العميل';
 
   @override
   String get failedToLoadAlerts => 'تعذّر تحميل التنبيهات';
@@ -531,7 +533,7 @@ class LAr extends L {
   String get scanBarcode => 'مسح الباركود';
 
   @override
-  String get enterCode => 'اكتب الرمز';
+  String get enterCode => 'أدخل الرمز';
 
   @override
   String get financialOffer => 'عرض السعر';
@@ -585,10 +587,10 @@ class LAr extends L {
   String get paymentCash => 'الدفع: 100% نقداً';
 
   @override
-  String get addAtLeastOneItem => 'أضف بند واحد على الأقل';
+  String get addAtLeastOneItem => 'أضف بنداً واحداً على الأقل';
 
   @override
-  String get enterPriceGreaterThanZero => 'اكتب سعر أكبر من صفر';
+  String get enterPriceGreaterThanZero => 'أدخل سعراً أكبر من صفر';
 
   @override
   String get failedToSendQuotation => 'تعذّر إرسال عرض السعر';
@@ -639,7 +641,7 @@ class LAr extends L {
   String get sendPickupNotification => 'إرسال إشعار الاستلام';
 
   @override
-  String get sentAutomatically => 'بينبعت تلقائياً من السيرفر';
+  String get sentAutomatically => 'يُرسل تلقائياً عبر الخادم';
 
   @override
   String get notifyDeviceReady => 'إشعار العميل - الجهاز جاهز';
@@ -657,7 +659,7 @@ class LAr extends L {
   String get whatsappUnavailable => 'رابط واتساب غير متاح';
 
   @override
-  String get workStatusSection => 'حالة الشغل';
+  String get workStatusSection => 'حالة العمل';
 
   @override
   String get clientDecisionSection => 'قرار العميل';
@@ -669,31 +671,31 @@ class LAr extends L {
   String get waitingToStart => 'بانتظار البدء';
 
   @override
-  String get technicianWorking => 'الفني عم يشتغل على الإصلاح';
+  String get technicianWorking => 'الفني يعمل على الإصلاح';
 
   @override
-  String get repairFinished => 'الإصلاح انتهى';
+  String get repairFinished => 'اكتمل الإصلاح';
 
   @override
-  String get customerAcceptedPrice => 'العميل وافق على السعر';
+  String get customerAcceptedPrice => 'وافق العميل على السعر';
 
   @override
   String get waitingCustomerReply => 'بانتظار رد العميل';
 
   @override
-  String get customerRejectedOffer => 'العميل رفض العرض';
+  String get customerRejectedOffer => 'رفض العميل العرض';
 
   @override
-  String get finishedAndReady => 'انتهى وجاهز للاستلام';
+  String get finishedAndReady => 'اكتمل وجاهز للاستلام';
 
   @override
-  String get markDelivered => 'تعليم كمُسلَّم';
+  String get markDelivered => 'تحديد كمُسلَّم';
 
   @override
   String get alreadyDelivered => 'مُسلَّم مسبقاً';
 
   @override
-  String get customerCollected => 'العميل استلم الجهاز';
+  String get customerCollected => 'استلم العميل الجهاز';
 
   @override
   String get createReportAndInvoice => 'إنشاء تقرير وفاتورة';
@@ -732,7 +734,7 @@ class LAr extends L {
   String get clearAll => 'مسح الكل';
 
   @override
-  String get typeManually => 'كتابة';
+  String get typeManually => 'إدخال يدوي';
 
   @override
   String get popularArticles => 'المقالات الشائعة';
@@ -741,7 +743,7 @@ class LAr extends L {
   String get viewAll => 'عرض الكل';
 
   @override
-  String get stillNeedHelp => 'ما زلت بحاجة لمساعدة؟';
+  String get stillNeedHelp => 'هل ما زلت بحاجة إلى مساعدة؟';
 
   @override
   String get supportAvailable247 =>
@@ -769,7 +771,7 @@ class LAr extends L {
   String get helpSsdStep1 => 'أطفئ جهاز العمل قبل توصيل القرص.';
 
   @override
-  String get helpSsdStep2 => 'وصّل الـ SSD بكابل أو قاعدة متوافقة.';
+  String get helpSsdStep2 => 'صِل قرص SSD بكابل أو قاعدة متوافقة.';
 
   @override
   String get helpSsdStep3 => 'افتح قضية جديدة واختر SSD كنوع للقرص.';
@@ -789,7 +791,7 @@ class LAr extends L {
 
   @override
   String get helpBillingStep3 =>
-      'علّم العمل كمُسلَّم بعد اكتمال الدفع والتسليم.';
+      'حدِّد العمل كمُسلَّم بعد اكتمال الدفع والتسليم.';
 
   @override
   String get tel => 'هاتف';
@@ -875,19 +877,20 @@ class LAr extends L {
 
   @override
   String showingSavedData(String when) {
-    return 'عم نعرض بيانات محفوظة $when';
+    return 'تُعرض بيانات محفوظة $when';
   }
 
   @override
-  String get justNow => 'هلق';
+  String get justNow => 'الآن';
 
   @override
   String minutesAgo(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'من $count دقائق',
-      one: 'من دقيقة',
+      other: 'منذ $count دقائق',
+      two: 'منذ دقيقتين',
+      one: 'منذ دقيقة',
     );
     return '$_temp0';
   }
@@ -897,8 +900,9 @@ class LAr extends L {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'من $count ساعات',
-      one: 'من ساعة',
+      other: 'منذ $count ساعات',
+      two: 'منذ ساعتين',
+      one: 'منذ ساعة',
     );
     return '$_temp0';
   }
@@ -908,8 +912,9 @@ class LAr extends L {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'من $count أيام',
-      one: 'من يوم',
+      other: 'منذ $count أيام',
+      two: 'منذ يومين',
+      one: 'منذ يوم',
     );
     return '$_temp0';
   }
@@ -918,36 +923,37 @@ class LAr extends L {
   String get failedToLoadStats => 'تعذّر تحميل الإحصائيات';
 
   @override
-  String get serverUnreachable => 'ما قدرنا نوصل للسيرفر';
+  String get serverUnreachable => 'تعذّر الوصول إلى الخادم';
 
   @override
-  String get noSavedData => 'ما في بيانات محفوظة للعرض';
+  String get noSavedData => 'لا توجد بيانات محفوظة للعرض';
 
   @override
-  String get searchHelpHint => 'ابحث بالمقالات';
+  String get searchHelpHint => 'ابحث في المقالات';
 
   @override
-  String get noArticlesMatch => 'ما في مقالات بتطابق البحث';
+  String get noArticlesMatch => 'لا توجد مقالات تطابق البحث';
 
   @override
   String get savedOfflineWillSync =>
-      'انحفظت على الجهاز. رح تنبعت أول ما يرجع السيرفر.';
+      'حُفظت على الجهاز، وستُرسل فور عودة الاتصال بالخادم.';
 
   @override
   String get noOfflineNumbersLeft =>
-      'خلصت أرقام الفواتير المحجوزة لليوم. لازم توصل بالسيرفر أول.';
+      'نفدت أرقام الفواتير المحجوزة لهذا اليوم. يجب الاتصال بالخادم أولاً.';
 
   @override
   String get attachmentsNeedServer =>
-      'المرفقات ما انرفعت. ضيفها كمان مرة لما يرجع السيرفر.';
+      'لم تُرفع المرفقات. أضفها مرة أخرى بعد عودة الاتصال بالخادم.';
 
   @override
   String pendingSyncCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count تعديلات مستنية الرفع',
-      one: 'تعديل واحد مستني الرفع',
+      other: '$count تعديلات بانتظار الرفع',
+      two: 'تعديلان بانتظار الرفع',
+      one: 'تعديل واحد بانتظار الرفع',
     );
     return '$_temp0';
   }
@@ -957,44 +963,68 @@ class LAr extends L {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count تعديلات انرفضت',
-      one: 'تعديل واحد انرفض',
+      other: 'رُفضت $count تعديلات',
+      two: 'رُفض تعديلان',
+      one: 'رُفض تعديل واحد',
     );
     return '$_temp0';
   }
 
   @override
-  String get syncNow => 'ارفع هلق';
+  String get syncNow => 'رفع الآن';
 
   @override
   String syncedCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'انبعتوا $count تعديلات',
-      one: 'انبعت تعديل واحد',
+      other: 'أُرسلت $count تعديلات',
+      two: 'أُرسل تعديلان',
+      one: 'أُرسل تعديل واحد',
     );
     return '$_temp0';
   }
 
   @override
-  String get pendingUpload => 'لسا ما انرفعت';
+  String get pendingUpload => 'لم تُرفع بعد';
 
   @override
   String get printDocuments => 'طباعة المستندات';
 
   @override
-  String get printSticker => 'ستيكر القطعة';
+  String get printSticker => 'ملصق الجهاز';
 
   @override
-  String get printStickerHint => 'بينلزق على القطعة المستلمة';
+  String get printStickerHint => 'يُلصق على الجهاز المستلم';
 
   @override
   String get printReceipt => 'سند الاستلام';
 
   @override
-  String get printReceiptHint => 'بينعطى للعميل';
+  String get printReceiptHint => 'يُسلَّم إلى العميل';
 
   @override
   String get printFailed => 'تعذّر فتح نافذة الطباعة';
+
+  @override
+  String repairsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count إصلاحات',
+      two: 'إصلاحان',
+      one: 'إصلاح واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastVisitOn(String date) {
+    return 'آخر زيارة: $date';
+  }
+
+  @override
+  String allWithCount(int count) {
+    return 'الكل $count';
+  }
 }

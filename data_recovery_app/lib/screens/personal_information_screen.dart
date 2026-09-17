@@ -120,8 +120,8 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
               children: [
                 _CircleBackButton(onPressed: () => Navigator.of(context).pop()),
                 const SizedBox(width: 8),
-                const Text(
-                  'personal information',
+                Text(
+                  l.personalInformation,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

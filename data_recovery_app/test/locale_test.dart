@@ -54,7 +54,7 @@ void main() {
   testWidgets('الترجمة بترجّع النص الصح لكل لغة', (tester) async {
     for (final (code, expected) in [
       ('en', 'Welcome Back'),
-      ('ar', 'أهلاً بعودتك'),
+      ('ar', 'مرحباً بعودتك'),
     ]) {
       late L l;
       await tester.pumpWidget(

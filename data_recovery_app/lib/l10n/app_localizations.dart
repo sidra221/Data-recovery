@@ -1908,6 +1908,24 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Could not open the print dialog'**
   String get printFailed;
+
+  /// No description provided for @repairsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 repair} other{{count} repairs}}'**
+  String repairsCount(int count);
+
+  /// No description provided for @lastVisitOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Last: {date}'**
+  String lastVisitOn(String date);
+
+  /// No description provided for @allWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count}'**
+  String allWithCount(int count);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -198,8 +198,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
               shown == _total
-                  ? '$_total result${_total == 1 ? '' : 's'}'
-                  : 'Showing $shown of $_total — refine the search to narrow it',
+                  ? l.resultsCount(_total)
+                  : l.showingOf(shown, _total),
               style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
             ),
           );

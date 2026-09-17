@@ -381,5 +381,29 @@
   "printStickerHint": "Stick it on the received device",
   "printReceipt": "Receiving receipt",
   "printReceiptHint": "Hand it to the customer",
-  "printFailed": "Could not open the print dialog"
+  "printFailed": "Could not open the print dialog",
+  "repairsCount": "{count, plural, =1{1 repair} other{{count} repairs}}",
+  "@repairsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastVisitOn": "Last: {date}",
+  "@lastVisitOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "allWithCount": "All {count}",
+  "@allWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

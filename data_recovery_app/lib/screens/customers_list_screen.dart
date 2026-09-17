@@ -222,7 +222,9 @@ class _CustomerCard extends StatelessWidget {
     final initial = customer.fullName.isNotEmpty ? customer.fullName[0].toUpperCase() : '?';
     final lastVisit = customer.lastVisit == null
         ? l.lastDash
-        : 'Last: ${DateFormat('d MMM yyyy', 'en').format(customer.lastVisit!.toLocal())}';
+        : l.lastVisitOn(
+            DateFormat('d MMM yyyy', 'en').format(customer.lastVisit!.toLocal()),
+          );
 
     return Container(
       decoration: BoxDecoration(
@@ -281,7 +283,7 @@ class _CustomerCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${customer.totalRepairs} Repairs',
+                          l.repairsCount(customer.totalRepairs),
                           style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                         ),
                       ],

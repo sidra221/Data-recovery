@@ -104,7 +104,9 @@ class AuthNotifier extends Notifier<AuthState> {
           );
       final token = profile.token;
       if (token == null || token.isEmpty) {
-        throw ApiException('Invalid login credentials');
+        // برسالة فاضية عن قصد: الشاشة بترجع لنصها المترجم. الـ provider ما
+        // عندو context فما بيقدر يترجم بنفسه.
+        throw ApiException('');
       }
       await ref.read(secureStorageProvider).saveToken(token);
       state = AuthState(status: AuthStatus.authenticated, profile: profile);
