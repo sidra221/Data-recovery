@@ -265,7 +265,6 @@
   "applyFilter": "Apply Filter",
   "clearAll": "Clear All",
   "typeManually": "Type",
-  "searchKnowledgeBase": "Search our knowledge base or browse categories below",
   "popularArticles": "POPULAR ARTICLES",
   "viewAll": "View All",
   "stillNeedHelp": "Still need help?",
@@ -345,5 +344,7 @@
   },
   "failedToLoadStats": "Failed to load statistics",
   "serverUnreachable": "Cannot reach the server",
-  "noSavedData": "No saved data to show"
+  "noSavedData": "No saved data to show",
+  "searchHelpHint": "Search articles",
+  "noArticlesMatch": "No articles match this search"
 }

@@ -133,12 +133,49 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
               pw.SizedBox(height: 24),
               pw.Text('Verification: ${invoice.invoiceNumber}'),
               if (invoice.terms.isNotEmpty) pw.Text(invoice.terms),
+              pw.Spacer(),
+              _signatureRow(),
             ],
           );
         },
       ),
     );
     await Printing.layoutPdf(onLayout: (_) => doc.save());
+  }
+
+  /// خانتَي التوقيع بأسفل الـ PDF. لو التوقيع مو مرسوم بعد، بينطبع سطر
+  /// فاضي حتى ينوقّع باليد على الورقة.
+  pw.Widget _signatureRow() {
+    pw.Widget box(String label, Uint8List? bytes) {
+      return pw.Expanded(
+        child: pw.Column(
+          children: [
+            pw.SizedBox(
+              height: 50,
+              child: bytes == null
+                  ? pw.SizedBox()
+                  : pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain),
+            ),
+            pw.Container(
+              margin: const pw.EdgeInsets.only(bottom: 4),
+              decoration: const pw.BoxDecoration(
+                border: pw.Border(top: pw.BorderSide(width: 0.7)),
+              ),
+            ),
+            pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
+          ],
+        ),
+      );
+    }
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
+      children: [
+        box('Seller Signature', _sellerSignature),
+        pw.SizedBox(width: 40),
+        box('Receiver Signature', _receiverSignature),
+      ],
+    );
   }
 
   Future<void> _captureSignature({required bool seller}) async {

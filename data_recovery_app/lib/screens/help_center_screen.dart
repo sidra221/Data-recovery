@@ -31,6 +31,27 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       ];
 
   final Set<int> _expanded = {1};
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// بيفلتر بالعنوان وبالخطوات — الموظف غالباً بيتذكر كلمة من جوّا المقال
+  /// مو عنوانه.
+  List<_HelpArticle> _filter(List<_HelpArticle> articles) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return articles;
+    return [
+      for (final a in articles)
+        if (a.title.toLowerCase().contains(q) ||
+            a.steps.any((s) => s.toLowerCase().contains(q)))
+          a,
+    ];
+  }
 
   Future<void> _emailSupport() async {
     final l = L.of(context);
@@ -50,7 +71,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final articles = _articlesFor(l);
+    final articles = _filter(_articlesFor(l));
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -92,11 +113,32 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                       color: Color(0xFF111827),
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    l.searchKnowledgeBase,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _query = value),
+                    decoration: InputDecoration(
+                      hintText: l.searchHelpHint,
+                      prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              color: const Color(0xFF9CA3AF),
+                              onPressed: () => setState(() {
+                                _searchController.clear();
+                                _query = '';
+                              }),
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -210,6 +252,15 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 ),
               );
             }),
+            if (articles.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: Text(
+                  l.noArticlesMatch,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                ),
+              ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,

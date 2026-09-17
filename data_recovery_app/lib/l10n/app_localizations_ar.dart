@@ -735,10 +735,6 @@ class LAr extends L {
   String get typeManually => 'كتابة';
 
   @override
-  String get searchKnowledgeBase =>
-      'ابحث في قاعدة المعرفة أو تصفّح الأقسام أدناه';
-
-  @override
   String get popularArticles => 'المقالات الشائعة';
 
   @override
@@ -926,4 +922,10 @@ class LAr extends L {
 
   @override
   String get noSavedData => 'ما في بيانات محفوظة للعرض';
+
+  @override
+  String get searchHelpHint => 'ابحث بالمقالات';
+
+  @override
+  String get noArticlesMatch => 'ما في مقالات بتطابق البحث';
 }

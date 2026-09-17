@@ -734,10 +734,6 @@ class LEn extends L {
   String get typeManually => 'Type';
 
   @override
-  String get searchKnowledgeBase =>
-      'Search our knowledge base or browse categories below';
-
-  @override
   String get popularArticles => 'POPULAR ARTICLES';
 
   @override
@@ -928,4 +924,10 @@ class LEn extends L {
 
   @override
   String get noSavedData => 'No saved data to show';
+
+  @override
+  String get searchHelpHint => 'Search articles';
+
+  @override
+  String get noArticlesMatch => 'No articles match this search';
 }

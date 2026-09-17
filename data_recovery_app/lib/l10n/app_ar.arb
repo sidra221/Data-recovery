@@ -265,7 +265,6 @@
   "applyFilter": "تطبيق التصفية",
   "clearAll": "مسح الكل",
   "typeManually": "كتابة",
-  "searchKnowledgeBase": "ابحث في قاعدة المعرفة أو تصفّح الأقسام أدناه",
   "popularArticles": "المقالات الشائعة",
   "viewAll": "عرض الكل",
   "stillNeedHelp": "ما زلت بحاجة لمساعدة؟",
@@ -345,5 +344,7 @@
   },
   "failedToLoadStats": "تعذّر تحميل الإحصائيات",
   "serverUnreachable": "ما قدرنا نوصل للسيرفر",
-  "noSavedData": "ما في بيانات محفوظة للعرض"
+  "noSavedData": "ما في بيانات محفوظة للعرض",
+  "searchHelpHint": "ابحث بالمقالات",
+  "noArticlesMatch": "ما في مقالات بتطابق البحث"
 }

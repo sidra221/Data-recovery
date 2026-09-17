@@ -1501,12 +1501,6 @@ abstract class L {
   /// **'Type'**
   String get typeManually;
 
-  /// No description provided for @searchKnowledgeBase.
-  ///
-  /// In en, this message translates to:
-  /// **'Search our knowledge base or browse categories below'**
-  String get searchKnowledgeBase;
-
   /// No description provided for @popularArticles.
   ///
   /// In en, this message translates to:
@@ -1818,6 +1812,18 @@ abstract class L {
   /// In en, this message translates to:
   /// **'No saved data to show'**
   String get noSavedData;
+
+  /// No description provided for @searchHelpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search articles'**
+  String get searchHelpHint;
+
+  /// No description provided for @noArticlesMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles match this search'**
+  String get noArticlesMatch;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
