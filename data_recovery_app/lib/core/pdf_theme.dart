@@ -1,7 +1,32 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/widgets.dart' as pw;
 
-/// خطوط المستندات المطبوعة (فاتورة، ستيكر، سند استلام).
+final _arabicRange =
+    RegExp(r'[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]');
+
+bool hasArabic(String text) => _arabicRange.hasMatch(text);
+
+/// نص بالـ PDF باتجاه مشتقّ من محتواه.
+///
+/// حزمة `pdf` بترتّب الحروف حسب اتجاه الصفحة، وصفحاتنا إنكليزية (LTR). فأي
+/// نص عربي — اسم عميل، وصف عطل، شروط، اسم شركة — كان بينطبع **معكوس**:
+/// الحروف مشكّلة صح بس مرتّبة من اليسار لليمين.
+///
+/// المستندات مختلطة بطبيعتها (رقم فاتورة لاتيني واسم عربي بنفس الصفحة)،
+/// فاتجاه الصفحة لحاله ما بيكفي — كل نص لازم ياخد اتجاهه من محتواه هو.
+pw.Widget rtlAware(
+  String text, {
+  pw.TextStyle? style,
+  int? maxLines,
+  pw.TextAlign? align,
+}) {
+  return pw.Directionality(
+    textDirection: hasArabic(text) ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+    child: pw.Text(text, style: style, maxLines: maxLines, textAlign: align),
+  );
+}
+
+/// خطوط المستندات المطبوعة (فاتورة، ملصق، سند استلام).
 ///
 /// حزمة `pdf` بتستعمل Helvetica افتراضياً، وهي Type1 بلا دعم يونيكود أصلاً —
 /// فكل حرف عربي بيطلع مربّع فاضي. وأسماء العملاء والأجهزة والمشاكل كلها

@@ -60,6 +60,16 @@ Dio _dioOnline() {
   return dio;
 }
 
+/// الرقم المتوقّع لأول عملية أوفلاين اليوم. محسوب وقت التشغيل عن قصد —
+/// تثبيت التاريخ بالنص بيخلّي الاختبار يفشل أول ما يتغيّر اليوم.
+String _expectedOfflineNumber(int sequence) {
+  final now = DateTime.now();
+  final day = '${now.year.toString().padLeft(4, '0')}'
+      '${now.month.toString().padLeft(2, '0')}'
+      '${now.day.toString().padLeft(2, '0')}';
+  return '01-$day-$sequence';
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -115,13 +125,13 @@ void main() {
     final job = await container.read(jobsProvider.notifier).createJob(_payload);
 
     expect(job.id, lessThan(0), reason: 'id سالب = لسا ما انرفعت');
-    expect(job.invoiceNumber, '01-20260917-9000');
+    expect(job.invoiceNumber, _expectedOfflineNumber(9000));
     expect(job.barcode, job.invoiceNumber, reason: 'الباركود = رقم الفاتورة');
     expect(job.customerName, 'سامر');
 
     final queued = (await queue.all()).single;
     expect(queued.kind, PendingKind.createJob);
-    expect(queued.payload['invoice_number'], '01-20260917-9000');
+    expect(queued.payload['invoice_number'], _expectedOfflineNumber(9000));
     expect(queued.payload['customer_name'], 'سامر');
   });
 
@@ -134,7 +144,7 @@ void main() {
     await container.read(jobsProvider.notifier).createJob(_payload);
 
     final jobs = container.read(jobsProvider).jobs;
-    expect(jobs.single.invoiceNumber, '01-20260917-9000');
+    expect(jobs.single.invoiceNumber, _expectedOfflineNumber(9000));
   });
 
   test('بدون مدى محجوز: بترمي خطأ واضح مو بتحفظ رقم عشوائي', () async {

@@ -39,7 +39,6 @@ class PrintTemplates {
   static Future<Uint8List> sticker({
     required Job job,
     required String companyName,
-    required String companyNameArabic,
   }) async {
     final theme = await PdfTheme.load();
     final doc = pw.Document(theme: theme);
@@ -60,21 +59,14 @@ class PrintTemplates {
                     child: pw.Container(
                       padding: const pw.EdgeInsets.all(3),
                       decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.6)),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.center,
-                        children: [
-                          pw.Text(
-                            companyNameArabic,
-                            style: const pw.TextStyle(fontSize: 7),
+                      child: pw.Center(
+                        child: rtlAware(
+                          companyName,
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
                           ),
-                          pw.Text(
-                            companyName,
-                            style: pw.TextStyle(
-                              fontSize: 7.5,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -125,7 +117,7 @@ class PrintTemplates {
                             ),
                             pw.SizedBox(height: 2),
                             pw.Expanded(
-                              child: pw.Text(
+                              child: rtlAware(
                                 job.problem,
                                 style: const pw.TextStyle(fontSize: 7.5),
                                 maxLines: 6,
@@ -160,7 +152,7 @@ class PrintTemplates {
             ),
           ),
           pw.Expanded(
-            child: pw.Text(
+            child: rtlAware(
               value.isEmpty ? '—' : value,
               style: pw.TextStyle(
                 fontSize: 8,
@@ -264,7 +256,7 @@ class PrintTemplates {
               ),
               pw.Spacer(),
               pw.Center(
-                child: pw.Text(
+                child: rtlAware(
                   companyName,
                   style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 ),
@@ -281,9 +273,9 @@ class PrintTemplates {
     pw.Widget cell(String text, {bool bold = false, pw.TextAlign? align}) {
       return pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: pw.Text(
-          text.isEmpty ? '' : text,
-          textAlign: align,
+        child: rtlAware(
+          text,
+          align: align,
           style: pw.TextStyle(
             fontSize: 9.5,
             fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -316,7 +308,7 @@ class PrintTemplates {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(english, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
-                pw.Text(arabic, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
+                rtlAware(arabic, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
               ],
             ),
           ),
@@ -324,7 +316,7 @@ class PrintTemplates {
             height: 62,
             width: double.infinity,
             padding: const pw.EdgeInsets.all(6),
-            child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+            child: rtlAware(value, style: const pw.TextStyle(fontSize: 10)),
           ),
         ],
       ),

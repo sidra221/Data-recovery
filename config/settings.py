@@ -192,7 +192,9 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-COMPANY_NAME = "مكتب من الصفر الى الواحد للدعاية والاعلان"
+# الاسم بيضل إنكليزي عن قصد: الترجمة العربية ("مكتب من الصفر إلى الواحد
+# لاسترجاع الملفات") طويلة وغير مستعملة، والعلامة معروفة بالإنكليزي.
+COMPANY_NAME = os.environ.get("COMPANY_NAME", "01 Data Recovery")
 COMPANY_TAX_NUMBER = os.environ.get("COMPANY_TAX_NUMBER", "312738260800003")
 COMPANY_CR_NUMBER = os.environ.get("COMPANY_CR_NUMBER", "7043150239")
 COMPANY_ADDRESS = os.environ.get(

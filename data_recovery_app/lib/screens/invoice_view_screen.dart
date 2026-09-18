@@ -7,7 +7,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:signature/signature.dart';
 
 import '../core/api_client.dart';
@@ -78,41 +77,44 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
     ).format(value.toLocal());
   }
 
-  String _shareText(InvoiceView invoice) {
-    final l = L.of(context);
-    return '${invoice.company.name}\n'
-        '${l.labelInvoice}: ${invoice.invoiceNumber}\n'
-        '${l.customer}: ${invoice.customerName}\n'
-        '${l.labelPhone}: ${invoice.customerPhone}\n'
-        '${l.colTotal}: ${invoice.total.toStringAsFixed(2)}';
-  }
-
+  /// بيشارك الفاتورة **كملف PDF** مو كرسالة نصية — العميل بدّو مستند
+  /// يقدر يحفظه ويطبعه، مو نص بالواتساب.
   Future<void> _share() async {
     final invoice = _invoice;
     if (invoice == null) return;
-    await SharePlus.instance.share(ShareParams(text: _shareText(invoice)));
+    final bytes = await _buildPdf(invoice);
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: 'invoice-${invoice.invoiceNumber}.pdf',
+    );
   }
 
   Future<void> _saveAndPrint() async {
     final invoice = _invoice;
     if (invoice == null) return;
+    final bytes = await _buildPdf(invoice);
+    await Printing.layoutPdf(onLayout: (_) => Future.value(bytes));
+  }
+
+  Future<Uint8List> _buildPdf(InvoiceView invoice) async {
     final l = L.of(context);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final theme = await PdfTheme.load();
     final doc = pw.Document(theme: theme);
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         theme: theme,
-        textDirection: isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr,
         build: (context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(invoice.company.name, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              rtlAware(
+                invoice.company.name,
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+              ),
               pw.SizedBox(height: 8),
               pw.Text('${l.labelInvoice}: ${invoice.invoiceNumber}'),
-              pw.Text('${l.customer}: ${invoice.customerName}'),
+              rtlAware('${l.customer}: ${invoice.customerName}'),
               pw.Text('${l.labelPhone}: ${invoice.customerPhone}'),
               pw.SizedBox(height: 16),
               ...[
@@ -120,7 +122,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Expanded(child: pw.Text(item.description)),
+                      pw.Expanded(child: rtlAware(item.description)),
                       pw.Text(item.total.toStringAsFixed(2)),
                     ],
                   ),
@@ -135,7 +137,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
               ),
               pw.SizedBox(height: 24),
               pw.Text('${l.caseCode}: ${invoice.invoiceNumber}'),
-              if (invoice.terms.isNotEmpty) pw.Text(invoice.terms),
+              if (invoice.terms.isNotEmpty) rtlAware(invoice.terms),
               pw.Spacer(),
               _signatureRow(l),
             ],
@@ -143,7 +145,7 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
         },
       ),
     );
-    await Printing.layoutPdf(onLayout: (_) => doc.save());
+    return doc.save();
   }
 
   /// خانتَي التوقيع بأسفل الـ PDF. لو التوقيع مو مرسوم بعد، بينطبع سطر
@@ -520,27 +522,38 @@ class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> {
     final l = L.of(context);
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _PaidBox(label: l.paidOnMainFund, value: invoice.total.toStringAsFixed(2)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: _PaidBox(label: l.paidOnTwo, value: '0')),
-          ],
+        // IntrinsicHeight + stretch: بدونها كل كرت بياخد ارتفاع محتواه،
+        // فكرت الملاحظات (نص أطول) كان بيطلع أكبر من جاره بنفس الصف.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _PaidBox(
+                  label: l.paidOnMainFund,
+                  value: invoice.total.toStringAsFixed(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: _PaidBox(label: l.paidOnTwo, value: '0')),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _PaidBox(label: l.paidOnThree, value: '0')),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _PaidBox(
-                label: l.labelNotes,
-                value: invoice.terms.trim().isEmpty ? '' : invoice.terms.trim(),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _PaidBox(label: l.paidOnThree, value: '0')),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PaidBox(
+                  label: l.labelNotes,
+                  value: invoice.terms.trim().isEmpty ? '' : invoice.terms.trim(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

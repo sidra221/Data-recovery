@@ -5,9 +5,11 @@ class AppConstants {
     'API_BASE_URL',
     defaultValue: ApiConfig.apiBaseUrl,
   );
-  /// اسم الشركة على المطبوعات (ستيكر، سند استلام، عرض سعر).
+  /// اسم الشركة على المطبوعات (ملصق، سند استلام، عرض سعر).
+  ///
+  /// إنكليزي بس عن قصد: العلامة معروفة هيك، والترجمة العربية طويلة
+  /// ("مكتب من الصفر إلى الواحد لاسترجاع الملفات") وما حدا بيستعملها.
   static const String companyName = '01 Data Recovery';
-  static const String companyNameArabic = '01 لاستعادة البيانات';
 
   static const String tokenKey = 'auth_token';
   static const String localeKey = 'app_locale';

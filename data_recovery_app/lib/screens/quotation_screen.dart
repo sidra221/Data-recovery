@@ -383,49 +383,55 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
       'd MMM yyyy',
       Localizations.localeOf(context).languageCode,
     ).format(DateTime.now());
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MetaLine(label: l.toColon, value: _customerName),
-                  const SizedBox(height: 10),
-                  _MetaLine(label: l.personName, value: _customerName),
-                  const SizedBox(height: 10),
-                  _MetaLine(label: l.tel, value: '—'),
-                ],
+    // الخط الفاصل صار عمود ثالث بنفس الصف بدل ما يكون طبقة فوقه. هيك
+    // بينمركز بين العمودين بالضبط، وعرضه بيضمن مسافة على الجهتين فما
+    // بيلزق بالنص. و IntrinsicHeight بتخلّي طوله يطابق المحتوى تماماً.
+    return IntrinsicHeight(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _MetaLine(label: l.toColon, value: _customerName),
+                    const SizedBox(height: 10),
+                    _MetaLine(label: l.personName, value: _customerName),
+                    const SizedBox(height: 10),
+                    _MetaLine(label: l.tel, value: '—'),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 28),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MetaLine(label: l.fromColon, value: _companyName),
-                  const SizedBox(height: 10),
-                  _MetaLine(label: l.mobile, value: _customerPhone),
-                  const SizedBox(height: 10),
-                  _MetaLine(label: l.labelDate, value: dateText),
-                ],
+              SizedBox(
+                width: 48,
+                child: CustomPaint(painter: _DashedLinePainter()),
               ),
-            ),
-          ],
-        ),
-        CustomPaint(
-          size: const Size(1, 110),
-          painter: _DashedLinePainter(),
-        ),
-        const CircleAvatar(
-          radius: 16,
-          backgroundColor: _accent,
-          child: Icon(Icons.description_outlined, color: Colors.white, size: 18),
-        ),
-      ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _MetaLine(label: l.fromColon, value: _companyName),
+                    const SizedBox(height: 10),
+                    _MetaLine(label: l.mobile, value: _customerPhone),
+                    const SizedBox(height: 10),
+                    _MetaLine(label: l.labelDate, value: dateText),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const CircleAvatar(
+            radius: 16,
+            backgroundColor: _accent,
+            child: Icon(Icons.description_outlined, color: Colors.white, size: 18),
+          ),
+        ],
+      ),
     );
   }
 

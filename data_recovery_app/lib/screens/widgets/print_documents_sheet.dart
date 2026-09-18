@@ -72,7 +72,6 @@ class PrintDocumentsSheet extends StatelessWidget {
                 () => PrintTemplates.sticker(
                   job: job,
                   companyName: AppConstants.companyName,
-                  companyNameArabic: AppConstants.companyNameArabic,
                 ),
               ),
             ),

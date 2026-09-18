@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:data_recovery_app/core/pdf_theme.dart';
 import 'package:data_recovery_app/core/print_templates.dart';
 import 'package:data_recovery_app/models/job.dart';
 
@@ -54,12 +55,32 @@ void main() {
     });
   });
 
+  group('اتجاه النص بالمستندات', () {
+    // النص العربي كان بينطبع معكوس لأن اتجاه الصفحة إنكليزي. القرار
+    // بينبنى على محتوى كل نص، فهاد الفحص هو نقطة القرار.
+    test('بيميّز العربي عن اللاتيني', () {
+      expect(hasArabic('أحمد اليافعي'), isTrue);
+      expect(hasArabic('لا يعمل من قبل المستخدم'), isTrue);
+      expect(hasArabic('hussam awad'), isFalse);
+      expect(hasArabic('01-20260917-0013'), isFalse);
+      expect(hasArabic('HDD External 2.5'), isFalse);
+    });
+
+    test('نص مختلط فيه عربي بيتعامل كعربي', () {
+      expect(hasArabic('01 لاستعادة البيانات'), isTrue);
+      expect(hasArabic('Invoice: فاتورة'), isTrue);
+    });
+
+    test('نص فاضي مو عربي', () {
+      expect(hasArabic(''), isFalse);
+    });
+  });
+
   group('ستيكر القطعة', () {
     test('بيطلع PDF صالح بخط مدمج', () async {
       final bytes = await PrintTemplates.sticker(
         job: _job(),
         companyName: '01 Data Recovery',
-        companyNameArabic: '01 لاستعادة البيانات',
       );
 
       expect(bytes.length, greaterThan(1000));
@@ -72,7 +93,6 @@ void main() {
       final bytes = await PrintTemplates.sticker(
         job: _job(),
         companyName: '01',
-        companyNameArabic: '٠١',
       );
 
       final media = RegExp(r'/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)')
@@ -94,7 +114,6 @@ void main() {
       final bytes = await PrintTemplates.sticker(
         job: _job(problem: '', model: '', serial: ''),
         companyName: '01',
-        companyNameArabic: '٠١',
       );
       expect(bytes.length, greaterThan(1000));
     });
