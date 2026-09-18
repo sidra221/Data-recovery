@@ -1027,4 +1027,11 @@ class LAr extends L {
   String allWithCount(int count) {
     return 'الكل $count';
   }
+
+  @override
+  String get cannotDeleteCustomerWithJobs =>
+      'لا يمكن حذف عميل لديه قضايا مرتبطة';
+
+  @override
+  String get invalidPhone => 'أدخل رقم هاتف صحيح';
 }

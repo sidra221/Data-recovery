@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -87,7 +88,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : l.failedToLoadCustomer;
+        _error = apiErrorText(l, error, fallback: l.failedToLoadCustomer);
       });
     } catch (_) {
       if (!mounted) return;
@@ -134,7 +135,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         ..showSnackBar(SnackBar(content: Text(l.updatedSuccessfully)));
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : l.failedToUpdate);
+      _showError(apiErrorText(l, error, fallback: l.failedToUpdate));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToUpdate);
@@ -159,7 +160,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message);
+      _showError(apiErrorText(l, error, fallback: l.failedToDeleteCustomer));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToDeleteCustomer);

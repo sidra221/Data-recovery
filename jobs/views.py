@@ -153,7 +153,9 @@ class JobViewSet(viewsets.ModelViewSet):
             job=job,
             field_name=StatusLog.FieldName.STATUS,
             status=job.status,
-            note="تم إنشاء الفاتورة",
+            # بدون ملاحظة عن قصد: الحالة "Received" مع الوقت واسم الموظف
+            # بيقولوا "انعملت القضية" بالضبط. أي نص هون بينحفظ بلغة وحدة
+            # بقاعدة البيانات وما بيقدر يتبع لغة التطبيق.
             created_by=self.request.user,
         )
         customer, created = Customer.objects.get_or_create(
@@ -337,8 +339,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.jobs.exists():
+            # النص إنكليزي كاحتياطي، والرمز هو يلي بيترجمه التطبيق بلغته.
             return Response(
-                {"detail": "لا يمكن حذف عميل لديه فواتير مرتبطة"},
+                {
+                    "detail": "Cannot delete a customer that has jobs",
+                    "code": "customer_has_jobs",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)

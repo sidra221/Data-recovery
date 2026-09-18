@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -45,7 +46,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = error.message.isNotEmpty ? error.message : l.failedToLoadAlerts;
+        _error = apiErrorText(l, error, fallback: l.failedToLoadAlerts);
       });
     } catch (_) {
       if (!mounted) return;

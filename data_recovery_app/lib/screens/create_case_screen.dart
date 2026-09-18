@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -129,7 +130,7 @@ class _CreateCaseScreenState extends ConsumerState<CreateCaseScreen> {
       _showError(l.noOfflineNumbersLeft);
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : l.failedToCreateCase);
+      _showError(apiErrorText(l, error, fallback: l.failedToCreateCase));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToCreateCase);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -78,7 +79,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         _loading = false;
         _searched = true;
         _results = const [];
-        _error = error.message.isNotEmpty ? error.message : l.searchFailed;
+        _error = apiErrorText(l, error, fallback: l.searchFailed);
       });
     } catch (_) {
       if (!mounted) return;

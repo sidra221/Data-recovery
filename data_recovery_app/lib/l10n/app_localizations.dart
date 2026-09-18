@@ -1926,6 +1926,18 @@ abstract class L {
   /// In en, this message translates to:
   /// **'All {count}'**
   String allWithCount(int count);
+
+  /// No description provided for @cannotDeleteCustomerWithJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete a customer that has cases'**
+  String get cannotDeleteCustomerWithJobs;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number'**
+  String get invalidPhone;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

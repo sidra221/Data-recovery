@@ -1020,4 +1020,11 @@ class LEn extends L {
   String allWithCount(int count) {
     return 'All $count';
   }
+
+  @override
+  String get cannotDeleteCustomerWithJobs =>
+      'Cannot delete a customer that has cases';
+
+  @override
+  String get invalidPhone => 'Enter a valid phone number';
 }

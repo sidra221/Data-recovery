@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -181,7 +182,7 @@ class _CasesListScreenState extends ConsumerState<CasesListScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(error.message.isNotEmpty ? error.message : l.barcodeNotFound)),
+          SnackBar(content: Text(apiErrorText(l, error, fallback: l.barcodeNotFound))),
         );
     } catch (_) {
       if (!mounted) return;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../core/api_client.dart';
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import '../models/quotation.dart';
 import '../providers/quotations_provider.dart';
@@ -142,7 +143,8 @@ class _QuotationScreenState extends ConsumerState<QuotationScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : L.of(context).failedToSendQuotation);
+      final l = L.of(context);
+      _showError(apiErrorText(l, error, fallback: l.failedToSendQuotation));
     } catch (_) {
       if (!mounted) return;
       _showError(L.of(context).failedToSendQuotation);

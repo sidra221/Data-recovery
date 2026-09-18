@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -55,7 +56,7 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.message.isNotEmpty ? error.message : l.failedToLoadCase;
+        _error = apiErrorText(l, error, fallback: l.failedToLoadCase);
       });
     } catch (_) {
       if (!mounted) return;

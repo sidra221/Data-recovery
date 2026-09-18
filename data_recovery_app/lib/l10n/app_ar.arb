@@ -405,5 +405,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "cannotDeleteCustomerWithJobs": "لا يمكن حذف عميل لديه قضايا مرتبطة",
+  "invalidPhone": "أدخل رقم هاتف صحيح"
 }

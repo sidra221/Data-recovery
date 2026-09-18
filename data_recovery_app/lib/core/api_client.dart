@@ -16,12 +16,20 @@ class ApiException implements Exception {
     this.message, {
     this.statusCode,
     this.data,
+    this.code,
     this.isNetworkError = false,
   });
 
   final String message;
   final int? statusCode;
   final dynamic data;
+
+  /// رمز الخطأ من السيرفر، إذا بعت واحد.
+  ///
+  /// [message] بتجي بلغة السيرفر، فما بتتبع لغة التطبيق. الرمز بيخلّي
+  /// التطبيق يعرض نصّه المترجم، والرسالة تضل احتياطي للأخطاء يلي ما إلها
+  /// رمز معروف.
+  final String? code;
 
   /// ما وصلنا للسيرفر أصلاً (مطفّى، مافي نت، انتهت المهلة).
   ///
@@ -356,10 +364,17 @@ class ApiClient {
         _messageFrom(error),
         statusCode: error.response?.statusCode,
         data: error.response?.data,
+        code: _codeFrom(error),
         // مافي response = ما وصل جواب من السيرفر بالمرة.
         isNetworkError: error.response == null && error.type != DioExceptionType.cancel,
       );
     }
+  }
+
+  String? _codeFrom(DioException error) {
+    final data = error.response?.data;
+    if (data is Map && data['code'] is String) return data['code'] as String;
+    return null;
   }
 
   String _messageFrom(DioException error) {

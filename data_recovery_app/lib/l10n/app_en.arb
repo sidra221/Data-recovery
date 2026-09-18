@@ -405,5 +405,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "cannotDeleteCustomerWithJobs": "Cannot delete a customer that has cases",
+  "invalidPhone": "Enter a valid phone number"
 }

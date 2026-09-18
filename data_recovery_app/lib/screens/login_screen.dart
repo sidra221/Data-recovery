@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on ApiException catch (error) {
       if (!mounted) return;
       _showError(
-        error.message.isNotEmpty ? error.message : l.invalidCredentials,
+        apiErrorText(l, error, fallback: l.invalidCredentials),
       );
     } catch (_) {
       if (!mounted) return;

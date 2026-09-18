@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/api_error_text.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,7 +59,7 @@ class _UpdateStatusSheetState extends ConsumerState<UpdateStatusSheet> {
       widget.onUpdated?.call();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : l.failedToUpdateStatus);
+      _showError(apiErrorText(l, error, fallback: l.failedToUpdateStatus));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToUpdateStatus);

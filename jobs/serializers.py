@@ -186,7 +186,9 @@ class JobSerializer(serializers.ModelSerializer):
     def validate_customer_phone(self, value):
         digits = "".join(ch for ch in value if ch.isdigit() or ch == "+")
         if len(digits) < 8:
-            raise serializers.ValidationError("رقم التليفون غير صحيح.")
+            raise serializers.ValidationError(
+                "Enter a valid phone number", code="invalid_phone",
+            )
         return value
 
 

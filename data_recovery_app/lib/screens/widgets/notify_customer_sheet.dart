@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/api_error_text.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,7 +65,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : l.failedToLoadInvoiceText);
+      _showError(apiErrorText(l, error, fallback: l.failedToLoadInvoiceText));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToLoadInvoiceText);
@@ -111,7 +112,7 @@ class _NotifyCustomerSheetState extends ConsumerState<NotifyCustomerSheet> {
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showError(error.message.isNotEmpty ? error.message : l.failedToRecordSend);
+      _showError(apiErrorText(l, error, fallback: l.failedToRecordSend));
     } catch (_) {
       if (!mounted) return;
       _showError(l.failedToOpenWhatsapp);
