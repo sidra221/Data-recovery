@@ -32,7 +32,7 @@ class JobApiTests(APITestCase):
         self.assertEqual(response.data["customer_name"], "أحمد علي")
         self.assertEqual(response.data["barcode"], response.data["invoice_number"])
         self.assertEqual(response.data["status"], "received")
-        self.assertTrue(response.data["invoice_number"].startswith("01-"))
+        self.assertEqual(response.data["invoice_number"], f"01-{settings.INVOICE_START}")
         self.assertEqual(len(response.data["status_logs"]), 1)
 
     def test_scan_barcode(self):
@@ -673,8 +673,7 @@ class OfflineNumberBlockTests(APITestCase):
 
     def test_accepts_a_number_from_the_reserved_block(self):
         block = self._block().data
-        today = timezone.localdate()
-        number = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+        number = f"{block['prefix']}-{block['block_start']}"
 
         response = self.client.post(
             "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
@@ -684,8 +683,7 @@ class OfflineNumberBlockTests(APITestCase):
         self.assertEqual(response.data["barcode"], number)
 
     def test_rejects_a_number_the_server_could_hand_out(self):
-        today = timezone.localdate()
-        number = f"{settings.INVOICE_PREFIX}-{today:%Y%m%d}-0001"
+        number = f"{settings.INVOICE_PREFIX}-{settings.INVOICE_START}"
 
         response = self.client.post(
             "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
@@ -694,8 +692,7 @@ class OfflineNumberBlockTests(APITestCase):
 
     def test_rejects_a_duplicate_number(self):
         block = self._block().data
-        today = timezone.localdate()
-        number = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+        number = f"{block['prefix']}-{block['block_start']}"
         self.client.post(
             "/api/jobs/", {**self.payload, "invoice_number": number}, format="json"
         )
@@ -713,8 +710,7 @@ class OfflineNumberBlockTests(APITestCase):
 
     def test_server_numbering_still_works_alongside_offline_ones(self):
         block = self._block().data
-        today = timezone.localdate()
-        offline = f"{block['prefix']}-{today:%Y%m%d}-{block['block_start']:04d}"
+        offline = f"{block['prefix']}-{block['block_start']}"
         self.client.post(
             "/api/jobs/", {**self.payload, "invoice_number": offline}, format="json"
         )
@@ -725,3 +721,19 @@ class OfflineNumberBlockTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         sequence = int(response.data["invoice_number"].rsplit("-", 1)[-1])
         self.assertLess(sequence, DeviceNumberBlock.OFFLINE_FLOOR)
+
+    def test_numbering_starts_at_the_configured_value(self):
+        response = self.client.post("/api/jobs/", self.payload, format="json")
+        self.assertEqual(
+            response.data["invoice_number"], f"01-{settings.INVOICE_START}",
+        )
+
+    def test_numbering_is_continuous_not_daily(self):
+        first = self.client.post("/api/jobs/", self.payload, format="json")
+        second = self.client.post("/api/jobs/", self.payload, format="json")
+
+        a = int(first.data["invoice_number"].rsplit("-", 1)[-1])
+        b = int(second.data["invoice_number"].rsplit("-", 1)[-1])
+        self.assertEqual(b, a + 1)
+        # ما في تاريخ بالرقم — الشكل صار PREFIX-NNNNN بس
+        self.assertEqual(first.data["invoice_number"].count("-"), 1)

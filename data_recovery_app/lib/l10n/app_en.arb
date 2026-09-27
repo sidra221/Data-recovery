@@ -145,7 +145,7 @@
   "failedToUpdate": "Failed to update",
   "failedToLoadCustomer": "Failed to load customer",
   "failedToDeleteCustomer": "Failed to delete customer",
-  "customersList": "Customers List",
+  "customersList": "Customer Search",
   "searchCustomersHint": "Search Name, Email, phone",
   "noCustomersFound": "No customers found",
   "lastDash": "Last: -",
@@ -407,5 +407,7 @@
     }
   },
   "cannotDeleteCustomerWithJobs": "Cannot delete a customer that has cases",
-  "invalidPhone": "Enter a valid phone number"
+  "invalidPhone": "Enter a valid phone number",
+  "sharePdf": "Share as PDF",
+  "printPdf": "Print"
 }

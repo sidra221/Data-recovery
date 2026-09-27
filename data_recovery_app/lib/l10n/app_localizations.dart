@@ -886,7 +886,7 @@ abstract class L {
   /// No description provided for @customersList.
   ///
   /// In en, this message translates to:
-  /// **'Customers List'**
+  /// **'Customer Search'**
   String get customersList;
 
   /// No description provided for @searchCustomersHint.
@@ -1938,6 +1938,18 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Enter a valid phone number'**
   String get invalidPhone;
+
+  /// No description provided for @sharePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Share as PDF'**
+  String get sharePdf;
+
+  /// No description provided for @printPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get printPdf;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

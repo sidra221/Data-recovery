@@ -413,7 +413,7 @@ class LAr extends L {
   String get failedToDeleteCustomer => 'تعذّر حذف العميل';
 
   @override
-  String get customersList => 'قائمة العملاء';
+  String get customersList => 'قائمة البحث عن العملاء';
 
   @override
   String get searchCustomersHint =>
@@ -1034,4 +1034,10 @@ class LAr extends L {
 
   @override
   String get invalidPhone => 'أدخل رقم هاتف صحيح';
+
+  @override
+  String get sharePdf => 'مشاركة كملف PDF';
+
+  @override
+  String get printPdf => 'طباعة';
 }

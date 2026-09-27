@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/api_error_text.dart';
 import '../l10n/app_localizations.dart';
+import 'widgets/print_documents_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -474,7 +475,11 @@ class _DeviceCard extends StatelessWidget {
     final l = L.of(context);
     final c = _statusColors;
     return _SoftSurface(
-      child: Padding(
+      // الضغط بيفتح مستندات الجهاز — طباعة أو مشاركة كـ PDF.
+      child: InkWell(
+        onTap: () => PrintDocumentsSheet.show(context, job: job),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,6 +553,7 @@ class _DeviceCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }

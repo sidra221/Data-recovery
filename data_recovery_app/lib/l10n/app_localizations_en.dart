@@ -413,7 +413,7 @@ class LEn extends L {
   String get failedToDeleteCustomer => 'Failed to delete customer';
 
   @override
-  String get customersList => 'Customers List';
+  String get customersList => 'Customer Search';
 
   @override
   String get searchCustomersHint => 'Search Name, Email, phone';
@@ -1027,4 +1027,10 @@ class LEn extends L {
 
   @override
   String get invalidPhone => 'Enter a valid phone number';
+
+  @override
+  String get sharePdf => 'Share as PDF';
+
+  @override
+  String get printPdf => 'Print';
 }

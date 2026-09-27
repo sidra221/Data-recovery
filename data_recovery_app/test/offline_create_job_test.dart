@@ -19,8 +19,8 @@ final _payload = <String, dynamic>{
 
 final _serverJob = <String, dynamic>{
   'id': 7,
-  'invoice_number': '01-20260917-0001',
-  'barcode': '01-20260917-0001',
+  'invoice_number': '01-16720',
+  'barcode': '01-16720',
   'customer_name': 'سامر',
   'customer_phone': '0791234567',
   'hard_disk_type': 'hdd_25',
@@ -60,16 +60,6 @@ Dio _dioOnline() {
   return dio;
 }
 
-/// الرقم المتوقّع لأول عملية أوفلاين اليوم. محسوب وقت التشغيل عن قصد —
-/// تثبيت التاريخ بالنص بيخلّي الاختبار يفشل أول ما يتغيّر اليوم.
-String _expectedOfflineNumber(int sequence) {
-  final now = DateTime.now();
-  final day = '${now.year.toString().padLeft(4, '0')}'
-      '${now.month.toString().padLeft(2, '0')}'
-      '${now.day.toString().padLeft(2, '0')}';
-  return '01-$day-$sequence';
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -100,17 +90,17 @@ void main() {
 
   test('السيرفر شغّال: بتنعمل عادي وما بينضاف شي للطابور', () async {
     await minter.saveBlock(
-      const NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9009),
+      const NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900009),
     );
     final container = await containerWith(_dioOnline());
 
     final job = await container.read(jobsProvider.notifier).createJob(_payload);
 
     expect(job.id, 7);
-    expect(job.invoiceNumber, '01-20260917-0001');
+    expect(job.invoiceNumber, '01-16720');
     expect(await queue.all(), isEmpty);
     expect(
-      await minter.remainingToday(),
+      await minter.remaining(),
       10,
       reason: 'ما لازم نستهلك رقم محجوز والسيرفر شغّال',
     );
@@ -118,33 +108,33 @@ void main() {
 
   test('السيرفر مطفّى: بتنحفظ بالطابور برقم من المدى المحجوز', () async {
     await minter.saveBlock(
-      const NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9009),
+      const NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900009),
     );
     final container = await containerWith(_dioOffline());
 
     final job = await container.read(jobsProvider.notifier).createJob(_payload);
 
     expect(job.id, lessThan(0), reason: 'id سالب = لسا ما انرفعت');
-    expect(job.invoiceNumber, _expectedOfflineNumber(9000));
+    expect(job.invoiceNumber, '01-900000');
     expect(job.barcode, job.invoiceNumber, reason: 'الباركود = رقم الفاتورة');
     expect(job.customerName, 'سامر');
 
     final queued = (await queue.all()).single;
     expect(queued.kind, PendingKind.createJob);
-    expect(queued.payload['invoice_number'], _expectedOfflineNumber(9000));
+    expect(queued.payload['invoice_number'], '01-900000');
     expect(queued.payload['customer_name'], 'سامر');
   });
 
   test('العملية المحفوظة بتظهر بالقائمة فوراً', () async {
     await minter.saveBlock(
-      const NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9009),
+      const NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900009),
     );
     final container = await containerWith(_dioOffline());
 
     await container.read(jobsProvider.notifier).createJob(_payload);
 
     final jobs = container.read(jobsProvider).jobs;
-    expect(jobs.single.invoiceNumber, _expectedOfflineNumber(9000));
+    expect(jobs.single.invoiceNumber, '01-900000');
   });
 
   test('بدون مدى محجوز: بترمي خطأ واضح مو بتحفظ رقم عشوائي', () async {
@@ -159,7 +149,7 @@ void main() {
 
   test('خلص المدى لهاليوم: بترمي خطأ بدل ما تعطي رقم بيتصادم', () async {
     await minter.saveBlock(
-      const NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9000),
+      const NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900000),
     );
     final container = await containerWith(_dioOffline());
 
@@ -189,7 +179,7 @@ void main() {
       ),
     );
     await minter.saveBlock(
-      const NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9009),
+      const NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900009),
     );
     final container = await containerWith(dio);
 

@@ -17,7 +17,7 @@ class SyncState {
     this.pending = 0,
     this.rejected = 0,
     this.isSyncing = false,
-    this.numbersLeftToday = 0,
+    this.numbersLeft = 0,
   });
 
   /// عمليات مستنية الشبكة.
@@ -28,8 +28,8 @@ class SyncState {
 
   final bool isSyncing;
 
-  /// كم رقم فاتورة باقي بالمدى المحجوز لهاليوم.
-  final int numbersLeftToday;
+  /// كم رقم فاتورة باقي بالمدى المحجوز للجهاز.
+  final int numbersLeft;
 
   bool get hasPending => pending > 0;
   bool get hasRejected => rejected > 0;
@@ -38,13 +38,13 @@ class SyncState {
     int? pending,
     int? rejected,
     bool? isSyncing,
-    int? numbersLeftToday,
+    int? numbersLeft,
   }) {
     return SyncState(
       pending: pending ?? this.pending,
       rejected: rejected ?? this.rejected,
       isSyncing: isSyncing ?? this.isSyncing,
-      numbersLeftToday: numbersLeftToday ?? this.numbersLeftToday,
+      numbersLeft: numbersLeft ?? this.numbersLeft,
     );
   }
 }
@@ -66,7 +66,7 @@ class SyncNotifier extends Notifier<SyncState> {
     state = state.copyWith(
       pending: (await _queue.waiting()).length,
       rejected: (await _queue.rejected()).length,
-      numbersLeftToday: await _minter.remainingToday(),
+      numbersLeft: await _minter.remaining(),
     );
   }
 

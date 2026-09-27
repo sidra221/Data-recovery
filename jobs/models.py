@@ -18,8 +18,11 @@ class DeviceNumberBlock(models.Model):
     ضل أوفلاين لبكرا بيضل يقدر يولّد أرقام.
     """
 
-    OFFLINE_FLOOR = 9000
-    BLOCK_SIZE = 50
+    # العدّاد العادي مستمر وبيبلّش من INVOICE_START (16720). المدايات
+    # المحجوزة لازم تكون بعيدة عنه بحيث ما يوصلها أبداً — 900000 يعني
+    # أكتر من 880 ألف عملية قبل التصادم.
+    OFFLINE_FLOOR = 900_000
+    BLOCK_SIZE = 1000
 
     device_id = models.CharField("معرّف الجهاز", max_length=64, unique=True)
     block_start = models.PositiveIntegerField("بداية المدى")
@@ -240,31 +243,38 @@ class Job(models.Model):
 
     @classmethod
     def _next_invoice_number(cls):
-        today = timezone.localdate()
-        prefix = f"{settings.INVOICE_PREFIX}-{today:%Y%m%d}-"
+        """الرقم الجاي بالعدّاد المستمر: `PREFIX-NNNNN`.
+
+        العدّاد مستمر مو يومي — بيكمّل ترقيم الورشة القديم. الأرقام من
+        [DeviceNumberBlock.OFFLINE_FLOOR] وفوق محجوزة للأجهزة تولّدها وهي
+        أوفلاين، فمنتجاهلها وقت الحساب وإلا أول عملية أوفلاين بتقفز العدّاد
+        جوّا المدى المحجوز.
+        """
+        prefix = f"{settings.INVOICE_PREFIX}-"
         floor = DeviceNumberBlock.OFFLINE_FLOOR
         with transaction.atomic():
-            # الأرقام من OFFLINE_FLOOR وفوق بيولّدها الجهاز وهو أوفلاين من
-            # المدى المحجوز إله. لازم نتجاهلها وقت الحساب، وإلا أول عملية
-            # أوفلاين بتقفز التسلسل اليومي جوّا المدى المحجوز وبتتصادم.
             used = (
                 cls.objects.select_for_update()
                 .filter(invoice_number__startswith=prefix)
                 .values_list("invoice_number", flat=True)
             )
             server_sequences = [
-                int(number.rsplit("-", 1)[-1])
+                int(tail)
                 for number in used
-                if number.rsplit("-", 1)[-1].isdigit()
-                and int(number.rsplit("-", 1)[-1]) < floor
+                if (tail := number.rsplit("-", 1)[-1]).isdigit()
+                and int(tail) < floor
             ]
-            sequence = max(server_sequences) + 1 if server_sequences else 1
+            sequence = (
+                max(server_sequences) + 1
+                if server_sequences
+                else settings.INVOICE_START
+            )
             if sequence >= floor:
                 raise RuntimeError(
-                    "daily invoice sequence reached the offline-reserved range "
+                    "invoice sequence reached the offline-reserved range "
                     f"({floor}); raise DeviceNumberBlock.OFFLINE_FLOOR"
                 )
-        return f"{prefix}{sequence:04d}"
+        return f"{prefix}{sequence}"
 
     def mark_invoice_sent(self):
         self.invoice_sent_at = timezone.now()

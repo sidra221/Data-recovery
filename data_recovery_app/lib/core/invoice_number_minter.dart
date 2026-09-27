@@ -40,9 +40,9 @@ class NumberBlock {
 
 /// بيولّد أرقام فواتير محلياً من المدى المحجوز للجهاز.
 ///
-/// الرقم بيطلع بنفس شكل السيرفر: `PREFIX-YYYYMMDD-NNNN`. التسلسل بيبلّش من
-/// `blockStart` كل يوم جديد — المدى محجوز للجهاز بكل الأيام، مو ليوم واحد،
-/// فلو ضل أوفلاين لبكرا بيضل يقدر يولّد.
+/// الرقم بيطلع بنفس شكل السيرفر: `PREFIX-NNNNN`. العدّاد مستمر مو يومي، متل
+/// عدّاد السيرفر — الجهاز بياخد مدى ثابت (مثلاً 900000-900999) وبياكل منه
+/// رقم لكل عملية أوفلاين، مهما كان اليوم.
 class InvoiceNumberMinter {
   InvoiceNumberMinter({SharedPreferences? prefs}) : _injected = prefs;
 
@@ -70,44 +70,30 @@ class InvoiceNumberMinter {
     }
   }
 
-  /// بيرجّع الرقم الجاي، أو `null` لو ما في مدى محجوز أو خلص المدى لهاليوم.
+  /// بيرجّع الرقم الجاي، أو `null` لو ما في مدى محجوز أو خلص المدى.
   ///
-  /// خلوص المدى معناه إن الجهاز عمل أكتر من [NumberBlock.size] عملية بيوم
-  /// واحد وهو أوفلاين. منرجّع `null` بدل ما نعطي رقم برّا المدى، لأن رقم
-  /// برّا المدى ممكن يتصادم مع رقم تاني وقت المزامنة.
-  Future<String?> mint({DateTime? now}) async {
+  /// خلوص المدى معناه إن الجهاز عمل [NumberBlock.size] عملية أوفلاين بدون
+  /// ما يتصل بالسيرفر ولا مرة. منرجّع `null` بدل ما نعطي رقم برّا المدى،
+  /// لأن رقم برّا المدى ممكن يتصادم مع رقم السيرفر وقت المزامنة.
+  Future<String?> mint() async {
     final block = await readBlock();
     if (block == null) return null;
 
-    final today = now ?? DateTime.now();
-    final day =
-        '${today.year.toString().padLeft(4, '0')}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
-
     final store = await _store;
-    final cursor = jsonDecode(store.getString(_cursorKey) ?? '{}') as Map<String, dynamic>;
-    // التسلسل بينعاد من بداية المدى كل يوم، لأن الرقم فيه التاريخ.
-    final next = cursor['day'] == day ? (cursor['next'] as int) : block.blockStart;
+    final next = store.getInt(_cursorKey) ?? block.blockStart;
     if (next > block.blockEnd) return null;
 
-    await store.setString(
-      _cursorKey,
-      jsonEncode({'day': day, 'next': next + 1}),
-    );
-    return '${block.prefix}-$day-${next.toString().padLeft(4, '0')}';
+    await store.setInt(_cursorKey, next + 1);
+    return '${block.prefix}-$next';
   }
 
-  /// كم رقم باقي لهاليوم. بينفع نحذّر الموظف قبل ما يخلص المدى.
-  Future<int> remainingToday({DateTime? now}) async {
+  /// كم رقم باقي بالمدى. بينفع نحذّر الموظف قبل ما يخلص.
+  Future<int> remaining() async {
     final block = await readBlock();
     if (block == null) return 0;
 
-    final today = now ?? DateTime.now();
-    final day =
-        '${today.year.toString().padLeft(4, '0')}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
-
     final store = await _store;
-    final cursor = jsonDecode(store.getString(_cursorKey) ?? '{}') as Map<String, dynamic>;
-    final next = cursor['day'] == day ? (cursor['next'] as int) : block.blockStart;
+    final next = store.getInt(_cursorKey) ?? block.blockStart;
     return (block.blockEnd - next + 1).clamp(0, block.size);
   }
 

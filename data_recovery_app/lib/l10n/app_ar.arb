@@ -145,7 +145,7 @@
   "failedToUpdate": "تعذّر التحديث",
   "failedToLoadCustomer": "تعذّر تحميل بيانات العميل",
   "failedToDeleteCustomer": "تعذّر حذف العميل",
-  "customersList": "قائمة العملاء",
+  "customersList": "قائمة البحث عن العملاء",
   "searchCustomersHint": "ابحث بالاسم أو البريد الإلكتروني أو الهاتف",
   "noCustomersFound": "لا يوجد عملاء",
   "lastDash": "آخر زيارة: -",
@@ -407,5 +407,7 @@
     }
   },
   "cannotDeleteCustomerWithJobs": "لا يمكن حذف عميل لديه قضايا مرتبطة",
-  "invalidPhone": "أدخل رقم هاتف صحيح"
+  "invalidPhone": "أدخل رقم هاتف صحيح",
+  "sharePdf": "مشاركة كملف PDF",
+  "printPdf": "طباعة"
 }

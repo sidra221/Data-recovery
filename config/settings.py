@@ -204,6 +204,9 @@ COMPANY_ADDRESS = os.environ.get(
 )
 INVOICE_PREFIX = "01"
 
+# العدّاد بيكمّل ترقيم النظام القديم تبع الورشة، فبيبلّش من هون مو من ١.
+INVOICE_START = int(os.environ.get("INVOICE_START", "16720"))
+
 LIGHTOTP_API_KEY = os.environ.get("LIGHTOTP_API_KEY", "")
 LIGHTOTP_TEMPLATE_ID = os.environ.get("LIGHTOTP_TEMPLATE_ID", "")
 

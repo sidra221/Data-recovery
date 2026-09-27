@@ -9,12 +9,12 @@ import 'package:data_recovery_app/core/pending_queue.dart';
 import 'package:data_recovery_app/core/secure_storage.dart';
 import 'package:data_recovery_app/core/sync_engine.dart';
 
-const _block = NumberBlock(prefix: '01', blockStart: 9000, blockEnd: 9002);
+const _block = NumberBlock(prefix: '01', blockStart: 900000, blockEnd: 900002);
 
 final _jobJson = <String, dynamic>{
   'id': 1,
-  'invoice_number': '01-20260917-9000',
-  'barcode': '01-20260917-9000',
+  'invoice_number': '01-900000',
+  'barcode': '01-900000',
   'customer_name': 'سامر',
   'customer_phone': '0791234567',
   'hard_disk_type': 'hdd_25',
@@ -112,42 +112,43 @@ void main() {
 
     test('بيولّد بنفس شكل السيرفر وبيزيد التسلسل', () async {
       await minter.saveBlock(_block);
-      final day = DateTime(2026, 9, 17);
 
-      expect(await minter.mint(now: day), '01-20260917-9000');
-      expect(await minter.mint(now: day), '01-20260917-9001');
-      expect(await minter.mint(now: day), '01-20260917-9002');
+      expect(await minter.mint(), '01-900000');
+      expect(await minter.mint(), '01-900001');
+      expect(await minter.mint(), '01-900002');
     });
 
     test('بيوقف عند آخر المدى بدل ما يطلع برّا', () async {
       await minter.saveBlock(_block);
-      final day = DateTime(2026, 9, 17);
       for (var i = 0; i < 3; i++) {
-        await minter.mint(now: day);
+        await minter.mint();
       }
 
       expect(
-        await minter.mint(now: day),
+        await minter.mint(),
         isNull,
         reason: 'رقم برّا المدى ممكن يتصادم مع رقم السيرفر',
       );
     });
 
-    test('التسلسل بيرجع لأول المدى بيوم جديد', () async {
+    test('العدّاد مستمر — ما بينعاد بيوم جديد', () async {
       await minter.saveBlock(_block);
-      await minter.mint(now: DateTime(2026, 9, 17));
-      await minter.mint(now: DateTime(2026, 9, 17));
+      await minter.mint();
+      await minter.mint();
 
-      expect(await minter.mint(now: DateTime(2026, 9, 18)), '01-20260918-9000');
+      expect(
+        await minter.mint(),
+        '01-900002',
+        reason: 'المدى محجوز للجهاز كله مو ليوم، فما في إعادة تصفير',
+      );
     });
 
-    test('بيعرف كم رقم باقي لهاليوم', () async {
+    test('بيعرف كم رقم باقي', () async {
       await minter.saveBlock(_block);
-      final day = DateTime(2026, 9, 17);
 
-      expect(await minter.remainingToday(now: day), 3);
-      await minter.mint(now: day);
-      expect(await minter.remainingToday(now: day), 2);
+      expect(await minter.remaining(), 3);
+      await minter.mint();
+      expect(await minter.remaining(), 2);
     });
   });
 
@@ -180,7 +181,7 @@ void main() {
     test('بترفع العمليات وبتفضّي الطابور', () async {
       await queue.add(
         kind: PendingKind.createJob,
-        payload: {'customer_name': 'سامر', 'invoice_number': '01-20260917-9000'},
+        payload: {'customer_name': 'سامر', 'invoice_number': '01-900000'},
       );
       await queue.add(kind: PendingKind.deliver, payload: {'job_id': 1});
 
@@ -208,7 +209,7 @@ void main() {
     test('إعادة إرسال عملية وصلت قبل بتنعتبر نجاح مو تكرار', () async {
       await queue.add(
         kind: PendingKind.createJob,
-        payload: {'invoice_number': '01-20260917-9000'},
+        payload: {'invoice_number': '01-900000'},
       );
 
       // هاد الرد يلي بيرجّعه السيرفر لو الرقم أصلاً انسجّل.
