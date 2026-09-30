@@ -5,6 +5,9 @@ import 'dart:io';
 
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:pdf/widgets.dart' as pw;
+
+import 'package:data_recovery_app/core/arabic_text.dart';
 import 'package:data_recovery_app/core/pdf_theme.dart';
 import 'package:data_recovery_app/core/print_templates.dart';
 import 'package:data_recovery_app/models/job.dart';
@@ -73,6 +76,27 @@ void main() {
 
     test('نص فاضي مو عربي', () {
       expect(hasArabic(''), isFalse);
+    });
+  });
+
+  group('rtlAware', () {
+    // الغلطة يلي صارت: لفّ النص بـ pw.Directionality. وقتها حزمة pdf
+    // بتعيد المعالجة فوق التشكيل يلي عملناه، والحروف بترجع تتفكّك.
+    // منشكّل إحنا ومنسلّمها نصاً جاهزاً — فلازم يضل pw.Text مجرّد.
+    test('ما بيلفّ النص بـ Directionality', () {
+      expect(rtlAware('اسم العميل'), isA<pw.Text>());
+      expect(rtlAware('Client Name'), isA<pw.Text>());
+    });
+
+    test('بيمرّر النص العربي مشكّلاً مو خاماً', () {
+      final widget = rtlAware('اسم العميل') as pw.Text;
+      expect(widget.text.toPlainText(), shapeForPdf('اسم العميل'));
+      expect(widget.text.toPlainText(), isNot('اسم العميل'));
+    });
+
+    test('النص اللاتيني بيمرق بدون تغيير', () {
+      final widget = rtlAware('Client Name') as pw.Text;
+      expect(widget.text.toPlainText(), 'Client Name');
     });
   });
 

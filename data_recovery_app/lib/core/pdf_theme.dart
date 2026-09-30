@@ -1,28 +1,21 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/widgets.dart' as pw;
 
-final _arabicRange =
-    RegExp(r'[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]');
+import 'arabic_text.dart';
 
-bool hasArabic(String text) => _arabicRange.hasMatch(text);
-
-/// نص بالـ PDF باتجاه مشتقّ من محتواه.
+/// نص عربي جاهز للرسم بالـ PDF.
 ///
-/// حزمة `pdf` بترتّب الحروف حسب اتجاه الصفحة، وصفحاتنا إنكليزية (LTR). فأي
-/// نص عربي — اسم عميل، وصف عطل، شروط، اسم شركة — كان بينطبع **معكوس**:
-/// الحروف مشكّلة صح بس مرتّبة من اليسار لليمين.
-///
-/// المستندات مختلطة بطبيعتها (رقم فاتورة لاتيني واسم عربي بنفس الصفحة)،
-/// فاتجاه الصفحة لحاله ما بيكفي — كل نص لازم ياخد اتجاهه من محتواه هو.
+/// **بدون `pw.Directionality` عن قصد.** لفّ النص بـ Directionality بيخلّي
+/// حزمة `pdf` تعيد المعالجة فوق معالجتنا، والنتيجة حروف مفكوكة. منشكّل
+/// ومنرتّب بـ [shapeForPdf] ومنسلّم الحزمة نصاً جاهزاً ترسمه حرفياً.
 pw.Widget rtlAware(
-  String text, {
-  pw.TextStyle? style,
-  int? maxLines,
-  pw.TextAlign? align,
-}) {
-  return pw.Directionality(
-    textDirection: hasArabic(text) ? pw.TextDirection.rtl : pw.TextDirection.ltr,
-    child: pw.Text(text, style: style, maxLines: maxLines, textAlign: align),
+  String text,
+  {pw.TextStyle? style, int? maxLines, pw.TextAlign? align}) {
+  return pw.Text(
+    shapeForPdf(text),
+    style: style,
+    maxLines: maxLines,
+    textAlign: align ?? (hasArabic(text) ? pw.TextAlign.right : null),
   );
 }
 

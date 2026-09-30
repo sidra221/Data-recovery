@@ -181,10 +181,6 @@ fi
 
 cd "$APP_DIR"
 DART_DEFINE="API_BASE_URL=${API_BASE_URL}"
-# حزمة pdf بوضعها الافتراضي بتعيد ترتيب العربي بس وبتستعمل الأشكال
-# المنفصلة للحروف، فالكلمات بتطلع مقطّعة بالمطبوعات ("م ح م د" بدل "محمد").
-# إطفاء use_bidi بيشغّل arabic.convert يلي بيعمل التشكيل الصح.
-ARABIC_DEFINE="use_bidi=false"
 # بصمة البناء: أول ٧ حروف من الكوميت + وقت البناء. بتظهر بشاشة الدخول
 # حتى يكون واضح أي نسخة مثبّتة على الجهاز بدون تخمين.
 GIT_SHA="$(git -C "${ROOT_DIR}" rev-parse --short=7 HEAD 2>/dev/null || echo nogit)"
@@ -196,7 +192,7 @@ BUILD_DEFINE="BUILD_ID=${GIT_SHA} $(date '+%m-%d %H:%M')"
 build_apk() {
   echo
   echo "Building Android APK..."
-  flutter build apk --release --dart-define="${DART_DEFINE}" --dart-define="${ARABIC_DEFINE}" --dart-define="${BUILD_DEFINE}"
+  flutter build apk --release --dart-define="${DART_DEFINE}" --dart-define="${BUILD_DEFINE}"
   echo
   echo "APK: ${APP_DIR}/build/app/outputs/flutter-apk/app-release.apk"
 }
@@ -204,7 +200,7 @@ build_apk() {
 build_web() {
   echo
   echo "Building web..."
-  flutter build web --release --dart-define="${DART_DEFINE}" --dart-define="${ARABIC_DEFINE}" --dart-define="${BUILD_DEFINE}"
+  flutter build web --release --dart-define="${DART_DEFINE}" --dart-define="${BUILD_DEFINE}"
   echo
   echo "Web build: ${APP_DIR}/build/web"
 }
