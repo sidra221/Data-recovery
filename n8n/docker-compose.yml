@@ -1,0 +1,22 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - TZ=Asia/Amman
+      - GENERIC_TIMEZONE=Asia/Amman
+      # بدون هاد، n8n بيفرض كوكي آمن (secure) يلي بيحتاج https، وبيكسر
+      # تسجيل الدخول لما بتفتحه محلياً على http://localhost:5678
+      - N8N_SECURE_COOKIE=false
+    extra_hosts:
+      # حتى الحاوية تقدر توصل لسيرفر Django الشغّال على نفس الجهاز
+      # (لازم تشغّل manage.py runserver على 0.0.0.0:8000 مش 127.0.0.1:8000)
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
