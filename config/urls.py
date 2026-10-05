@@ -10,8 +10,6 @@ admin.site.index_title = "لوحة التحكم"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("jobs.urls")),
-    path("api/", include("apitokens.api_urls")),
-    path("tools/", include("apitokens.urls")),
 ]
 
 if settings.DEBUG:
