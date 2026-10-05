@@ -132,8 +132,8 @@
     <form class="generate" method="post">
       {% csrf_token %}
       <div class="field">
-        <label for="label">الاسم (للتعريف بس)</label>
-        <input type="text" id="label" name="label" placeholder="مثلاً: متجر فلان" required>
+        <label for="label">اسم العميل / المتجر</label>
+        <input type="text" id="label" name="label" placeholder="مثلاً: سوبرماركت الأمل" required>
       </div>
       <div class="field">
         <label for="image_quota">عدد الصور المسموح</label>
@@ -159,9 +159,9 @@
         <tr>
           <th>الاسم</th>
           <th>التوكن</th>
-          <th>السقف</th>
+          <th>عدد الصور المسموح</th>
           <th>الفترة</th>
-          <th>المستهلك</th>
+          <th>المستخدم حالياً</th>
           <th>الحالة</th>
           <th>تاريخ الإنشاء</th>
           <th></th>
